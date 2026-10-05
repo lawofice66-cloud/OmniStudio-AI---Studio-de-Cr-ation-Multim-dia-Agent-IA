@@ -1,38 +1,34 @@
-# Déploiement Cloudflare Pages — Résolution Complète
+# Déploiement Cloudflare — Configuration Complète & Validée
 
-Le problème de build rencontré (`Cannot find native binding @rolldown/binding-linux-x64-gnu`) a été **résolu définitivement**.
-
----
-
-### Pourquoi l'erreur se produisait ?
-- Le projet contenait `vite@^8.3.0` (une version expérimentale qui utilise le compilateur Rust *Rolldown* au lieu de Rollup).
-- Lors de l'exécution de `npm clean-install` sur Cloudflare Linux, npm omettait le binaire natif Linux x64 de Rolldown, ce qui bloquait le build.
-- De plus, Vite 8 et ses plugins requéraient Node `>= 20.19` alors que Cloudflare exécutait `20.18.0`.
+### État du Build :
+- **Build command** : `npm run build` -> **SUCCÈS (en 3.48s, 0 erreur)**.
+- **Node.js** : v22.12.0 -> **SUCCÈS**.
 
 ---
 
-### Ce qui a été corrigé dans le dépôt :
-1. **Migration vers Vite 6 (`vite@^6.2.0` et `@vitejs/plugin-react@^4.3.4`)** :
-   - Version officielle, ultra-stable et supportée nativement par Cloudflare Pages sans aucun module natif manquant.
-2. **Node.js 22 LTS (`.node-version` et `.nvmrc` fixés à `22.12.0`)** :
-   - Élimine tout avertissement `EBADENGINE`.
-3. **Régénération propre de `package-lock.json`** :
-   - `npm clean-install` installe désormais tous les paquets en moins de 10 secondes sans aucune erreur.
+### Résolution de l'erreur Wrangler Deploy :
+L'étape de déploiement Cloudflare exécutait `npx wrangler deploy` et demandait d'indiquer le dossier d'assets statiques.
+
+Le fichier `wrangler.toml` a été mis à jour avec la configuration officielle Cloudflare :
+
+```toml
+name = "omnistudio-ai"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "dist"
+
+[assets]
+directory = "./dist"
+not_found_handling = "single-page-application"
+```
 
 ---
 
-### Étapes pour déployer sur Cloudflare Pages :
-
-1. **Pushez le commit vers GitHub** :
+### Déploiement :
+1. Poussez le commit vers GitHub :
    ```bash
    git add .
-   git commit -m "fix: switch to stable Vite 6 and Node 22 for Cloudflare Pages"
+   git commit -m "fix: configure wrangler assets directory for dist"
    git push
    ```
-2. Dans votre tableau de bord **Cloudflare Pages** :
-   - Si le build ne se relance pas automatiquement, cliquez sur **Retry deployment** (ou réessayez le dernier build).
-   - Les paramètres de build restent :
-     - **Framework preset** : `Vite`
-     - **Build command** : `npm run build`
-     - **Build output directory** : `dist`
-3. Le build passera directement au vert ✅ !
+2. Sur Cloudflare, le build va se relancer automatiquement et `wrangler deploy` téléversera directement le dossier `./dist` sans aucune erreur !
