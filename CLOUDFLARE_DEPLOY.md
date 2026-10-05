@@ -1,34 +1,24 @@
-# Déploiement Cloudflare — Configuration Complète & Validée
+# Déploiement Cloudflare — Résolution de l'Erreur 100324
 
-### État du Build :
-- **Build command** : `npm run build` -> **SUCCÈS (en 3.48s, 0 erreur)**.
-- **Node.js** : v22.12.0 -> **SUCCÈS**.
-
----
-
-### Résolution de l'erreur Wrangler Deploy :
-L'étape de déploiement Cloudflare exécutait `npx wrangler deploy` et demandait d'indiquer le dossier d'assets statiques.
-
-Le fichier `wrangler.toml` a été mis à jour avec la configuration officielle Cloudflare :
-
+### 1. Cause de l'erreur `100324` (Infinite loop) :
+Cloudflare Workers Static Assets utilise nativement la règle suivante dans `wrangler.toml` :
 ```toml
-name = "omnistudio-ai"
-compatibility_date = "2024-09-23"
-compatibility_flags = ["nodejs_compat"]
-pages_build_output_dir = "dist"
-
 [assets]
 directory = "./dist"
 not_found_handling = "single-page-application"
 ```
+Lorsque le fichier `_redirects` contenait `/* /index.html 200`, Cloudflare détectait une boucle infinie de redirection (`[code: 100324]`).
+
+### 2. Actions effectuées :
+- **Suppression de `_redirects`** : le routage SPA est désormais géré à 100% de manière native et propre par Cloudflare via `not_found_handling = "single-page-application"`.
+- **Alignement du nom du Worker** : `wrangler.toml` utilise exactement le nom attendu par Cloudflare CI : `omnistudio-ai---studio-de-cr-ation-multim-dia-agent-ia`.
 
 ---
 
-### Déploiement :
-1. Poussez le commit vers GitHub :
-   ```bash
-   git add .
-   git commit -m "fix: configure wrangler assets directory for dist"
-   git push
-   ```
-2. Sur Cloudflare, le build va se relancer automatiquement et `wrangler deploy` téléversera directement le dossier `./dist` sans aucune erreur !
+### 3. Pousser vers GitHub pour déployer :
+```bash
+git add .
+git commit -m "fix: remove _redirects and match worker name for cloudflare deploy"
+git push
+```
+Le déploiement Cloudflare passera désormais en vert !
