@@ -168,18 +168,18 @@ export const PricingPage: React.FC = () => {
 
           <div className="pt-8 space-y-3">
             {/* RedotPay Visa Card Box */}
-            <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-red-500/40 space-y-2">
+            <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-emerald-500/40 space-y-2">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-red-300 flex items-center gap-1.5">
-                  <CreditCard className="w-3.5 h-3.5 text-red-400" />
+                <span className="font-bold text-emerald-300 flex items-center gap-1.5">
+                  <CreditCard className="w-3.5 h-3.5 text-emerald-400" />
                   RedotPay Visa Card
                 </span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 font-semibold">
-                  5 USD
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-black">
+                  5 USD (0 frais en plus)
                 </span>
               </div>
               <p className="text-[11px] text-slate-300 leading-tight">
-                Paiement direct par RedotPay Visa Card ou virement RedotPay :
+                Paiement direct par RedotPay Visa Card ou virement RedotPay sans frais :
               </p>
               <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-900 border border-white/10 font-mono text-xs">
                 <span className="text-white font-bold select-all truncate">
@@ -196,12 +196,12 @@ export const PricingPage: React.FC = () => {
               </div>
             </div>
 
-            {/* NOWPayments Button */}
+            {/* NOWPayments Button (6 USD = 5 USD + 1 USD frais réseau) */}
             <button
               onClick={handleOpenNowPayments}
               className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black text-xs shadow-xl shadow-amber-500/25 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
             >
-              <span>Payer 5 USD sur NOWPayments (Crypto & Cartes)</span>
+              <span>Payer 6 USD sur NOWPayments (5$ + 1$ frais réseau)</span>
               <ExternalLink className="w-4 h-4" />
             </button>
 
@@ -227,14 +227,14 @@ export const PricingPage: React.FC = () => {
               Barème des crédits par fonctionnalité
             </h3>
             <p className="text-xs text-slate-400 mt-1">
-              Chaque outil consomme un nombre fixe de crédits. Aucun frais caché.
+              Chaque outil consomme un nombre fixe de crédits. 500 crédits inclus dans l'Abonnement Pro.
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
           <div className="p-4 rounded-2xl bg-slate-900/80 border border-white/5 space-y-2">
-            <span className="text-xs font-semibold text-purple-400">Agent IA Nova</span>
+            <span className="text-xs font-semibold text-purple-400">Agent Nova</span>
             <div className="text-2xl font-black text-white">0.5 crédit</div>
             <p className="text-[11px] text-slate-400">Par échange ou prompt rédigé.</p>
             <span className="inline-block text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">
@@ -243,29 +243,38 @@ export const PricingPage: React.FC = () => {
           </div>
 
           <div className="p-4 rounded-2xl bg-slate-900/80 border border-white/5 space-y-2">
+            <span className="text-xs font-semibold text-indigo-400">Texte vers Image 8K</span>
+            <div className="text-2xl font-black text-white">2 crédits</div>
+            <p className="text-[11px] text-slate-400">Par image 8K photoréaliste.</p>
+            <span className="inline-block text-[10px] text-slate-400">
+              Jusqu'à 250 images 8K / mois en Pro
+            </span>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-slate-900/80 border border-white/5 space-y-2">
+            <span className="text-xs font-semibold text-pink-400">Texte vers Vidéo Veo 3</span>
+            <div className="text-2xl font-black text-white">25 crédits</div>
+            <p className="text-[11px] text-slate-400">Par vidéo 5s cinématique & plan TXT.</p>
+            <span className="inline-block text-[10px] text-pink-400 font-semibold">
+              Rendu Veo 3 &lt; 35 sec
+            </span>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-slate-900/80 border border-white/5 space-y-2">
+            <span className="text-xs font-semibold text-cyan-400">Musique Lyria 3 Pro</span>
+            <div className="text-2xl font-black text-white">15 crédits</div>
+            <p className="text-[11px] text-slate-400">Par piste symphonique 48kHz.</p>
+            <span className="inline-block text-[10px] text-cyan-400 font-semibold">
+              Export WAV 48k + MP3
+            </span>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-slate-900/80 border border-white/5 space-y-2">
             <span className="text-xs font-semibold text-emerald-400">Transcription Audio</span>
             <div className="text-2xl font-black text-white">1 crédit</div>
             <p className="text-[11px] text-slate-400">Par audio importé ou enregistré.</p>
             <span className="inline-block text-[10px] text-slate-400">
-              Jusqu'à 500 transcriptions / mois en Pro
-            </span>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-slate-900/80 border border-white/5 space-y-2">
-            <span className="text-xs font-semibold text-indigo-400">Texte vers Image</span>
-            <div className="text-2xl font-black text-white">2 crédits</div>
-            <p className="text-[11px] text-slate-400">Par image haute définition générée.</p>
-            <span className="inline-block text-[10px] text-slate-400">
-              Jusqu'à 250 images HD / mois en Pro
-            </span>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-slate-900/80 border border-white/5 space-y-2">
-            <span className="text-xs font-semibold text-pink-400">Texte vers Vidéo</span>
-            <div className="text-2xl font-black text-white">5 crédits</div>
-            <p className="text-[11px] text-slate-400">Par rendu vidéo cinématique & storyboard.</p>
-            <span className="inline-block text-[10px] text-slate-400">
-              Jusqu'à 100 vidéos / mois en Pro
+              Jusqu'à 500 transcriptions / mois
             </span>
           </div>
         </div>
@@ -278,7 +287,7 @@ export const PricingPage: React.FC = () => {
             <ShieldCheck className="w-6 h-6 text-amber-400" />
           </div>
           <div>
-            <h4 className="text-sm font-bold text-white">Paiement Garanti & Sécurisé par NOWPayments</h4>
+            <h4 className="text-sm font-bold text-white">Paiement Garanti & Sécurisé par NOWPayments (6 USD) ou RedotPay (5 USD)</h4>
             <p className="text-xs text-slate-400 mt-0.5">
               Lien officiel de facturation : <span className="font-mono text-amber-300">{PRICING_CONFIG.NOWPAYMENTS_URL}</span>
             </p>
@@ -287,9 +296,9 @@ export const PricingPage: React.FC = () => {
 
         <button
           onClick={handleOpenNowPayments}
-          className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-2 shadow-lg shrink-0 transition-transform hover:scale-105"
+          className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-2 shadow-lg shrink-0 transition-transform hover:scale-105 cursor-pointer"
         >
-          <span>Ouvrir NOWPayments (5$)</span>
+          <span>Ouvrir NOWPayments (6$)</span>
           <ExternalLink className="w-3.5 h-3.5" />
         </button>
       </div>

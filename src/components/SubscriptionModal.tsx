@@ -172,30 +172,38 @@ export const SubscriptionModal: React.FC = () => {
 
         {/* Credit Cost Reference Grid */}
         <div className="mb-6 p-3.5 rounded-2xl bg-slate-900/80 border border-white/10">
-          <p className="text-xs font-semibold text-slate-300 mb-2 flex items-center gap-1.5">
-            <Coins className="w-3.5 h-3.5 text-indigo-400" />
-            Coûts en crédits par action dans OmniStudio AI :
-          </p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+              <Coins className="w-3.5 h-3.5 text-indigo-400" />
+              Barème des crédits par action dans OmniStudio AI :
+            </p>
+            <span className="text-[10px] text-amber-400 font-bold">500 crédits rechargeables</span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
             <div className="p-2 rounded-xl bg-slate-950/70 border border-white/5">
-              <span className="text-slate-400 block text-[10px]">Agent IA Co-pilote</span>
+              <span className="text-slate-400 block text-[10px]">Agent Nova</span>
               <span className="font-bold text-white">0.5 crédit</span>
-              <span className="text-[10px] text-emerald-400 block font-medium">(Gratuit en Pro)</span>
+              <span className="text-[10px] text-emerald-400 block font-bold">(Illimité en Pro)</span>
             </div>
             <div className="p-2 rounded-xl bg-slate-950/70 border border-white/5">
-              <span className="text-slate-400 block text-[10px]">Transcription Audio</span>
+              <span className="text-slate-400 block text-[10px]">Image 8K</span>
+              <span className="font-bold text-white">2 crédits</span>
+              <span className="text-[10px] text-slate-400 block">/ image 8K</span>
+            </div>
+            <div className="p-2 rounded-xl bg-slate-950/70 border border-white/5">
+              <span className="text-slate-400 block text-[10px]">Vidéo 5s Veo 3</span>
+              <span className="font-bold text-white">25 crédits</span>
+              <span className="text-[10px] text-pink-400 block font-medium">/ vidéo 5s</span>
+            </div>
+            <div className="p-2 rounded-xl bg-slate-950/70 border border-white/5">
+              <span className="text-slate-400 block text-[10px]">Musique Lyria 3</span>
+              <span className="font-bold text-white">15 crédits</span>
+              <span className="text-[10px] text-cyan-400 block font-medium">/ piste 48kHz</span>
+            </div>
+            <div className="p-2 rounded-xl bg-slate-950/70 border border-white/5">
+              <span className="text-slate-400 block text-[10px]">Transcription</span>
               <span className="font-bold text-white">1 crédit</span>
               <span className="text-[10px] text-slate-400 block">/ audio analysé</span>
-            </div>
-            <div className="p-2 rounded-xl bg-slate-950/70 border border-white/5">
-              <span className="text-slate-400 block text-[10px]">Texte vers Image</span>
-              <span className="font-bold text-white">2 crédits</span>
-              <span className="text-[10px] text-slate-400 block">/ image HD générée</span>
-            </div>
-            <div className="p-2 rounded-xl bg-slate-950/70 border border-white/5">
-              <span className="text-slate-400 block text-[10px]">Texte vers Vidéo</span>
-              <span className="font-bold text-white">5 crédits</span>
-              <span className="text-[10px] text-slate-400 block">/ vidéo cinématique</span>
             </div>
           </div>
         </div>
@@ -210,7 +218,7 @@ export const SubscriptionModal: React.FC = () => {
                 <span>Moyens de Paiement pour l'Abonnement Pro</span>
               </h3>
               <p className="text-xs text-slate-400 mt-0.5">
-                Choisissez votre méthode préférée : RedotPay Visa Card ou NOWPayments Crypto / Cartes.
+                RedotPay Visa Card (5 USD direct, 0 frais) ou NOWPayments Crypto / Cartes (5 USD + 1 USD frais réseau = 6 USD).
               </p>
             </div>
             
@@ -224,7 +232,7 @@ export const SubscriptionModal: React.FC = () => {
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                <span>RedotPay Visa</span>
+                <span>RedotPay (5$)</span>
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               </button>
 
@@ -233,16 +241,16 @@ export const SubscriptionModal: React.FC = () => {
                 onClick={() => setActivePaymentMethod('nowpayments')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                   activePaymentMethod === 'nowpayments'
-                    ? 'bg-amber-500 text-slate-950 shadow-md'
+                    ? 'bg-amber-500 text-slate-950 shadow-md font-extrabold'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                <span>NOWPayments</span>
+                <span>NOWPayments (6$)</span>
               </button>
             </div>
           </div>
 
-          {/* Option 1: RedotPay Visa Card (Direct instructions with lawofice66@gmail.com) */}
+          {/* Option 1: RedotPay Visa Card (Direct instructions with lawofice66@gmail.com - 5 USD 0 frais) */}
           {activePaymentMethod === 'redotpay' && (
             <div className="space-y-4 animate-in fade-in">
               <div className="p-4 rounded-2xl bg-gradient-to-r from-red-950/40 via-slate-900 to-slate-900 border border-red-500/40 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -251,12 +259,12 @@ export const SubscriptionModal: React.FC = () => {
                     <span className="px-2.5 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/30 text-[11px] font-black tracking-wide uppercase">
                       RedotPay Visa Card
                     </span>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black">
-                      5 USD / mois
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-400 text-slate-950 font-black">
+                      5 USD (0 frais en plus)
                     </span>
                   </div>
                   <p className="text-xs text-slate-300">
-                    Transférez <strong>5 USD</strong> via l'application RedotPay ou votre carte RedotPay Visa à l'adresse e-mail dédiée :
+                    Transférez exactement <strong>5 USD</strong> sans aucun frais supplémentaire vers l'adresse RedotPay officielle :
                   </p>
                 </div>
 
@@ -293,7 +301,7 @@ export const SubscriptionModal: React.FC = () => {
                   <span className="w-5 h-5 rounded-full bg-red-500/20 text-red-300 font-bold flex items-center justify-center text-[10px] mb-1">
                     2
                   </span>
-                  <strong className="text-white block text-[11px]">Envoyez 5 USD</strong>
+                  <strong className="text-white block text-[11px]">Envoyez 5 USD (0 frais)</strong>
                   <p className="text-slate-400 text-[10px] leading-tight">
                     Transférez 5$ vers l'ID / Email : <strong className="text-red-300">{REDOTPAY_EMAIL}</strong>.
                   </p>
@@ -322,23 +330,23 @@ export const SubscriptionModal: React.FC = () => {
                   className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs shadow-lg shadow-emerald-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer hover:scale-105 active:scale-95"
                 >
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>J'ai envoyé via RedotPay : Activer mon Pro (+500 cr)</span>
+                  <span>J'ai envoyé 5 USD via RedotPay : Activer mon Pro (+500 cr)</span>
                 </button>
               </div>
             </div>
           )}
 
-          {/* Option 2: NOWPayments Crypto & Gateway */}
+          {/* Option 2: NOWPayments Crypto & Gateway (6 USD = 5 USD + 1 USD frais de réseau) */}
           {activePaymentMethod === 'nowpayments' && (
             <div className="space-y-4 animate-in fade-in">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30">
                 <div>
                   <h4 className="text-sm font-bold text-white flex items-center gap-2">
                     <span>Passerelle NOWPayments (Crypto & Cartes)</span>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black">5 USD</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black">6 USD</span>
                   </h4>
                   <p className="text-xs text-slate-300 mt-1">
-                    USDT, Bitcoin, Ethereum, Cartes bancaires et +300 devises acceptées.
+                    5 USD abonnement + 1 USD de frais réseau inclus pour couvrir la transaction. USDT, BTC, ETH, cartes bancaires acceptés.
                   </p>
                 </div>
 
@@ -348,7 +356,7 @@ export const SubscriptionModal: React.FC = () => {
                     onClick={handleOpenNowPayments}
                     className="px-5 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-extrabold text-xs shadow-lg shadow-amber-500/30 transition-all flex items-center justify-center gap-2 hover:scale-105 active:scale-95 cursor-pointer"
                   >
-                    <span>Payer 5 USD sur NOWPayments</span>
+                    <span>Payer 6 USD sur NOWPayments (5$ + 1$ frais)</span>
                     <ExternalLink className="w-4 h-4" />
                   </button>
 
@@ -367,7 +375,7 @@ export const SubscriptionModal: React.FC = () => {
                 <div className="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
                   <span>
-                    La passerelle NOWPayments est ouverte. Dès votre règlement finalisé, cliquez sur <strong>"Activer mon Pro"</strong> ci-dessus pour profiter instantanément de vos 500 crédits !
+                    La passerelle NOWPayments est ouverte. Dès votre règlement de 6 USD validé, cliquez sur <strong>"Activer mon Pro"</strong> ci-dessus pour profiter instantanément de vos 500 crédits !
                   </span>
                 </div>
               )}

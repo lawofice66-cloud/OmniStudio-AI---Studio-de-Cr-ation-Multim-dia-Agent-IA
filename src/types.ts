@@ -16,6 +16,10 @@ export interface ImageGeneration {
   style: string;
   aspectRatio: string;
   imageUrl: string;
+  engine?: 'gemini-nano-banana' | 'imagen-3' | 'flux-pro';
+  quality?: string;
+  lighting?: string;
+  lens?: string;
   createdAt: string;
   creditsUsed: number;
 }
@@ -46,6 +50,8 @@ export interface VideoGeneration {
   duration: string;
   style: string;
   aspectRatio: string;
+  engine?: 'veo-3' | 'kling-2.1' | 'luma-dream';
+  resolution?: string;
   videoUrl?: string;
   storyboard: VideoStoryboard;
   createdAt: string;
@@ -109,14 +115,16 @@ export interface StoryGeneration {
 export interface MusicGeneration {
   id: string;
   prompt: string;
-  model: 'lyria-3-clip-preview' | 'lyria-3-pro-preview';
+  model: 'lyria-3-clip-preview' | 'lyria-3-pro-preview' | string;
   mode: 'clip' | 'pro';
   duration: string;
   style: string;
   mood: string;
   audioUrl: string;
+  mp3Url?: string;
   lyrics?: string;
   title: string;
+  sampleRate?: string;
   createdAt: string;
   creditsUsed: number;
 }
@@ -134,14 +142,16 @@ export interface CreditTransaction {
 export const PRICING_CONFIG = {
   NOWPAYMENTS_URL: 'https://nowpayments.io/payment/?iid=5933425812',
   PRO_PRICE_USD: 5,
+  PRO_NOWPAYMENTS_TOTAL_USD: 6, // 5 USD + 1 USD frais de réseau
+  PRO_REDOTPAY_TOTAL_USD: 5,    // 5 USD direct (0 frais supplémentaires)
   FREE_PLAN_CREDITS: 25,
   PRO_PLAN_CREDITS: 500,
   CREDIT_COSTS: {
     AGENT_CHAT: 0.5, // Free for Pro users
     TRANSCRIBE: 1,
-    STORY_GENERATOR: 2,
+    STORY_GENERATOR: 3,
     TEXT_TO_IMAGE: 2,
-    MUSIC_GENERATOR: 3,
-    TEXT_TO_VIDEO: 5,
+    MUSIC_GENERATOR: 15, // 1 musique symphonique full track = 15 crédits
+    TEXT_TO_VIDEO: 25,   // 1 vidéo 5s = 25 crédits
   },
 };
