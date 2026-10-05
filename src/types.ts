@@ -132,7 +132,7 @@ export interface CreditTransaction {
 }
 
 export const PRICING_CONFIG = {
-  NOWPAYMENTS_URL: 'https://nowpayments.io/payment/?iid=6283011596',
+  NOWPAYMENTS_URL: 'https://nowpayments.io/payment/?iid=5933425812',
   PRO_PRICE_USD: 5,
   FREE_PLAN_CREDITS: 25,
   PRO_PLAN_CREDITS: 500,
