@@ -24,12 +24,20 @@ function MainApp() {
   const [isAgentDrawerOpen, setIsAgentDrawerOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [musicMoodContext, setMusicMoodContext] = useState<string>('');
+  const [imagePromptContext, setImagePromptContext] = useState<string>('');
+  const [videoPromptContext, setVideoPromptContext] = useState<string>('');
+  const [videoRatioContext, setVideoRatioContext] = useState<'16:9' | '9:16'>('16:9');
+  const [videoAutoGenerate, setVideoAutoGenerate] = useState(false);
 
-  const handleApplyPromptToImage = (_prompt: string) => {
+  const handleApplyPromptToImage = (promptText: string) => {
+    setImagePromptContext(promptText);
     setActiveTab('image');
   };
 
-  const handleApplyPromptToVideo = (_prompt: string) => {
+  const handleApplyPromptToVideo = (promptText: string, ratio?: '16:9' | '9:16', autoStart = false) => {
+    setVideoPromptContext(promptText);
+    if (ratio) setVideoRatioContext(ratio);
+    setVideoAutoGenerate(autoStart);
     setActiveTab('video');
   };
 
@@ -38,9 +46,13 @@ function MainApp() {
     setActiveTab('music');
   };
 
-  const handleSelectSample = (type: 'image' | 'video' | 'music' | 'story', _prompt: string, extraData?: any) => {
+  const handleSelectSample = (type: 'image' | 'video' | 'music' | 'story', samplePrompt: string, extraData?: any) => {
     if (type === 'music' && extraData?.mood) {
       setMusicMoodContext(extraData.mood);
+    } else if (type === 'image' && samplePrompt) {
+      setImagePromptContext(samplePrompt);
+    } else if (type === 'video' && samplePrompt) {
+      setVideoPromptContext(samplePrompt);
     }
     setActiveTab(type);
   };
@@ -64,8 +76,23 @@ function MainApp() {
           />
         )}
         {activeTab === 'youtube-demo' && <YouTubeDemoStudio />}
-        {activeTab === 'image' && <TextToImageStudio />}
-        {activeTab === 'video' && <TextToVideoStudio />}
+        {activeTab === 'image' && (
+          <TextToImageStudio 
+            initialPrompt={imagePromptContext} 
+            onClearInitialPrompt={() => setImagePromptContext('')} 
+          />
+        )}
+        {activeTab === 'video' && (
+          <TextToVideoStudio 
+            initialPrompt={videoPromptContext} 
+            initialRatio={videoRatioContext}
+            autoGenerate={videoAutoGenerate}
+            onClearInitialPrompt={() => {
+              setVideoPromptContext('');
+              setVideoAutoGenerate(false);
+            }} 
+          />
+        )}
         {activeTab === 'transcribe' && <AudioTranscribeStudio />}
         {activeTab === 'story' && (
           <StoryGeneratorStudio

@@ -106,11 +106,22 @@ export function generateShowcaseWav(style: 'cinematic' | 'synthwave' | 'lofi' | 
     offset += 4;
   }
 
+  if (typeof window !== 'undefined' && typeof window.URL !== 'undefined' && typeof Blob !== 'undefined') {
+    const blob = new Blob([buffer], { type: 'audio/wav' });
+    return URL.createObjectURL(blob);
+  }
+
+  // Fallback chunked base64 for Node.js / non-browser environments
+  if (typeof Buffer !== 'undefined') {
+    return `data:audio/wav;base64,${Buffer.from(buffer).toString('base64')}`;
+  }
+
   const bytes = new Uint8Array(buffer);
   let binary = '';
-  const len = bytes.byteLength;
-  for (let i = 0; i < len; i++) {
-    binary += String.fromCharCode(bytes[i]);
+  const chunkSize = 8192;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.subarray(i, Math.min(i + chunkSize, bytes.length));
+    binary += String.fromCharCode.apply(null, Array.from(chunk));
   }
   return `data:audio/wav;base64,${btoa(binary)}`;
 }

@@ -53,6 +53,8 @@ export interface VideoGeneration {
   engine?: 'veo-3' | 'kling-2.1' | 'luma-dream';
   resolution?: string;
   videoUrl?: string;
+  imageUrl?: string;
+  technicalPlan?: string;
   storyboard: VideoStoryboard;
   createdAt: string;
   creditsUsed: number;

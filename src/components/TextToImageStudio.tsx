@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Sparkles, 
   Download, 
@@ -88,11 +88,26 @@ const QUICK_PROMPTS = [
   'Un robot vintage préparant un cappuccino avec de la vapeur volumétrique, studio d\'art 3D ultra détaillé',
 ];
 
-export const TextToImageStudio: React.FC = () => {
+interface TextToImageStudioProps {
+  initialPrompt?: string;
+  onClearInitialPrompt?: () => void;
+}
+
+export const TextToImageStudio: React.FC<TextToImageStudioProps> = ({
+  initialPrompt,
+  onClearInitialPrompt,
+}) => {
   const { user, deductCredits, addImageGeneration, imageHistory, openSubscriptionModal } = useAuth();
   const { success: toastSuccess, info: toastInfo } = useToast();
   
-  const [prompt, setPrompt] = useState('');
+  const [prompt, setPrompt] = useState(initialPrompt || '');
+
+  useEffect(() => {
+    if (initialPrompt) {
+      setPrompt(initialPrompt);
+      if (onClearInitialPrompt) onClearInitialPrompt();
+    }
+  }, [initialPrompt]);
   const [selectedEngine, setSelectedEngine] = useState<'gemini-nano-banana' | 'imagen-3' | 'flux-pro'>('gemini-nano-banana');
   const [selectedStyle, setSelectedStyle] = useState('Cinematic');
   const [selectedLighting, setSelectedLighting] = useState('Volumétrique');
@@ -189,7 +204,7 @@ export const TextToImageStudio: React.FC = () => {
       } else {
         // 2. Guaranteed zero-failure 8K photorealistic fallback
         // Ensures 100% reliability on Cloudflare Pages static hosting / offline / timeout
-        const clientResult = generateClientSide8KImage(
+        const clientResult = await generateClientSide8KImage(
           prompt,
           selectedStyle,
           selectedEngine,
@@ -223,7 +238,7 @@ export const TextToImageStudio: React.FC = () => {
     } catch (err: any) {
       console.error('Image generation error:', err);
       // Even in the rarest runtime catch, generate client-side image rather than showing an error!
-      const clientResult = generateClientSide8KImage(
+      const clientResult = await generateClientSide8KImage(
         prompt,
         selectedStyle,
         selectedEngine,

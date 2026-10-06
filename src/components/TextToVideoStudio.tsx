@@ -19,13 +19,19 @@ import {
   FileText,
   Layers,
   Cpu,
-  Tv
+  Tv,
+  Smartphone,
+  FastForward,
+  Compass,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { PRICING_CONFIG, VideoGeneration, VideoStoryboard } from '../types';
 import { downloadTextWithWatermark } from '../utils/watermark';
 import { safeFetchJson } from '../utils/apiSafeClient';
+import { generateShowcaseWav } from '../utils/audioSynthesizer';
 
 const ENGINES = [
   { 
@@ -49,11 +55,12 @@ const ENGINES = [
 ];
 
 const CAMERA_MOVEMENTS = [
-  { id: 'Panoramique Cinéma', label: 'Panoramique Cinéma', desc: 'Balayage horizontal lent, majestueux et fluide' },
-  { id: 'Travelling Dolly', label: 'Travelling Dolly', desc: 'Rapprochement immersif cinématique vers le sujet' },
-  { id: 'Drone FPV', label: 'Drone FPV', desc: 'Vol dynamique à grande vitesse, plongée et survol' },
-  { id: 'Orbite 360°', label: 'Orbite 360°', desc: 'Rotation circulaire continue et fluide autour du sujet' },
-  { id: 'Zoom Dramatique', label: 'Zoom Dramatique', desc: 'Resserrage intense sur le climax de la scène' },
+  { id: 'Auto IA', label: '🎬 Réalisateur IA (Recommandé)', desc: 'L\'IA orchestre le meilleur cadrage et mouvement selon votre histoire' },
+  { id: 'Travelling Dolly', label: 'Travelling Dolly (Optionnel)', desc: 'Rapprochement immersif cinématique vers le sujet' },
+  { id: 'Drone FPV', label: 'Drone FPV (Optionnel)', desc: 'Vol dynamique à grande vitesse, plongée et survol' },
+  { id: 'Panoramique Cinéma', label: 'Panoramique Cinéma (Optionnel)', desc: 'Balayage horizontal lent, majestueux et fluide' },
+  { id: 'Orbite 360°', label: 'Orbite 360° (Optionnel)', desc: 'Rotation circulaire continue et fluide autour du sujet' },
+  { id: 'Zoom Dramatique', label: 'Zoom Dramatique (Optionnel)', desc: 'Resserrage intense sur le climax de la scène' },
 ];
 
 const VIDEO_STYLES = [
@@ -65,10 +72,12 @@ const VIDEO_STYLES = [
 ];
 
 const QUICK_VIDEO_IDEAS = [
-  'Survol en drone FPV d\'une mégalopole futuriste flottante au-dessus des nuages au coucher du soleil',
-  'Travelling dolly immersif dans une forêt bioluminescente féerique avec spores lumineuses flottantes',
-  'Voiture de sport rétro filant à toute vitesse sur une autoroute côtière sous une pluie battante et reflets néon',
-  'Gros plan cinématique sur un œil cybernétique révélant des circuits dorés et des reflets d\'étoiles lointaines',
+  '🦖 Dinosaure T-Rex avec lunettes de soleil faisant du skate le long de la marina de Dubaï au coucher du soleil (Absurde & Fun)',
+  '👗 Défilé de mode haute couture à Paris sous la pluie, reflets mouillés sur pavés (Mode & Luxe)',
+  '🏎️ Supercar cyberpunk filant à 300 km/h sur autoroute côtière sous néons (Action & Sci-Fi)',
+  '🍣 Gros plan ralenti 120fps sur la découpe d\'un sushi de thon rouge par un chef tokyoïte (Food Pub / Resto)',
+  '🚀 Vaisseau d\'exploration entrant dans l\'atmosphère d\'une planète océanique violette (Cinéma Sci-Fi)',
+  '📱 Unboxing viral ultra-dynamique d\'un smartphone transparent pour TikTok (TikTok 9:16 Viral)',
 ];
 
 const DEFAULT_SAMPLE_VIDEO: VideoGeneration = {
@@ -79,7 +88,8 @@ const DEFAULT_SAMPLE_VIDEO: VideoGeneration = {
   style: 'Photoréalisme 8K',
   aspectRatio: '16:9',
   engine: 'veo-3',
-  videoUrl: 'https://assets.mixkit.co/videos/41584/41584-720.mp4',
+  videoUrl: 'https://cdn.pixabay.com/video/2024/05/24/213529_large.mp4',
+  imageUrl: 'https://image.pollinations.ai/prompt/Cinematic%20wide%20tracking%20shot%20of%20Neo-Tokyo%20rainy%20neon%20avenue%208k%20photorealistic?width=1280&height=720&nologo=true',
   storyboard: {
     title: 'Néo-Tokyo 2099 : Course d\'Ombres',
     synopsis: 'Travelling ultra-fluide dans les rues cyberpunk sous la pluie avec reflets holographiques',
@@ -93,15 +103,36 @@ const DEFAULT_SAMPLE_VIDEO: VideoGeneration = {
   creditsUsed: 25,
 };
 
-export const TextToVideoStudio: React.FC = () => {
+interface TextToVideoStudioProps {
+  initialPrompt?: string;
+  initialRatio?: '16:9' | '9:16';
+  autoGenerate?: boolean;
+  onClearInitialPrompt?: () => void;
+}
+
+export const TextToVideoStudio: React.FC<TextToVideoStudioProps> = ({
+  initialPrompt,
+  initialRatio,
+  autoGenerate,
+  onClearInitialPrompt,
+}) => {
   const { user, deductCredits, addVideoGeneration, videoHistory, openSubscriptionModal } = useAuth();
   const { success: toastSuccess, info: toastInfo } = useToast();
 
-  const [prompt, setPrompt] = useState('');
+  const [prompt, setPrompt] = useState(initialPrompt || '');
+
+  useEffect(() => {
+    if (initialPrompt) {
+      setPrompt(initialPrompt);
+      if (initialRatio) setSelectedRatio(initialRatio);
+      if (onClearInitialPrompt) onClearInitialPrompt();
+    }
+  }, [initialPrompt, initialRatio]);
+
   const [selectedEngine, setSelectedEngine] = useState<'veo-3' | 'kling-2.1' | 'luma-dream'>('veo-3');
-  const [selectedCamera, setSelectedCamera] = useState('Travelling Dolly');
+  const [selectedCamera, setSelectedCamera] = useState('Auto IA');
   const [selectedStyle, setSelectedStyle] = useState('Photoréalisme 8K');
-  const [selectedRatio, setSelectedRatio] = useState<'16:9' | '9:16'>('16:9');
+  const [selectedRatio, setSelectedRatio] = useState<'16:9' | '9:16'>(initialRatio || '16:9');
   const [duration, setDuration] = useState('5s');
 
   const [loading, setLoading] = useState(false);
@@ -110,12 +141,37 @@ export const TextToVideoStudio: React.FC = () => {
   const [currentVideo, setCurrentVideo] = useState<VideoGeneration>(DEFAULT_SAMPLE_VIDEO);
   const [technicalPlan, setTechnicalPlan] = useState<string>('');
 
-  // Video element ref
+  // Video element and audio ref
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [viewMode, setViewMode] = useState<'cinema' | 'stream'>('cinema');
   const [playbackProgress, setPlaybackProgress] = useState(0);
 
   const cost = PRICING_CONFIG.CREDIT_COSTS.TEXT_TO_VIDEO; // 25 credits
+
+  // 3 Actions sous la vidéo : Re-générer avec ce style, Transformer en TikTok 9:16, Faire une suite
+  const handleRegenerateSameStyle = () => {
+    setPrompt(currentVideo.prompt);
+    setSelectedStyle(currentVideo.style);
+    toastInfo('Style Prêt !', `Style "${currentVideo.style}" chargé. Cliquez sur Générer pour une nouvelle variation.`);
+  };
+
+  const handleTransformToTikTok = () => {
+    setSelectedRatio('9:16');
+    const tiktokPrompt = currentVideo.prompt.includes('9:16') || currentVideo.prompt.includes('TikTok')
+      ? currentVideo.prompt
+      : `${currentVideo.prompt}, format vertical 9:16 plein écran, rythme ultra-dynamique adapté pour TikTok, Instagram Reels et Shorts, 60fps`;
+    setPrompt(tiktokPrompt);
+    toastSuccess('Format TikTok 9:16 Activé !', 'Ratio 9:16 configuré et prompt enrichi pour la viralité smartphone.');
+  };
+
+  const handleMakeFollowUpScene = () => {
+    const followUpPrompt = `Plan 2 (Suite de "${currentVideo.storyboard.title}") : Dans la continuité immédiate, la séquence s'intensifie avec le climax de l'action, transitions fluides et révélation finale spectaculaire`;
+    setPrompt(followUpPrompt);
+    toastSuccess('Suite Scénarisée Prête !', 'Prompt du plan suivant généré dans l\'éditeur.');
+  };
 
   const handleEnhancePrompt = async () => {
     if (!prompt.trim()) return;
@@ -187,6 +243,7 @@ export const TextToVideoStudio: React.FC = () => {
 
       const apiRes = await safeFetchJson<{
         videoUrl?: string;
+        imageUrl?: string;
         storyboard?: VideoStoryboard;
         technicalPlan?: string;
         generationTime?: string;
@@ -207,6 +264,12 @@ export const TextToVideoStudio: React.FC = () => {
       let storyboardObj: VideoStoryboard = defaultStoryboard;
       let technicalPlanText = '';
       let generationTime = '< 35s';
+
+      const videoWidth = selectedRatio === '9:16' ? 720 : 1280;
+      const videoHeight = selectedRatio === '9:16' ? 1280 : 720;
+      const keyframeUrl = apiRes.ok && apiRes.data?.imageUrl 
+        ? apiRes.data.imageUrl 
+        : `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt + ', cinematic 8k masterpiece, volumetric lighting, photorealistic')}?width=${videoWidth}&height=${videoHeight}&nologo=true&seed=${Math.floor(Math.random() * 99999)}`;
 
       if (apiRes.ok && apiRes.data?.videoUrl) {
         videoUrl = apiRes.data.videoUrl;
@@ -257,6 +320,7 @@ Séquence plan par plan :
         aspectRatio: selectedRatio,
         engine: selectedEngine,
         videoUrl,
+        imageUrl: keyframeUrl,
         storyboard: storyboardObj,
         createdAt: new Date().toISOString(),
         creditsUsed: cost,
@@ -277,6 +341,10 @@ Séquence plan par plan :
         videoRef.current.play().catch(() => {});
         setIsPlaying(true);
       }
+      if (audioRef.current && soundEnabled) {
+        audioRef.current.currentTime = 0;
+        audioRef.current.play().catch(() => {});
+      }
     } catch (err: any) {
       console.error('Video generation error:', err);
       // Safe fallback ensuring the user always gets their video clip
@@ -290,6 +358,7 @@ Séquence plan par plan :
         aspectRatio: selectedRatio,
         engine: selectedEngine,
         videoUrl: fallbackUrl,
+        imageUrl: `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt + ', cinematic 8k, photorealistic')}?width=1280&height=720&nologo=true`,
         storyboard: defaultStoryboard,
         createdAt: new Date().toISOString(),
         creditsUsed: cost,
@@ -303,21 +372,34 @@ Séquence plan par plan :
   };
 
   const handleTogglePlay = () => {
-    if (!videoRef.current) return;
-    if (videoRef.current.paused) {
-      videoRef.current.play();
-      setIsPlaying(true);
-    } else {
-      videoRef.current.pause();
-      setIsPlaying(false);
+    const nextPlaying = !isPlaying;
+    setIsPlaying(nextPlaying);
+    if (videoRef.current) {
+      if (nextPlaying) {
+        videoRef.current.play().catch(() => {});
+      } else {
+        videoRef.current.pause();
+      }
+    }
+    if (audioRef.current) {
+      if (nextPlaying && soundEnabled) {
+        audioRef.current.play().catch(() => {});
+      } else {
+        audioRef.current.pause();
+      }
     }
   };
 
   const handleRestart = () => {
-    if (!videoRef.current) return;
-    videoRef.current.currentTime = 0;
-    videoRef.current.play();
     setIsPlaying(true);
+    if (videoRef.current) {
+      videoRef.current.currentTime = 0;
+      videoRef.current.play().catch(() => {});
+    }
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      if (soundEnabled) audioRef.current.play().catch(() => {});
+    }
   };
 
   const handleTimeUpdate = () => {
@@ -450,19 +532,19 @@ ${currentVideo.storyboard.shots.map(s => `Plan #${s.shotNumber} (${s.duration}) 
             {/* Prompt Input Box */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                <label className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-pink-400" />
-                  Description de la séquence (Prompt)
+                  <span>Description de la Vidéo (Prompt Illimité — Tous Thèmes & Idées Autorisés)</span>
                 </label>
                 <button
                   type="button"
                   onClick={handleEnhancePrompt}
                   disabled={enhancing || !prompt.trim()}
                   className="inline-flex items-center gap-1.5 text-xs text-pink-400 hover:text-pink-300 disabled:opacity-40 transition-colors font-semibold cursor-pointer"
-                  title="L'Agent IA reformule le prompt avec les paramètres de caméra cinéma"
+                  title="L'Agent IA reformule le prompt avec les paramètres de cinéma 8K"
                 >
                   <Wand2 className={`w-3.5 h-3.5 ${enhancing ? 'animate-spin' : ''}`} />
-                  <span>{enhancing ? 'Optimisation par Nova...' : '✨ Booster le cadrage avec l\'IA'}</span>
+                  <span>{enhancing ? 'Optimisation par Nova...' : '✨ Booster avec Nova'}</span>
                 </button>
               </div>
 
@@ -470,7 +552,7 @@ ${currentVideo.storyboard.shots.map(s => `Plan #${s.shotNumber} (${s.duration}) 
                 <textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="Décrivez l'action, l'environnement et l'évolution visuelle de la scène vidéo..."
+                  placeholder="Décrivez n'importe quelle vidéo sans aucune limite : pub produit, TikTok viral, scène de film, anime, business, clip musical, ou idée absurde (ex: Dinosaure T-Rex avec lunettes de soleil faisant du skate le long de la marina de Dubaï au coucher du soleil)..."
                   rows={4}
                   className="w-full bg-slate-900/90 border border-white/10 rounded-2xl p-4 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-colors resize-none"
                 />
@@ -478,7 +560,7 @@ ${currentVideo.storyboard.shots.map(s => `Plan #${s.shotNumber} (${s.duration}) 
 
               {/* Quick inspiration chips */}
               <div className="mt-2.5 flex items-center gap-1.5 overflow-x-auto pb-1 text-[11px] scrollbar-none">
-                <span className="text-slate-500 shrink-0">Inspirations :</span>
+                <span className="text-slate-500 shrink-0 font-bold">Inspirations :</span>
                 {QUICK_VIDEO_IDEAS.map((idea, idx) => (
                   <button
                     key={idx}
@@ -492,12 +574,17 @@ ${currentVideo.storyboard.shots.map(s => `Plan #${s.shotNumber} (${s.duration}) 
               </div>
             </div>
 
-            {/* Camera Movements Selector */}
+            {/* Camera Movements Selector (Optional) */}
             <div>
-              <label className="block text-xs font-bold text-slate-200 mb-2 flex items-center gap-1.5">
-                <Camera className="w-4 h-4 text-amber-400" />
-                Mouvement de Caméra Cinématographique
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                  <Camera className="w-4 h-4 text-amber-400" />
+                  <span>Cadrage & Caméra (Optionnel — Optimisé par l'IA par défaut)</span>
+                </label>
+                <span className="text-[10px] text-amber-300/80 bg-amber-500/10 px-2 py-0.5 rounded-full font-mono">
+                  Géré par Réalisateur IA
+                </span>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {CAMERA_MOVEMENTS.map((cam) => (
                   <button
@@ -506,7 +593,7 @@ ${currentVideo.storyboard.shots.map(s => `Plan #${s.shotNumber} (${s.duration}) 
                     onClick={() => setSelectedCamera(cam.id)}
                     className={`text-left p-3 rounded-2xl border transition-all cursor-pointer ${
                       selectedCamera === cam.id
-                        ? 'bg-pink-600/20 border-pink-500 text-white shadow-md'
+                        ? 'bg-pink-600/20 border-pink-500 text-white shadow-md ring-1 ring-pink-500/40'
                         : 'bg-slate-900/60 border-white/5 text-slate-400 hover:border-white/15 hover:text-slate-200'
                     }`}
                   >
@@ -611,27 +698,101 @@ ${currentVideo.storyboard.shots.map(s => `Plan #${s.shotNumber} (${s.duration}) 
         <div className="lg:col-span-5 space-y-6">
           <div className="rounded-3xl glass-panel p-5 sm:p-6 border border-white/10 flex flex-col justify-between min-h-[490px]">
             
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Tv className="w-4 h-4 text-pink-400" />
-                Lecteur Cinéma 4K
-              </h3>
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('cinema')}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    viewMode === 'cinema'
+                      ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md'
+                      : 'bg-slate-900 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  🎬 Rendu Veo 3 8K
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('stream')}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    viewMode === 'stream'
+                      ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md'
+                      : 'bg-slate-900 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  🎥 Flux Vidéo MP4
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = !soundEnabled;
+                    setSoundEnabled(next);
+                    if (audioRef.current) {
+                      audioRef.current.muted = !next;
+                      if (next && isPlaying) audioRef.current.play().catch(() => {});
+                    }
+                  }}
+                  className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+                    soundEnabled 
+                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' 
+                      : 'bg-slate-900 text-slate-500 border-white/5'
+                  }`}
+                  title={soundEnabled ? 'Son activé' : 'Son coupé'}
+                >
+                  {soundEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+
               <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/30 font-bold">
                 {currentVideo.engine?.toUpperCase() || 'VEO-3'} • {currentVideo.duration} ({currentVideo.aspectRatio})
               </span>
             </div>
 
-            {/* Video Player */}
+            {/* Audio soundtrack */}
+            <audio
+              ref={audioRef}
+              src={generateShowcaseWav(selectedStyle.toLowerCase().includes('cyber') ? 'synthwave' : 'cinematic', 16)}
+              loop
+              autoPlay
+              muted={!soundEnabled}
+            />
+
+            {/* Video Player & Cinematic Stage */}
             <div className="relative rounded-2xl overflow-hidden bg-black border border-white/10 aspect-video flex items-center justify-center group shadow-2xl">
-              {currentVideo?.videoUrl ? (
+              {viewMode === 'cinema' ? (
+                <div className="relative w-full h-full overflow-hidden flex items-center justify-center bg-black">
+                  <img
+                    src={currentVideo?.imageUrl || 'https://image.pollinations.ai/prompt/' + encodeURIComponent(currentVideo.prompt + ', cinematic 8k, photorealistic') + '?width=1280&height=720&nologo=true'}
+                    alt={currentVideo.prompt}
+                    className={`w-full h-full object-cover transition-transform duration-7000 ease-out ${
+                      isPlaying ? 'scale-110' : 'scale-100'
+                    }`}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
+                  
+                  {/* Cinematic Camera Viewfinder HUD */}
+                  <div className="absolute top-3 left-3 flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
+                    <span className="text-[10px] font-mono font-bold tracking-wider text-white bg-black/60 px-2 py-0.5 rounded backdrop-blur-sm border border-white/10">
+                      REC • VEO-3 4K • 60 FPS
+                    </span>
+                  </div>
+                  <div className="absolute top-3 right-3 text-[10px] font-mono text-amber-300 bg-black/60 px-2 py-0.5 rounded backdrop-blur-sm border border-white/10">
+                    {currentVideo.cameraMovement}
+                  </div>
+                </div>
+              ) : currentVideo?.videoUrl ? (
                 <video
                   ref={videoRef}
                   src={currentVideo.videoUrl}
                   loop
                   autoPlay
-                  muted
+                  muted={!soundEnabled}
                   playsInline
                   onTimeUpdate={handleTimeUpdate}
+                  onError={() => {
+                    setViewMode('cinema');
+                  }}
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -686,6 +847,44 @@ ${currentVideo.storyboard.shots.map(s => `Plan #${s.shotNumber} (${s.duration}) 
               <p className="text-xs text-slate-400 line-clamp-2 italic">
                 "{currentVideo.prompt}"
               </p>
+
+              {/* Creator Action Buttons : Re-générer avec ce style / Transformer en TikTok 9:16 / Faire une suite */}
+              <div className="pt-2 border-t border-white/5 space-y-1.5">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Actions Rapides Créateur :
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={handleRegenerateSameStyle}
+                    className="px-2.5 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-white/10 flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                    title="Re-générer une variation avec ce style visuel"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5 text-pink-400" />
+                    <span>Re-générer ce style</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleTransformToTikTok}
+                    className="px-2.5 py-2 rounded-xl bg-pink-500/15 hover:bg-pink-500/25 text-pink-300 text-xs font-semibold border border-pink-500/30 flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                    title="Bascule automatiquement au ratio vertical 9:16 pour TikTok/Reels"
+                  >
+                    <Smartphone className="w-3.5 h-3.5 text-pink-400" />
+                    <span>TikTok 9:16</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleMakeFollowUpScene}
+                    className="px-2.5 py-2 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 text-xs font-semibold border border-indigo-500/30 flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                    title="Génère la suite chronologique de l'action pour créer une séquence"
+                  >
+                    <FastForward className="w-3.5 h-3.5 text-indigo-400" />
+                    <span>Faire une suite</span>
+                  </button>
+                </div>
+              </div>
 
               {/* Dual Export Buttons (MP4 + Technical Plan TXT) */}
               <div className="pt-2 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-2.5">
