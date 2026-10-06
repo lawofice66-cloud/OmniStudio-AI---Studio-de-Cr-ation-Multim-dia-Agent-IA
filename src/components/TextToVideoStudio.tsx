@@ -25,6 +25,7 @@ import {
   Compass,
   Volume2,
   VolumeX,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -418,6 +419,18 @@ Séquence plan par plan :
     link.click();
     document.body.removeChild(link);
     toastSuccess('Téléchargement MP4', 'Le fichier vidéo MP4 haute définition a été lancé.');
+  };
+
+  const handleDownloadKeyframe = () => {
+    if (!currentVideo?.imageUrl) return;
+    const link = document.createElement('a');
+    link.href = currentVideo.imageUrl;
+    link.download = `omnistudio-veo3-image-${currentVideo.id}.jpg`;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toastSuccess('Rendu 8K Téléchargé', 'Le visuel photoréaliste a été enregistré.');
   };
 
   const handleDownloadTechnicalPlan = () => {
@@ -902,7 +915,7 @@ ${currentVideo.storyboard.shots.map(s => `Plan #${s.shotNumber} (${s.duration}) 
                   )}
                 </div>
 
-                <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                   <button
                     onClick={handleDownloadTechnicalPlan}
                     className="flex-1 sm:flex-none px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
@@ -910,6 +923,15 @@ ${currentVideo.storyboard.shots.map(s => `Plan #${s.shotNumber} (${s.duration}) 
                   >
                     <FileText className="w-3.5 h-3.5 text-amber-400" />
                     <span>Plan TXT</span>
+                  </button>
+
+                  <button
+                    onClick={handleDownloadKeyframe}
+                    className="flex-1 sm:flex-none px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                    title="Télécharger le rendu visuel 8K"
+                  >
+                    <ImageIcon className="w-3.5 h-3.5 text-pink-400" />
+                    <span>Image 8K</span>
                   </button>
 
                   <button

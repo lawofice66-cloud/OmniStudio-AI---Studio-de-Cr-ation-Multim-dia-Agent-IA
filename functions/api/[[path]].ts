@@ -69,61 +69,119 @@ Présente toujours 3 VARIANTES distinctes :
    - **PROMPT VEO 3 (EN)** : (Le prompt en anglais avec style artistique marqué)
    - **EXPLICATION (FR)** : (Résumé en français du parti-pris artistique)
 
+RÈGLE ABSOLUE POUR LES PROMPTS EN ANGLAIS (PROMPT VEO 3 (EN)) :
+1. NETTOIE COMPLÈTEMENT l'input utilisateur : supprime impérativement "fais-moi", "-moi", "moi", "je veux", "crée", "génère", "fais", "une pub TikTok pour", les tirets initiaux "-".
+2. TRADUIS et transforme TOUJOURS l'idée en ANGLAIS CINÉMATOGRAPHIQUE PRO.
+3. Le PROMPT VEO 3 (EN) ne doit JAMAIS contenir de français, de tirets, de "moi", ni de "fais-moi". Il doit être 100% anglais cinéma pur prêt pour Google Veo 3.
+Exemple :
+Si l'utilisateur tape : "-moi une pub TikTok pour une pizzeria avec un pizzaiolo qui lance sa pâte en l'air au ralenti"
+TU DOIS GÉNÉRER :
+PROMPT VEO 3 (EN) : "Cinematic slow-motion close-up of a charismatic Italian pizzaiolo tossing pizza dough high in the air inside a rustic wood-fired pizzeria, flour dust sparkling in warm golden light, 8K photorealistic, volumetric lighting, shallow depth of field, 60fps, mouth-watering food commercial [16:9]"
+ET PAS : "Cinematic shot of -moi une pub TikTok..."
+
 Termine en disant à l'utilisateur qu'il peut cliquer directement sur le bouton "Utiliser ce prompt pour générer" sous chaque variante pour lancer le rendu vidéo !`;
 
-// Pure TypeScript fallback translation and universal prompt generation
-function translateAndEnrichPrompt(input: string): string {
-  let text = input.trim();
-  const translations: Array<[RegExp, string]> = [
-    [/dinosaure/gi, 'T-Rex dinosaur wearing cool sunglasses'],
-    [/skate/gi, 'skateboarding performing tricks'],
-    [/dubaï|dubai/gi, 'in Dubai Marina with luxury futuristic skyline'],
-    [/femme/gi, 'young graceful woman'],
-    [/fille/gi, 'elegant girl'],
-    [/homme/gi, 'charismatic man'],
-    [/danse|danseurs|danseuse/gi, 'dancing joyfully with fluid motions'],
-    [/pluie/gi, 'under pouring cinematic rain with water splashes'],
-    [/paris/gi, 'on Paris Champs-Elysees boulevard with warm cafe bokeh'],
-    [/voiture|auto/gi, 'aerodynamic supercar speeding on coastal highway'],
-    [/moto/gi, 'high-speed motorcycle'],
-    [/espace/gi, 'outer space nebula with cosmic dust and stars'],
-    [/astronaute/gi, 'solitary astronaut exploring alien surface'],
-    [/mer|océan|ocean/gi, 'majestic ocean waves at sunset'],
-    [/plage/gi, 'tropical beach with turquoise water'],
-    [/montagne/gi, 'epic snow-capped alpine mountains'],
-    [/forêt|foret/gi, 'ancient enchanted misty pine forest'],
-    [/sushi/gi, 'delicate sushi preparation macro 120fps closeup'],
-    [/restaurant|food|cuisine/gi, 'michelin-star gourmet kitchen presentation'],
-    [/chat/gi, 'adorable domestic cat'],
-    [/chien/gi, 'playful golden retriever dog'],
-    [/pub|commercial/gi, 'viral commercial product showcase with volumetric spotlights'],
+function cleanUserInput(input: string): string {
+  let cleaned = input.trim().replace(/^[-–—\s,.:;!/?]+/, '');
+  const prefixPatterns = [
+    /^(fais-moi|donne-moi|montre-moi|envoie-moi|génère-moi|écris-moi|propose-moi|crée-moi)\s+/i,
+    /^(-moi|moi|stpl|svp|stp|salut|bonjour|s'il te plaît|s'il vous plaît)\s+/i,
+    /^(je veux|j'aimerais|je souhaite|je cherche|peux-tu|pourrais-tu|merci de|il me faut|on veut)\s+/i,
+    /^(génère|générer|crée|créer|fais|faire|produis|produire|donne|donner|montre|montrer)\s+/i,
+    /^(une\s+vidéo\s+de|un\s+vidéo\s+de|une\s+vidéo\s+avec|vidéo\s+de|vidéo\s+pour|vidéo\s+avec|clip\s+de|film\s+de)\s+/i,
+    /^(une\s+pub\s+tiktok\s+pour|une\s+pub\s+pour|un\s+tiktok\s+pour|un\s+reel\s+pour|un\s+short\s+pour|publicité\s+pour|pub\s+pour)\s+/i,
+    /^(un\s+tiktok|un\s+reel|un\s+short|une\s+story|une\s+pub|une\s+publicité)\s+/i,
   ];
+  for (const pattern of prefixPatterns) {
+    cleaned = cleaned.replace(pattern, '').trim();
+  }
+  return cleaned.replace(/^[-–—\s]*moi\s+/i, '').replace(/^[-–—\s]+/, '').trim() || input;
+}
 
-  for (const [pattern, replacement] of translations) {
-    text = text.replace(pattern, replacement);
+function translateIdeaToCinemaEnglish(frenchInput: string): { cinema16x9: string; tiktok9x16: string; artistic3d: string } {
+  const cleaned = cleanUserInput(frenchInput);
+  const lower = cleaned.toLowerCase();
+
+  if (lower.includes('pizza') || lower.includes('pizzaiolo') || lower.includes('pâte') || lower.includes('pate')) {
+    return {
+      cinema16x9: "Cinematic slow-motion close-up of a charismatic Italian pizzaiolo tossing pizza dough high in the air inside a rustic wood-fired pizzeria, flour dust sparkling in warm golden light, 8K photorealistic, volumetric lighting, shallow depth of field, 60fps, mouth-watering food commercial [16:9]",
+      tiktok9x16: "Dynamic vertical 9:16 viral commercial of a skilled Italian pizzaiolo spinning pizza dough high in the air with flour explosion effect, vibrant warm lighting, crisp 4K smartphone clarity, mouth-watering food commercial hook [9:16]",
+      artistic3d: "Stylized 3D Pixar Unreal Engine 5 animation of a cheerful Italian pizzaiolo happily juggling pizza dough inside a cozy cartoon pizzeria, whimsical warm lighting, sparkling flour dust particles, charming stylized depth, studio orchestral soundtrack [16:9]"
+    };
   }
 
-  // Remove common French conversational prefixes
-  text = text.replace(/^(je veux|génère|fais|crée|donne-moi|vidéo de|une vidéo de|une image de)\s*/i, '').trim();
-  return text || 'cinematic masterpiece';
+  if (lower.includes('dino') || lower.includes('skate') || lower.includes('dubai') || lower.includes('dubaï')) {
+    return {
+      cinema16x9: "Cinematic wide tracking shot of a mighty T-Rex dinosaur wearing dark sunglasses skateboarding smoothly along Dubai Marina glass skyscrapers at golden hour, photorealistic skin textures, volumetric sunset illumination, shallow depth of field, 8K photorealistic, ambient spatial sound design [16:9]",
+      tiktok9x16: "Dynamic vertical 9:16 viral sequence of a cool T-Rex dinosaur performing radical skateboard tricks down futuristic Dubai street, explosive action hook from opening second, vibrant neon-saturated colors, 4K smartphone clarity, trending high-energy audio [9:16]",
+      artistic3d: "Stylized 3D Pixar Unreal Engine 5 animation of a charming friendly dinosaur skateboarding through sunny Dubai Marina, whimsical warm lighting, volumetric dust particles, expressive joyful facial animation, orchestral soundtrack [16:9]"
+    };
+  }
+
+  if (lower.includes('mode') || lower.includes('mannequin') || lower.includes('femme') || lower.includes('fille') || lower.includes('paris') || lower.includes('robe')) {
+    const hasRain = lower.includes('pluie') || lower.includes('rain');
+    return {
+      cinema16x9: `Cinematic tracking shot of a young elegant French woman in red dress walking confidently on Champs-Élysées at golden hour, soft bokeh lights from cafés, ${hasRain ? 'light rain reflections on wet cobblestones, water droplets sparkling,' : 'sun-drenched Parisian architecture,'} 8K photorealistic, volumetric lighting, shallow depth of field, romantic mood, ambient city sounds [16:9]`,
+      tiktok9x16: "Dynamic vertical 9:16 high-fashion viral sequence of an elegant woman in haute-couture gown gliding through Paris, striking opening hook, high-contrast reflections, crisp 4K smartphone clarity, trending Parisian runway audio [9:16]",
+      artistic3d: "Stylized 3D Pixar Unreal Engine 5 aesthetic of an elegant Parisian woman walking in rain with glowing umbrellas, whimsical warm café lighting, soft atmospheric particles, charming stylized depth [16:9]"
+    };
+  }
+
+  if (lower.includes('voiture') || lower.includes('supercar') || lower.includes('auto') || lower.includes('moto') || lower.includes('course')) {
+    return {
+      cinema16x9: "Cinematic low-angle tracking shot of an aerodynamic luxury supercar speeding at 300 km/h along coastal highway at night, neon streaks reflecting on wet asphalt, 8K photorealistic textures, volumetric headlight beams, shallow depth of field, roaring engine audio [16:9]",
+      tiktok9x16: "Dynamic vertical 9:16 viral supercar sequence, explosive acceleration from opening frame, motion blur, neon reflections, crisp 4K clarity, powerful bass exhaust sound [9:16]",
+      artistic3d: "Stylized cyberpunk anime animation of a futuristic supercar drifting through neon-lit streets, high-octane anime cinematography, glowing particle trails, synthwave soundtrack [16:9]"
+    };
+  }
+
+  let englishConcept = cleaned;
+  const wordMap: Array<[RegExp, string]> = [
+    [/\bpub\b|\bpublicité\b/gi, 'commercial showcase'],
+    [/\bpizzeria\b/gi, 'rustic wood-fired pizzeria'],
+    [/\bpizzaiolo\b/gi, 'charismatic Italian pizzaiolo chef'],
+    [/\bpâte\b|\bpate\b/gi, 'fresh pizza dough'],
+    [/\blance\b|\blancer\b/gi, 'tossing high in the air'],
+    [/\bl'air\b/gi, 'the air'],
+    [/\bralenti\b/gi, 'slow-motion 120fps'],
+    [/\bhomme\b/gi, 'charismatic man'],
+    [/\bfemme\b/gi, 'elegant woman'],
+    [/\bavec\b/gi, 'featuring'],
+    [/\bqui\b/gi, 'actively'],
+    [/\bdans\b|\ben\b/gi, 'inside'],
+    [/\bsur\b/gi, 'upon'],
+    [/\bet\b/gi, 'and'],
+    [/\bun\b|\bune\b|\ble\b|\bla\b|\bles\b|\bdes\b|\bdu\b|\bde\b/gi, ''],
+  ];
+
+  for (const [re, rep] of wordMap) {
+    englishConcept = englishConcept.replace(re, rep);
+  }
+  englishConcept = englishConcept.replace(/\s+/g, ' ').trim() || 'cinematic masterpiece';
+
+  return {
+    cinema16x9: `Cinematic slow-motion shot of ${englishConcept}, shot on 35mm anamorphic lens, 8K photorealistic textures, volumetric golden hour illumination, subtle atmospheric haze, natural shallow depth of field, award-winning cinematography, immersive spatial ambient sound design, 60fps [16:9]`,
+    tiktok9x16: `Dynamic vertical 9:16 viral sequence of ${englishConcept}, explosive action hook from opening second, vibrant high-contrast colors, crisp 4K smartphone clarity, rapid camera momentum, trending sound design effects [9:16]`,
+    artistic3d: `Stylized 3D cinematic animation in Pixar Unreal Engine 5 aesthetic of ${englishConcept}, heartwarming expressive emotion, whimsical warm lighting, rich volumetric dust particles, charming stylized depth, studio orchestral soundtrack [16:9]`
+  };
 }
 
 function generateUniversalNovaReply(idea: string): string {
-  const cleanIdea = idea.replace(/^(je veux|génère|fais|crée|donne-moi|vidéo de|une vidéo de)\s*/i, '').trim() || idea;
-  const englishIdea = translateAndEnrichPrompt(cleanIdea);
+  const cleanIdea = cleanUserInput(idea);
+  const cinemaEng = translateIdeaToCinemaEnglish(idea);
 
   return `Voici 3 prompts cinématographiques professionnels prêts pour **Google Veo 3** pour votre idée : **"${cleanIdea}"**
 
 🎬 **Variante 1 : Cinématique 16:9 (Format Cinéma & YouTube 4K)**
-- **PROMPT VEO 3 (EN)** : \`Cinematic wide tracking shot of ${englishIdea}, shot on 35mm anamorphic lens, 8K photorealistic textures, volumetric golden hour illumination, subtle atmospheric haze, natural shallow depth of field, award-winning cinematography, immersive spatial ambient sound design, 60fps [16:9]\`
+- **PROMPT VEO 3 (EN)** : \`${cinemaEng.cinema16x9}\`
 - **EXPLICATION (FR)** : Mise en scène plein écran ultra-réaliste avec éclairage volumétrique et profondeur de champ cinéma.
 
 📱 **Variante 2 : Vertical 9:16 (Format TikTok Viral, Reels, Shorts)**
-- **PROMPT VEO 3 (EN)** : \`Dynamic vertical 9:16 viral sequence of ${englishIdea}, explosive action hook from opening second, vibrant high-contrast colors, crisp 4K smartphone clarity, rapid camera momentum, trending sound design effects [9:16]\`
+- **PROMPT VEO 3 (EN)** : \`${cinemaEng.tiktok9x16}\`
 - **EXPLICATION (FR)** : Cadrage vertical ultra-rythmé captant immédiatement le regard sur mobile dès la 1ère seconde.
 
 🎨 **Variante 3 : Style Artistique (Anime, 3D Pixar ou Unreal Engine 5)**
-- **PROMPT VEO 3 (EN)** : \`Stylized 3D cinematic animation in Pixar Unreal Engine 5 aesthetic of ${englishIdea}, heartwarming expressive emotion, whimsical warm lighting, rich volumetric dust particles, charming stylized depth, studio orchestral soundtrack [16:9]\`
+- **PROMPT VEO 3 (EN)** : \`${cinemaEng.artistic3d}\`
 - **EXPLICATION (FR)** : Animation 3D stylisée pleine de charme avec éclairage féerique et expressions vivantes.
 
 👇 *Cliquez ci-dessous sur le bouton "Utiliser ce prompt pour générer" pour injecter votre variante directement dans le Studio Vidéo et lancer le rendu Veo 3 !*`;
