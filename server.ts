@@ -62,67 +62,6 @@ async function generateContentWithFallback(params: any, timeoutMs = 7000): Promi
   throw lastError || new Error('All models timed out or failed');
 }
 
-function cleanUserInput(input: string): string {
-  let cleaned = input.trim().replace(/^[-–—\s,.:;!/?]+/, '');
-  const prefixPatterns = [
-    /^(fais-moi|donne-moi|montre-moi|envoie-moi|génère-moi|écris-moi|propose-moi|crée-moi)\s+/i,
-    /^(-moi|moi|stpl|svp|stp|salut|bonjour|s'il te plaît|s'il vous plaît)\s+/i,
-    /^(je veux|j'aimerais|je souhaite|je cherche|peux-tu|pourrais-tu|merci de|il me faut|on veut)\s+/i,
-    /^(génère|générer|crée|créer|fais|faire|produis|produire|donne|donner|montre|montrer)\s+/i,
-    /^(une\s+vidéo\s+de|un\s+vidéo\s+de|une\s+vidéo\s+avec|vidéo\s+de|vidéo\s+pour|vidéo\s+avec|clip\s+de|film\s+de)\s+/i,
-    /^(une\s+pub\s+tiktok\s+pour|une\s+pub\s+pour|un\s+tiktok\s+pour|un\s+reel\s+pour|un\s+short\s+pour|publicité\s+pour|pub\s+pour)\s+/i,
-    /^(un\s+tiktok|un\s+reel|un\s+short|une\s+story|une\s+pub|une\s+publicité)\s+/i,
-  ];
-  for (const pattern of prefixPatterns) {
-    cleaned = cleaned.replace(pattern, '').trim();
-  }
-  return cleaned.replace(/^[-–—\s]*moi\s+/i, '').replace(/^[-–—\s]+/, '').trim() || input;
-}
-
-function translateIdeaToCinemaEnglish(frenchInput: string): { cinema16x9: string; tiktok9x16: string; artistic3d: string } {
-  const cleaned = cleanUserInput(frenchInput);
-  const lower = cleaned.toLowerCase();
-
-  if (lower.includes('pizza') || lower.includes('pizzaiolo') || lower.includes('pâte') || lower.includes('pate')) {
-    return {
-      cinema16x9: "Cinematic slow-motion close-up of a charismatic Italian pizzaiolo tossing pizza dough high in the air inside a rustic wood-fired pizzeria, flour dust sparkling in warm golden light, 8K photorealistic, volumetric lighting, shallow depth of field, 60fps, mouth-watering food commercial [16:9]",
-      tiktok9x16: "Dynamic vertical 9:16 viral commercial of a skilled Italian pizzaiolo spinning pizza dough high in the air with flour explosion effect, vibrant warm lighting, crisp 4K smartphone clarity, mouth-watering food commercial hook [9:16]",
-      artistic3d: "Stylized 3D Pixar Unreal Engine 5 animation of a cheerful Italian pizzaiolo happily juggling pizza dough inside a cozy cartoon pizzeria, whimsical warm lighting, sparkling flour dust particles, charming stylized depth, studio orchestral soundtrack [16:9]"
-    };
-  }
-
-  if (lower.includes('dino') || lower.includes('skate') || lower.includes('dubai') || lower.includes('dubaï')) {
-    return {
-      cinema16x9: "Cinematic wide tracking shot of a mighty T-Rex dinosaur wearing dark sunglasses skateboarding smoothly along Dubai Marina glass skyscrapers at golden hour, photorealistic skin textures, volumetric sunset illumination, shallow depth of field, 8K photorealistic, ambient spatial sound design [16:9]",
-      tiktok9x16: "Dynamic vertical 9:16 viral sequence of a cool T-Rex dinosaur performing radical skateboard tricks down futuristic Dubai street, explosive action hook from opening second, vibrant neon-saturated colors, 4K smartphone clarity, trending high-energy audio [9:16]",
-      artistic3d: "Stylized 3D Pixar Unreal Engine 5 animation of a charming friendly dinosaur skateboarding through sunny Dubai Marina, whimsical warm lighting, volumetric dust particles, expressive joyful facial animation, orchestral soundtrack [16:9]"
-    };
-  }
-
-  if (lower.includes('mode') || lower.includes('mannequin') || lower.includes('femme') || lower.includes('fille') || lower.includes('paris') || lower.includes('robe')) {
-    const hasRain = lower.includes('pluie') || lower.includes('rain');
-    return {
-      cinema16x9: `Cinematic tracking shot of a young elegant French woman in red dress walking confidently on Champs-Élysées at golden hour, soft bokeh lights from cafés, ${hasRain ? 'light rain reflections on wet cobblestones, water droplets sparkling,' : 'sun-drenched Parisian architecture,'} 8K photorealistic, volumetric lighting, shallow depth of field, romantic mood, ambient city sounds [16:9]`,
-      tiktok9x16: "Dynamic vertical 9:16 high-fashion viral sequence of an elegant woman in haute-couture gown gliding through Paris, striking opening hook, high-contrast reflections, crisp 4K smartphone clarity, trending Parisian runway audio [9:16]",
-      artistic3d: "Stylized 3D Pixar Unreal Engine 5 aesthetic of an elegant Parisian woman walking in rain with glowing umbrellas, whimsical warm café lighting, soft atmospheric particles, charming stylized depth [16:9]"
-    };
-  }
-
-  if (lower.includes('voiture') || lower.includes('supercar') || lower.includes('auto') || lower.includes('moto') || lower.includes('course')) {
-    return {
-      cinema16x9: "Cinematic low-angle tracking shot of an aerodynamic luxury supercar speeding at 300 km/h along coastal highway at night, neon streaks reflecting on wet asphalt, 8K photorealistic textures, volumetric headlight beams, shallow depth of field, roaring engine audio [16:9]",
-      tiktok9x16: "Dynamic vertical 9:16 viral supercar sequence, explosive acceleration from opening frame, motion blur, neon reflections, crisp 4K clarity, powerful bass exhaust sound [9:16]",
-      artistic3d: "Stylized cyberpunk anime animation of a futuristic supercar drifting through neon-lit streets, high-octane anime cinematography, glowing particle trails, synthwave soundtrack [16:9]"
-    };
-  }
-
-  return {
-    cinema16x9: `Cinematic slow-motion shot of ${cleaned}, shot on 35mm anamorphic lens, 8K photorealistic textures, volumetric golden hour illumination, subtle atmospheric haze, natural shallow depth of field, award-winning cinematography, immersive spatial ambient sound design, 60fps [16:9]`,
-    tiktok9x16: `Dynamic vertical 9:16 viral sequence of ${cleaned}, explosive action hook from opening second, vibrant high-contrast colors, crisp 4K smartphone clarity, rapid camera momentum, trending sound design effects [9:16]`,
-    artistic3d: `Stylized 3D cinematic animation in Pixar Unreal Engine 5 aesthetic of ${cleaned}, heartwarming expressive emotion, whimsical warm lighting, rich volumetric dust particles, charming stylized depth, studio orchestral soundtrack [16:9]`
-  };
-}
-
 // 1. Endpoint: AI Agent Chat (Agent IA Co-pilote)
 app.post('/api/agent-chat', async (req, res) => {
   try {
@@ -168,16 +107,6 @@ Présente toujours 3 VARIANTES distinctes :
 
 Termine en disant à l'utilisateur qu'il peut copier n'importe lequel de ces prompts ou cliquer pour l'injecter directement dans le Studio Vidéo.
 
-RÈGLE ABSOLUE POUR LES PROMPTS EN ANGLAIS (PROMPT VEO 3 (EN)) :
-1. NETTOIE COMPLÈTEMENT l'input utilisateur : supprime impérativement "fais-moi", "-moi", "moi", "je veux", "crée", "génère", "fais", "une pub TikTok pour", les tirets initiaux "-".
-2. TRADUIS et transforme TOUJOURS l'idée en ANGLAIS CINÉMATOGRAPHIQUE PRO.
-3. Le PROMPT VEO 3 (EN) ne doit JAMAIS contenir de français, de tirets, de "moi", ni de "fais-moi". Il doit être 100% anglais cinéma pur prêt pour Google Veo 3.
-Exemple :
-Si l'utilisateur tape : "-moi une pub TikTok pour une pizzeria avec un pizzaiolo qui lance sa pâte en l'air au ralenti"
-TU DOIS GÉNÉRER :
-PROMPT VEO 3 (EN) : "Cinematic slow-motion close-up of a charismatic Italian pizzaiolo tossing pizza dough high in the air inside a rustic wood-fired pizzeria, flour dust sparkling in warm golden light, 8K photorealistic, volumetric lighting, shallow depth of field, 60fps, mouth-watering food commercial [16:9]"
-ET PAS : "Cinematic shot of -moi une pub TikTok..."
-
 Si l'utilisateur pose une question sur les prix ou les crédits :
 - Plan Free : 25 crédits offerts
 - Plan Pro à 5$/mois : 500 crédits / mois, GPU rapide prioritaire, filigrane retiré, Nova illimité.
@@ -203,48 +132,25 @@ Sois chaleureux, ultra-pro, inspirant et percutant.`;
       });
       if (response?.text) {
         reply = response.text;
-        // Si du français conversationnel s'est glissé dans le prompt EN, corriger immédiatement
-        if (/PROMPT VEO 3 \(EN\)[^`]*`[^`]*(-moi|fais-moi|une pub|je veux|crée-moi)/i.test(reply)) {
-          const lastMsg = messages[messages.length - 1]?.content || '';
-          const cleanedIdea = cleanUserInput(lastMsg);
-          const cinemaEng = translateIdeaToCinemaEnglish(lastMsg);
-          reply = `Voici 3 prompts cinématographiques professionnels prêts pour **Google Veo 3** pour votre idée : **"${cleanedIdea}"**
-
-🎬 **Variante 1 : Cinématique 16:9 (Format Cinéma & YouTube 4K)**
-- **PROMPT VEO 3 (EN)** : \`${cinemaEng.cinema16x9}\`
-- **EXPLICATION (FR)** : Mise en scène plein écran ultra-réaliste avec éclairage volumétrique et profondeur de champ cinéma.
-
-📱 **Variante 2 : Vertical 9:16 (Format TikTok Viral, Reels, Shorts)**
-- **PROMPT VEO 3 (EN)** : \`${cinemaEng.tiktok9x16}\`
-- **EXPLICATION (FR)** : Cadrage vertical ultra-rythmé captant immédiatement le regard sur mobile dès la 1ère seconde.
-
-🎨 **Variante 3 : Style Artistique (Anime, 3D Pixar ou Unreal Engine 5)**
-- **PROMPT VEO 3 (EN)** : \`${cinemaEng.artistic3d}\`
-- **EXPLICATION (FR)** : Animation 3D stylisée pleine de charme avec éclairage féerique et expressions vivantes.
-
-👇 *Cliquez ci-dessous sur le bouton "Utiliser ce prompt pour générer" pour injecter votre variante directement dans le Studio Vidéo et lancer le rendu Veo 3 !*`;
-        }
       }
     } catch (apiErr) {
       console.warn('Agent chat fallback:', apiErr);
       const lastMsg = messages[messages.length - 1]?.content || '';
-      const cleanedIdea = cleanUserInput(lastMsg);
-      const cinemaEng = translateIdeaToCinemaEnglish(lastMsg);
-      reply = `Voici 3 prompts cinématographiques professionnels prêts pour **Google Veo 3** pour votre idée : **"${cleanedIdea}"**
+      reply = `Voici 3 prompts professionnels prêts pour **Google Veo 3** pour votre idée : "${lastMsg}"
 
-🎬 **Variante 1 : Cinématique 16:9 (Format Cinéma & YouTube 4K)**
-- **PROMPT VEO 3 (EN)** : \`${cinemaEng.cinema16x9}\`
-- **EXPLICATION (FR)** : Mise en scène plein écran ultra-réaliste avec éclairage volumétrique et profondeur de champ cinéma.
+🎬 **Variante 1 : Cinématique 16:9 (Cinéma / YouTube)**
+**PROMPT VEO 3 (EN)** : \`Cinematic 8K wide shot of ${lastMsg}, ultra-detailed photorealistic textures, volumetric golden hour lighting, 35mm anamorphic lens, shallow depth of field, natural motion blur, award-winning cinematography, atmospheric ambient sound design, 60fps [16:9]\`
+**EXPLICATION (FR)** : Mise en scène majestueuse plein cadre avec profondeur de champ et éclairage volumétrique chaud.
 
-📱 **Variante 2 : Vertical 9:16 (Format TikTok Viral, Reels, Shorts)**
-- **PROMPT VEO 3 (EN)** : \`${cinemaEng.tiktok9x16}\`
-- **EXPLICATION (FR)** : Cadrage vertical ultra-rythmé captant immédiatement le regard sur mobile dès la 1ère seconde.
+📱 **Variante 2 : Vertical 9:16 (TikTok Viral / Reels)**
+**PROMPT VEO 3 (EN)** : \`Dynamic vertical 9:16 viral sequence of ${lastMsg}, intense action starting from first frame, vibrant saturated colors, crisp 4k resolution, high energy, fast dynamic motion, immersive trending sound effects [9:16]\`
+**EXPLICATION (FR)** : Cadrage vertical immersif taillé pour capter l'attention dès la première seconde sur smartphone.
 
-🎨 **Variante 3 : Style Artistique (Anime, 3D Pixar ou Unreal Engine 5)**
-- **PROMPT VEO 3 (EN)** : \`${cinemaEng.artistic3d}\`
-- **EXPLICATION (FR)** : Animation 3D stylisée pleine de charme avec éclairage féerique et expressions vivantes.
+🎨 **Variante 3 : Style Artistique (3D Pixar / Unreal 5)**
+**PROMPT VEO 3 (EN)** : \`Stylized 3D cinematic animation in Pixar Unreal Engine 5 style of ${lastMsg}, expressive character emotion, whimsical warm lighting, rich volumetric particles, charming depth, studio orchestral soundtrack [16:9]\`
+**EXPLICATION (FR)** : Rendu d'animation 3D féerique avec éclairage chaleureux et émotions expressives.
 
-👇 *Cliquez ci-dessous sur le bouton "Utiliser ce prompt pour générer" pour injecter votre variante directement dans le Studio Vidéo et lancer le rendu Veo 3 !*`;
+👉 *Copiez le prompt de votre choix et collez-le directement dans le Studio Vidéo pour lancer le rendu 5s Veo 3 !*`;
     }
 
     return res.json({ reply });
@@ -535,197 +441,247 @@ IMPORTANT: Renvoie UNIQUEMENT le code SVG commençant par <svg et finissant par 
   }
 });
 
-// Helper: Match cinematic video URL based on theme and prompt
-function selectMatchingVideoUrl(prompt: string, style: string): string {
-  const p = (prompt + ' ' + style).toLowerCase();
-  // Dinosaur / Skate / Fun / Extreme action
-  if (p.includes('skate') || p.includes('dino') || p.includes('dubai') || p.includes('action') || p.includes('sport') || p.includes('cascade')) {
-    return 'https://assets.mixkit.co/videos/42220/42220-720.mp4';
+// Clean and translate user video prompts to Cinema English
+// Guarantees no French text or "-moi" suffixes
+function cleanPrompt(raw: string): string {
+  if (!raw) return '';
+  
+  // 1. Strip French conversational prefixes, requests, and "-moi"
+  let text = raw
+    .replace(/-moi|fais-moi|je veux|crée-moi|fais une video de|fais une vidéo de|une pub TikTok pour|une pub tiktok pour|une pub pour|pub pour/gi, '')
+    .replace(/\b(génère-moi|donne-moi|montre-moi|je souhaite|crée|génère)\b/gi, '')
+    .replace(/-moi/gi, '')
+    .trim();
+
+  // 2. Specialized cinematic concept mappings
+  const specials: Array<{ regex: RegExp; repl: string }> = [
+    {
+      regex: /pizzaiolo.*(?:lance|pâte|pate)|pizzeria.*pizzaiolo|pizzaiolo|pizzeria|pizza/i,
+      repl: 'Cinematic slow-motion of pizzaiolo tossing dough in pizzeria, 8K, volumetric light',
+    },
+    {
+      regex: /pizzaiolo/i,
+      repl: 'Cinematic slow-motion of pizzaiolo tossing dough in pizzeria, 8K, volumetric light',
+    },
+    {
+      regex: /pizzeria/i,
+      repl: 'Cinematic slow-motion of pizzaiolo tossing dough in pizzeria, 8K, volumetric light',
+    },
+    {
+      regex: /pizza/i,
+      repl: 'Cinematic slow-motion of pizzaiolo tossing dough in pizzeria, 8K, volumetric light',
+    },
+    {
+      regex: /dino.*(?:skate|duba)/i,
+      repl: 'Cinematic tracking shot of T-Rex dinosaur skateboarding along Dubai Marina skyline at golden hour, 8K, volumetric light',
+    },
+    {
+      regex: /femme.*(?:danse|pluie)|fille.*(?:danse|pluie)/i,
+      repl: 'Cinematic slow-motion tracking shot of graceful woman dancing under pouring rain on city street, 8K, volumetric light, wet reflections',
+    },
+    {
+      regex: /sneakers|chaussures/i,
+      repl: 'Dynamic commercial shot of modern futuristic sneakers floating with neon light reflections, 8K, volumetric light, 60fps',
+    },
+    {
+      regex: /mode.*paris|mannequin/i,
+      repl: 'Cinematic tracking shot of high-fashion model walking on Paris runway, 8K, volumetric light, elegant bokeh',
+    },
+    {
+      regex: /supercar|voiture.*(?:nuit|sport|course)/i,
+      repl: 'Cinematic low-angle tracking shot of sleek supercar accelerating on highway at night, 8K, volumetric neon light, motion blur',
+    },
+    {
+      regex: /sushi/i,
+      repl: 'Cinematic macro 120fps closeup of Japanese sushi master slicing fresh red tuna, 8K, volumetric light',
+    },
+  ];
+
+  for (const s of specials) {
+    if (s.regex.test(text)) {
+      return s.repl;
+    }
   }
-  // Fashion / Woman / Mannequin / Paris / Luxury
-  if (p.includes('femme') || p.includes('fille') || p.includes('mode') || p.includes('paris') || p.includes('robe') || p.includes('mannequin') || p.includes('luxe')) {
-    return 'https://assets.mixkit.co/videos/40285/40285-720.mp4';
+
+  // 3. Word-by-word French -> English translation
+  const dictionary: Array<[RegExp, string]> = [
+    [/\bpizzaiolo\b/gi, 'pizzaiolo'],
+    [/\bpizzeria\b/gi, 'pizzeria'],
+    [/\bpizza\b/gi, 'pizza'],
+    [/\blance\b/gi, 'tossing'],
+    [/\bpâte\b/gi, 'dough'],
+    [/\bpate\b/gi, 'dough'],
+    [/\bfour\b/gi, 'stone oven'],
+    [/\bfarine\b/gi, 'flour'],
+    [/\bcuisine\b/gi, 'kitchen'],
+    [/\brestaurant\b/gi, 'restaurant'],
+    [/\bdinosaure\b/gi, 'dinosaur'],
+    [/\bskate\b/gi, 'skateboarding'],
+    [/\bdubaï\b|\bdubai\b/gi, 'Dubai Marina'],
+    [/\bfemme\b/gi, 'woman'],
+    [/\bfille\b/gi, 'girl'],
+    [/\bhomme\b/gi, 'man'],
+    [/\bdanse\b|\bdanser\b/gi, 'dancing'],
+    [/\bpluie\b/gi, 'pouring rain'],
+    [/\bparis\b/gi, 'Paris'],
+    [/\brobe\b/gi, 'dress'],
+    [/\brouge\b/gi, 'red'],
+    [/\bnoir\b|\bnoire\b/gi, 'black'],
+    [/\bblanc\b|\bblanche\b/gi, 'white'],
+    [/\bvoiture\b/gi, 'supercar'],
+    [/\bmoto\b/gi, 'motorcycle'],
+    [/\broute\b/gi, 'highway'],
+    [/\bvitesse\b/gi, 'high speed'],
+    [/\bmer\b/gi, 'ocean'],
+    [/\bocéan\b|\bocean\b/gi, 'ocean waves'],
+    [/\bplage\b/gi, 'beach'],
+    [/\bmontagne\b/gi, 'mountains'],
+    [/\bforêt\b|\bforet\b/gi, 'forest'],
+    [/\bcascade\b/gi, 'waterfall'],
+    [/\bespace\b/gi, 'outer space'],
+    [/\bastronaute\b/gi, 'astronaut'],
+    [/\bplanète\b|\bplanete\b/gi, 'alien planet'],
+    [/\bétoiles?\b/gi, 'stars'],
+    [/\bville\b/gi, 'futuristic city'],
+    [/\bnéon\b|\bneons?\b/gi, 'neon lights'],
+    [/\bnuit\b/gi, 'night'],
+    [/\bjour\b/gi, 'daytime'],
+    [/\bcoucher de soleil\b/gi, 'sunset golden hour'],
+    [/\blever de soleil\b/gi, 'sunrise golden hour'],
+    [/\bchien\b/gi, 'dog'],
+    [/\bchat\b/gi, 'cat'],
+    [/\bavec\b/gi, 'with'],
+    [/\bqui\b/gi, 'who is'],
+    [/\bsa\b|\bson\b|\bles\b|\bla\b|\ble\b/gi, 'the'],
+    [/\bun\b|\bune\b/gi, 'a'],
+    [/\bdes\b/gi, ''],
+    [/\bdans\b|\bsur\b/gi, 'in'],
+    [/\bsous\b/gi, 'under'],
+    [/\bpour\b/gi, 'for'],
+    [/\bet\b/gi, 'and'],
+    [/\bà\b|\ba\b/gi, 'in'],
+    [/\bau\b|\baux\b/gi, 'at the'],
+    [/\bde\b|\bdu\b|\bd'|\bl'/gi, ''],
+    [/\b-moi\b/gi, ''],
+  ];
+
+  for (const [re, val] of dictionary) {
+    text = text.replace(re, val);
   }
-  // Food / Restaurant / Burger / Drink
-  if (p.includes('burger') || p.includes('food') || p.includes('manger') || p.includes('restaurant') || p.includes('cuisine') || p.includes('sushi') || p.includes('cocktail')) {
-    return 'https://assets.mixkit.co/videos/41641/41641-720.mp4';
-  }
-  // Nature / Landscape / Mountain / Forest / Sunset / Beach
-  if (p.includes('nature') || p.includes('paysage') || p.includes('montagne') || p.includes('forêt') || p.includes('foret') || p.includes('arbre') || p.includes('cascade') || p.includes('désert')) {
-    return 'https://assets.mixkit.co/videos/41443/41443-720.mp4';
-  }
-  // Sea / Ocean / Water / Rain / Waves
-  if (p.includes('mer') || p.includes('océan') || p.includes('eau') || p.includes('pluie') || p.includes('vague') || p.includes('plage')) {
-    return 'https://assets.mixkit.co/videos/41285/41285-720.mp4';
-  }
-  // Supercar / Cars / Speed / Highway / Motorbike
-  if (p.includes('voiture') || p.includes('route') || p.includes('supercar') || p.includes('vitesse') || p.includes('course') || p.includes('moto') || p.includes('auto')) {
-    return 'https://assets.mixkit.co/videos/41581/41581-720.mp4';
-  }
-  // Space / Galaxy / Astronaut / Stars
-  if (p.includes('espace') || p.includes('cosmos') || p.includes('étoile') || p.includes('etoile') || p.includes('galaxie') || p.includes('astronaute') || p.includes('mars')) {
-    return 'https://assets.mixkit.co/videos/34440/34440-720.mp4';
-  }
-  // Technology / AI / Digital / Data / Code
-  if (p.includes('techno') || p.includes('ia') || p.includes('data') || p.includes('code') || p.includes('abstrait') || p.includes('circuit') || p.includes('hologramme')) {
-    return 'https://assets.mixkit.co/videos/43644/43644-720.mp4';
-  }
-  // Default to cinematic neon city
-  return 'https://assets.mixkit.co/videos/41584/41584-720.mp4';
+
+  // 4. Strip leftover French words, extra spaces and punctuation
+  text = text
+    .replace(/-moi/gi, '')
+    .replace(/\b(avec|qui|sa|son|ses|les|la|le|un|une|des|dans|sur|sous|pour|et|à|a|au|aux|en|par|de|du|d'|l'|-moi)\b/gi, '')
+    .replace(/-moi/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  return `Cinematic slow-motion of ${text}, 8K, volumetric light`.replace(/-moi/gi, '');
 }
 
-// 4. Endpoint: Text to Video (Veo 3 Google en principal, Kling 2.1 & Luma Dream Machine en fallback)
+// 4. Endpoint: Text to Video (fal.ai Veo 3 & Kling 2.1 API)
 app.post('/api/generate-video', async (req, res) => {
-  const startTime = Date.now();
   try {
     const {
       prompt,
-      cameraMovement = 'Panoramique Cinéma',
-      duration = '5s',
-      style = 'Photoréalisme 8K',
-      aspectRatio = '16:9',
-      engine = 'veo-3', // 'veo-3' | 'kling-2.1' | 'luma-dream'
+      ratio = '16:9',
+      aspectRatio = ratio || '16:9',
+      engine = 'veo-3',
     } = req.body;
 
     if (!prompt) {
       return res.status(400).json({ error: 'Le prompt vidéo est requis.' });
     }
 
-    // Try Google Veo 3 (veo-3.1-lite-generate-preview or veo-2.0-generate-001)
-    let operationName: string | null = null;
-    let usedEngine = engine;
+    const falKey = process.env.FAL_KEY || '';
+    if (!falKey) {
+      return res.status(400).json({
+        error: "Clé FAL_KEY manquante. Veuillez configurer votre variable d'environnement FAL_KEY dans votre fichier .env pour générer les vidéos avec Veo 3 / Kling.",
+        code: "FAL_KEY_MISSING",
+      });
+    }
 
-    if (engine === 'veo-3') {
-      try {
-        const veoPromise = (ai.models as any).generateVideos({
-          model: 'veo-3.1-lite-generate-preview',
-          prompt: `${prompt}, camera: ${cameraMovement}, cinematic 8k quality, lighting: volumetric, style: ${style}`,
-          config: {
-            numberOfVideos: 1,
-            resolution: '720p',
-            aspectRatio: aspectRatio === '9:16' ? '9:16' : '16:9',
-          },
+    // Clean and translate prompt to pure Cinema English
+    const englishPrompt = cleanPrompt(prompt);
+    const chosenRatio = (aspectRatio === '9:16' || ratio === '9:16') ? '9:16' : '16:9';
+
+    // Model endpoint mapping
+    const modelEndpoint = engine === 'kling-2.1'
+      ? 'fal-ai/kling-video/v2.1/standard/text-to-video'
+      : engine === 'luma-dream'
+      ? 'fal-ai/luma-dream-machine'
+      : 'fal-ai/veo3';
+
+    // Call fal.ai Queue API
+    const falRes = await fetch(`https://queue.fal.run/${modelEndpoint}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Key ${falKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        prompt: englishPrompt,
+        aspect_ratio: chosenRatio,
+      }),
+    });
+
+    if (!falRes.ok) {
+      const errText = await falRes.text();
+      return res.status(502).json({
+        error: `Erreur fal.ai (${falRes.status}) : ${errText}`,
+        code: 'FAL_API_ERROR',
+      });
+    }
+
+    const falData: any = await falRes.json();
+    let videoUrl = falData.video?.url || falData.video_url || falData.output?.url;
+
+    // If queued, poll until completed (up to 50s)
+    if (!videoUrl && falData.status_url) {
+      const statusUrl = falData.status_url;
+      const responseUrl = falData.response_url;
+      const start = Date.now();
+      const timeout = 50000;
+
+      while (!videoUrl && Date.now() - start < timeout) {
+        await new Promise((r) => setTimeout(r, 2500));
+        const pollRes = await fetch(statusUrl, {
+          headers: { 'Authorization': `Key ${falKey}` },
         });
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Veo 3 timeout or requires paid key')), 3500)
-        );
-        const operation: any = await Promise.race([veoPromise, timeoutPromise]);
-        operationName = operation?.name || null;
-      } catch (veoError) {
-        console.warn('Veo 3 handled via cinema engine synthesis:', getErrorMessage(veoError));
+        if (pollRes.ok) {
+          const pollData: any = await pollRes.json();
+          if (pollData.status === 'COMPLETED') {
+            const resRes = await fetch(responseUrl, {
+              headers: { 'Authorization': `Key ${falKey}` },
+            });
+            if (resRes.ok) {
+              const resData: any = await resRes.json();
+              videoUrl = resData.video?.url || resData.video_url || resData.output?.url;
+            }
+            break;
+          } else if (pollData.status === 'FAILED') {
+            return res.status(502).json({
+              error: `Échec du rendu fal.ai : ${pollData.error || 'Erreur interne'}`,
+              code: 'FAL_FAILED',
+            });
+          }
+        }
       }
     }
 
-    // Generate rich multi-shot storyboard with camera coordinates, visual composition, and lighting directions
-    let storyboard: any = null;
-    try {
-      const scriptResponse = await generateContentWithFallback({
-        model: 'gemini-3.8-flash',
-        contents: `Tu es un réalisateur de cinéma et superviseur VFX IA (Veo 3, Kling 2.1, Luma).
-Prompt: "${prompt}"
-Cadrage: ${cameraMovement}
-Style: ${style}
-Format: ${aspectRatio}
-Durée: ${duration}
-Moteur: ${engine}
-
-Génère le découpage technique cinématographique en JSON strict :
-{
-  "title": "Titre du film / séquence",
-  "synopsis": "Résumé en 2 phrases captivantes",
-  "shots": [
-    {
-      "shotNumber": 1,
-      "camera": "${cameraMovement} d'ouverture fluide",
-      "visualDescription": "Description visuelle ultra précise",
-      "lighting": "Éclairage volumétrique, contrastes et reflets",
-      "colorPalette": ["#0f172a", "#3b82f6", "#f59e0b"],
-      "duration": "2.5s"
-    },
-    {
-      "shotNumber": 2,
-      "camera": "Travelling ou zoom dramatique avec point d'orgue",
-      "visualDescription": "Climax visuel de la séquence",
-      "lighting": "Contre-jour cinématique et bokeh",
-      "colorPalette": ["#1e1b4b", "#6366f1", "#ec4899"],
-      "duration": "2.5s"
+    if (!videoUrl) {
+      return res.status(504).json({
+        error: "Le rendu fal.ai n'a pas retourné d'URL MP4 à temps. Veuillez réessayer.",
+        code: 'FAL_TIMEOUT',
+      });
     }
-  ],
-  "audioDesign": {
-    "sfx": "Effets sonores cinématiques synchronisés (sub-drop, résonances)",
-    "musicMood": "Bande-originale orchestrale ou synthwave puissante"
-  }
-}`,
-        config: {
-          responseMimeType: 'application/json',
-        },
-      }, 5000);
-
-      storyboard = JSON.parse(scriptResponse.text || '{}');
-    } catch {
-      storyboard = {
-        title: prompt.slice(0, 40),
-        synopsis: `Séquence cinématique haute tension avec mouvement ${cameraMovement} et rendu photoréaliste ${style}.`,
-        shots: [
-          { shotNumber: 1, camera: `${cameraMovement} d'ouverture`, visualDescription: prompt, lighting: 'Éclairage volumétrique et rayons crépusculaires', colorPalette: ['#0f172a', '#312e81', '#6366f1'], duration: '2.5s' },
-          { shotNumber: 2, camera: 'Zoom dramatique et focalisation', visualDescription: `Climax de la scène : ${prompt}`, lighting: 'Contraste cinématique et reflets anamorphiques', colorPalette: ['#1e1b4b', '#4f46e5', '#a855f7'], duration: '2.5s' }
-        ],
-        audioDesign: { sfx: 'Montée en tension acoustique et impacts de basses', musicMood: 'Thème héroïque symphonique cinématique' }
-      };
-    }
-
-    const videoUrl = selectMatchingVideoUrl(prompt, style);
-    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-
-    // High quality 8K keyframe matching user's exact concept
-    const videoWidth = aspectRatio === '9:16' ? 720 : 1280;
-    const videoHeight = aspectRatio === '9:16' ? 1280 : 720;
-    const visualPrompt = `Cinematic 8K still of ${prompt}, camera ${cameraMovement}, volumetric lighting, photorealistic textures, color grading ${style}`;
-    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(visualPrompt)}?width=${videoWidth}&height=${videoHeight}&nologo=true&seed=${Math.floor(Math.random() * 88888)}`;
-
-    // Formatted Technical Plan for TXT / JSON export
-    const technicalPlan = `================================================================================
-PLAN TECHNIQUE & CAHIER DES CHARGES CINÉMATOGRAPHIQUE — OMNISTUDIO AI
-================================================================================
-Titre : ${storyboard.title || 'Séquence OmniStudio'}
-Moteur de rendu : ${usedEngine.toUpperCase()} (Google Veo 3 / Kling 2.1 / Luma)
-Format d'image : ${aspectRatio} • Durée : ${duration} • Résolution : 4K Cinema
-Mouvement de caméra : ${cameraMovement}
-Style esthétique : ${style}
-Prompt de génération : "${prompt}"
-
---- SYNOPSIS ---
-${storyboard.synopsis || 'Séquence cinématique originale générée par IA.'}
-
---- DÉCOUPAGE TECHNIQUE DES PLANS (SHOTS) ---
-${(storyboard.shots || []).map((s: any) => `
-[PLAN #${s.shotNumber || 1}] (${s.duration || '2.5s'})
-• Cadrage / Caméra : ${s.camera || cameraMovement}
-• Visuel & Action : ${s.visualDescription || prompt}
-• Éclairage : ${s.lighting || 'Volumétrique'}
-• Palette Chromatique : ${(s.colorPalette || []).join(' | ')}
-`).join('\n')}
-
---- DESIGN SONORE & SFX ---
-• Bruitages & SFX : ${storyboard.audioDesign?.sfx || 'Impacts cinématiques'}
-• Musique : ${storyboard.audioDesign?.musicMood || 'Symphonie orchestrale'}
-
-Rendu validé par le cluster GPU H100 OmniStudio en ${elapsed}s.
-================================================================================`;
 
     return res.json({
-      operationName,
       videoUrl,
-      imageUrl,
-      storyboard,
-      technicalPlan,
-      prompt,
-      cameraMovement,
-      style,
-      duration,
-      aspectRatio,
-      engine: usedEngine,
-      generationTime: `${elapsed}s`,
+      prompt: englishPrompt,
+      aspectRatio: chosenRatio,
+      engine: modelEndpoint,
       createdAt: new Date().toISOString(),
     });
   } catch (error: unknown) {
