@@ -7,6 +7,7 @@ import { TextToVideoStudio } from './components/TextToVideoStudio';
 import { AudioTranscribeStudio } from './components/AudioTranscribeStudio';
 import { StoryGeneratorStudio } from './components/StoryGeneratorStudio';
 import { MusicGeneratorStudio } from './components/MusicGeneratorStudio';
+import { YouTubeDemoStudio } from './components/YouTubeDemoStudio';
 import { ShowcaseGallery } from './components/ShowcaseGallery';
 import { PricingPage } from './components/PricingPage';
 import { UsageDashboard } from './components/UsageDashboard';
@@ -19,7 +20,7 @@ import { Bot, Sparkles, Shield, Heart } from 'lucide-react';
 import { PRICING_CONFIG } from './types';
 
 function MainApp() {
-  const [activeTab, setActiveTab] = useState<'showcase' | 'image' | 'video' | 'transcribe' | 'story' | 'music' | 'agent' | 'pricing' | 'dashboard' | 'login'>('showcase');
+  const [activeTab, setActiveTab] = useState<'showcase' | 'image' | 'video' | 'transcribe' | 'story' | 'music' | 'agent' | 'pricing' | 'dashboard' | 'login' | 'youtube-demo'>('showcase');
   const [isAgentDrawerOpen, setIsAgentDrawerOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [musicMoodContext, setMusicMoodContext] = useState<string>('');
@@ -57,8 +58,12 @@ function MainApp() {
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === 'showcase' && (
-          <ShowcaseGallery onSelectSample={handleSelectSample} />
+          <ShowcaseGallery 
+            onSelectSample={handleSelectSample} 
+            onOpenYouTubeDemo={() => setActiveTab('youtube-demo')}
+          />
         )}
+        {activeTab === 'youtube-demo' && <YouTubeDemoStudio />}
         {activeTab === 'image' && <TextToImageStudio />}
         {activeTab === 'video' && <TextToVideoStudio />}
         {activeTab === 'transcribe' && <AudioTranscribeStudio />}

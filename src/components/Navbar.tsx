@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Sparkles, Crown, Coins, User as UserIcon, LogOut, ArrowRight, Zap, Menu, X, Video, Image, Mic, Bot, BarChart3, FileDown, BookOpen, Volume2 } from 'lucide-react';
+import { Sparkles, Crown, Coins, User as UserIcon, LogOut, ArrowRight, Zap, Menu, X, Video, Image, Mic, Bot, BarChart3, FileDown, BookOpen, Volume2, Youtube } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { PRICING_CONFIG } from '../types';
 
 interface NavbarProps {
-  activeTab: 'showcase' | 'image' | 'video' | 'transcribe' | 'story' | 'music' | 'agent' | 'pricing' | 'dashboard' | 'login';
-  setActiveTab: (tab: 'showcase' | 'image' | 'video' | 'transcribe' | 'story' | 'music' | 'agent' | 'pricing' | 'dashboard' | 'login') => void;
+  activeTab: 'showcase' | 'image' | 'video' | 'transcribe' | 'story' | 'music' | 'agent' | 'pricing' | 'dashboard' | 'login' | 'youtube-demo';
+  setActiveTab: (tab: 'showcase' | 'image' | 'video' | 'transcribe' | 'story' | 'music' | 'agent' | 'pricing' | 'dashboard' | 'login' | 'youtube-demo') => void;
   openAgentDrawer: () => void;
   openExportModal: () => void;
 }
@@ -55,6 +55,19 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, openAge
             >
               <Sparkles className="w-4 h-4 text-pink-400 animate-pulse" />
               <span>Démos</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('youtube-demo')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold transition-all cursor-pointer ${
+                activeTab === 'youtube-demo'
+                  ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-md shadow-red-500/30'
+                  : 'text-red-400 hover:text-white hover:bg-slate-800/60'
+              }`}
+            >
+              <Youtube className="w-4 h-4 text-red-500" />
+              <span>Démo YouTube</span>
+              <span className="text-[9px] bg-red-500/20 text-red-300 px-1 py-0.5 rounded font-black uppercase">4K</span>
             </button>
 
             <button
@@ -346,6 +359,18 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, openAge
           >
             <Sparkles className="w-4 h-4 text-pink-400" />
             <span>✨ Démos & Vitrine Créative</span>
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab('youtube-demo');
+              setMobileMenuOpen(false);
+            }}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-bold ${
+              activeTab === 'youtube-demo' ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white' : 'text-red-300 hover:bg-slate-900'
+            }`}
+          >
+            <Youtube className="w-4 h-4 text-red-500" />
+            <span>🎬 Démo Vidéo YouTube (4K)</span>
           </button>
           <button
             onClick={() => {
