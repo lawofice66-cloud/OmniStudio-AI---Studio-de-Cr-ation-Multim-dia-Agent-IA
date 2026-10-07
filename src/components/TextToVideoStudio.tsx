@@ -371,8 +371,27 @@ export const TextToVideoStudio: React.FC<TextToVideoStudioProps> = ({
     }
   };
 
-  const handleDownloadVideo = () => {
+  const handleDownloadVideo = async () => {
     if (!videoUrl) return;
+    try {
+      toastInfo('Téléchargement...', 'Préparation du fichier MP4...');
+      const response = await fetch(videoUrl);
+      if (response.ok) {
+        const blob = await response.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = `omnistudio-video-${Date.now()}.mp4`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(blobUrl);
+        toastSuccess('Téléchargement Terminé', 'Le fichier vidéo MP4 a été téléchargé.');
+        return;
+      }
+    } catch (e) {
+      console.warn('Direct blob download fallback:', e);
+    }
     const link = document.createElement('a');
     link.href = videoUrl;
     link.download = `omnistudio-video-${Date.now()}.mp4`;

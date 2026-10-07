@@ -594,7 +594,7 @@ app.post('/api/generate-video', async (req, res) => {
       return res.status(400).json({ error: 'Le prompt vidéo est requis.' });
     }
 
-    const falKey = process.env.FAL_KEY || '';
+    const falKey = process.env.FAL_KEY || process.env.VITE_FAL_KEY || '';
     if (!falKey) {
       return res.status(400).json({
         error: "Clé FAL_KEY manquante. Veuillez configurer votre variable d'environnement FAL_KEY dans votre fichier .env pour générer les vidéos avec Veo 3 / Kling.",

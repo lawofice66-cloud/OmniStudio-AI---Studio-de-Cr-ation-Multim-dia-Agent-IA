@@ -3,6 +3,7 @@ interface Env {
   API_KEY?: string;
   VITE_GEMINI_API_KEY?: string;
   FAL_KEY?: string;
+  VITE_FAL_KEY?: string;
 }
 
 type PagesFunction<T = any> = (context: {
@@ -35,7 +36,7 @@ function getApiKey(env: Env): string {
 }
 
 function getFalKey(env: Env): string {
-  return env.FAL_KEY || '';
+  return env.FAL_KEY || env.VITE_FAL_KEY || '';
 }
 
 // Clean and translate user video prompts to Cinema English
