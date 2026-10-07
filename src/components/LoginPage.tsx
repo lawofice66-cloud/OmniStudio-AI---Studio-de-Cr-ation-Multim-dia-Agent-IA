@@ -310,7 +310,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                     onClick={() => loginWithAdminSecret(adminSecretInput)}
                     className="w-full py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold text-xs shadow-md transition-all cursor-pointer"
                   >
-                    Valider l'Accès Admin (Alexandre Studio Pro)
+                    Valider l'Accès Administrateur
                   </button>
                 </div>
               )}

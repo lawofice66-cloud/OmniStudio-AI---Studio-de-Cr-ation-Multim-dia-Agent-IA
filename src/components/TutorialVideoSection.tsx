@@ -26,8 +26,8 @@ interface TutorialVideoSectionProps {
 }
 
 export const TutorialVideoSection: React.FC<TutorialVideoSectionProps> = ({ onStartFreeVideo }) => {
-  // Player mode: 'screen-recording' | 'youtube'
-  const [playerMode, setPlayerMode] = useState<'screen-recording' | 'youtube'>('screen-recording');
+  // Player mode: 'youtube' (default) | 'screen-recording'
+  const [playerMode, setPlayerMode] = useState<'screen-recording' | 'youtube'>('youtube');
   
   // Screen recording animation state (4 steps: 0, 1, 2, 3)
   const [isPlaying, setIsPlaying] = useState<boolean>(true);

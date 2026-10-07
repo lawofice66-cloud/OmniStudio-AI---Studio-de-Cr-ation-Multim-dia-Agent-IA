@@ -47,108 +47,60 @@ const STORAGE_KEYS = {
 export const ADMIN_SECRET_KEY = 'fallen75_secret_2024';
 const STORAGE_ADMIN_KEY = 'omnistudio_admin_secret';
 
-export const ADMIN_USER: User = {
-  id: 'usr_admin_alexandre',
+// Compte Créateur Invité VIP réservé à l'administrateur avec 500 crédits Pro permanents
+export const CREATOR_VIP_USER: User = {
+  id: 'usr_createur_invite_500',
   email: 'lawofice66@gmail.com',
-  name: 'Alexandre Studio',
+  name: 'Créateur Invité',
   plan: 'pro',
   credits: 500, // Toujours 500 crédits
-  avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+  avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
   createdAt: new Date().toISOString(),
   isPro: true, // Toujours Pro
 };
 
-// Default user for standard public visitors (normal Free user)
-export const DEFAULT_GUEST_USER: User = {
-  id: 'usr_guest_demo',
-  email: 'createur@omnistudio.ai',
-  name: 'Créateur Invité',
+export const ADMIN_USER: User = CREATOR_VIP_USER;
+
+// Compte visiteur public standard (Plan Free, 25 crédits d'essai)
+export const DEFAULT_PUBLIC_VISITOR: User = {
+  id: 'usr_visiteur_public',
+  email: 'visiteur@omnistudio.ai',
+  name: 'Visiteur',
   plan: 'free',
-  credits: PRICING_CONFIG.FREE_PLAN_CREDITS,
+  credits: PRICING_CONFIG.FREE_PLAN_CREDITS, // 25 crédits
   avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
   createdAt: new Date().toISOString(),
   isPro: false,
 };
 
+export const DEFAULT_GUEST_USER: User = DEFAULT_PUBLIC_VISITOR;
+
 export function isUserAdmin(u?: User | null): boolean {
   if (!u) return false;
   return (
-    u.name === 'Alexandre Studio' ||
+    u.email === 'lawofice66@gmail.com' ||
+    u.email === 'createur@omnistudio.ai' ||
     u.email === 'alexandre@studio.com' ||
-    u.email === 'lawofice66@gmail.com'
+    u.name === 'Alexandre Studio' ||
+    (u.name === 'Créateur Invité' && (u.isPro || u.credits >= 100))
   );
 }
 
-// Initial default user fallback (never Alexandre Studio publicly)
-const DEFAULT_USER: User = DEFAULT_GUEST_USER;
+// Initial default user fallback (Visiteur public avec 25 crédits)
+const DEFAULT_USER: User = DEFAULT_PUBLIC_VISITOR;
 
-// Seed historical usage data for the past 7 days to give vibrant immediate charts
-const getInitialTransactions = (): CreditTransaction[] => {
-  const now = new Date();
-  const daysAgo = (days: number, hours = 14) => {
-    const d = new Date(now);
-    d.setDate(d.getDate() - days);
-    d.setHours(hours, 20, 0, 0);
-    return d.toISOString();
-  };
-
-  return [
-    {
-      id: 'tx_seed_1',
-      type: 'addition',
-      category: 'bonus',
-      actionName: 'Bonus d\'inscription Plan Free',
-      amount: 25,
-      date: daysAgo(6, 9),
-      balanceAfter: 25,
-    },
-    {
-      id: 'tx_seed_2',
-      type: 'deduction',
-      category: 'image',
-      actionName: 'Génération Image : Cyberpunk Neon City',
-      amount: 2,
-      date: daysAgo(5, 11),
-      balanceAfter: 23,
-    },
-    {
-      id: 'tx_seed_3',
-      type: 'deduction',
-      category: 'agent',
-      actionName: 'Co-pilote Nova : Brainstorming Scénario',
-      amount: 0.5,
-      date: daysAgo(4, 15),
-      balanceAfter: 22.5,
-    },
-    {
-      id: 'tx_seed_4',
-      type: 'deduction',
-      category: 'video',
-      actionName: 'Génération Vidéo : Survol Drone Montagnes',
-      amount: 5,
-      date: daysAgo(3, 17),
-      balanceAfter: 17.5,
-    },
-    {
-      id: 'tx_seed_5',
-      type: 'deduction',
-      category: 'transcribe',
-      actionName: 'Transcription Audio : Réunion Marketing',
-      amount: 1,
-      date: daysAgo(2, 10),
-      balanceAfter: 16.5,
-    },
-    {
-      id: 'tx_seed_6',
-      type: 'deduction',
-      category: 'image',
-      actionName: 'Génération Image : Portrait Studio 35mm',
-      amount: 2,
-      date: daysAgo(1, 19),
-      balanceAfter: 14.5,
-    },
-  ];
-};
+// Seed clean initial transactions (25 credits for Free user)
+const getInitialTransactions = (): CreditTransaction[] => [
+  {
+    id: 'tx_seed_1',
+    type: 'addition',
+    category: 'bonus',
+    actionName: "Bonus d'inscription Plan Free (25 crédits offerts)",
+    amount: 25,
+    date: new Date().toISOString(),
+    balanceAfter: 25,
+  },
+];
 
 const getInitialImageHistory = (): ImageGeneration[] => [
   {
@@ -249,25 +201,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // 2. Check secret key in localStorage
       const storedSecret = localStorage.getItem(STORAGE_ADMIN_KEY);
       if (hasUrlAdmin || storedSecret === ADMIN_SECRET_KEY) {
-        return { ...ADMIN_USER, credits: 500, isPro: true, plan: 'pro' };
+        return { ...CREATOR_VIP_USER, credits: 500, isPro: true, plan: 'pro' };
       }
 
       // 3. For normal users, read standard user or fallback to guest
       const saved = localStorage.getItem(STORAGE_KEYS.USER);
       if (saved) {
         const parsed: User = JSON.parse(saved);
-        // Security: If account is named Alexandre Studio but secret is missing, do NOT grant admin
+        // Security: If account is VIP but secret is missing, do NOT grant admin
         if (isUserAdmin(parsed)) {
           if (storedSecret !== ADMIN_SECRET_KEY) {
-            return DEFAULT_GUEST_USER;
+            return DEFAULT_PUBLIC_VISITOR;
           }
-          return { ...parsed, isPro: true, plan: 'pro', credits: 500 };
+          return { ...CREATOR_VIP_USER, credits: 500, isPro: true, plan: 'pro' };
+        }
+        // If a standard Free user had old fractional seed credits (like 22.5 or 14.5), reset to 25
+        if (!parsed.isPro && (parsed.credits === 22.5 || parsed.credits === 14.5 || parsed.credits === 23 || parsed.credits === 17.5 || parsed.credits === 16.5)) {
+          return { ...parsed, credits: 25 };
         }
         return parsed;
       }
-      return DEFAULT_GUEST_USER;
+      return DEFAULT_PUBLIC_VISITOR;
     } catch {
-      return DEFAULT_GUEST_USER;
+      return DEFAULT_PUBLIC_VISITOR;
     }
   });
 
@@ -329,12 +285,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
 
-  // Enforce Alexandre Studio is ALWAYS Pro and 500 credits
+  // Enforce Créateur Invité is ALWAYS Pro and 500 credits
   useEffect(() => {
     if (user && isUserAdmin(user)) {
       if (!user.isPro || user.plan !== 'pro' || user.credits < 25) {
         setUser({
           ...user,
+          name: 'Créateur Invité',
           isPro: true,
           plan: 'pro',
           credits: 500,
@@ -377,7 +334,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(transactions));
   }, [transactions]);
 
-  const login = async (email: string, _pass: string): Promise<boolean> => {
+  const login = async (email: string, pass: string): Promise<boolean> => {
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPass = pass.trim();
+
+    // Vérification des identifiants exclusifs du compte Créateur Invité (500 crédits Pro)
+    const isOwnerEmail = cleanEmail === 'lawofice66@gmail.com' || cleanEmail === 'createur@omnistudio.ai' || cleanEmail === 'alexandre@studio.com';
+    const isSecretPass = cleanPass === ADMIN_SECRET_KEY;
+
+    if (isOwnerEmail || isSecretPass) {
+      if (!isSecretPass && cleanPass.length < 4) {
+        toastWarning('Mot de passe requis', 'Veuillez saisir votre mot de passe pour accéder au compte Créateur Invité.');
+        return false;
+      }
+
+      localStorage.setItem(STORAGE_ADMIN_KEY, ADMIN_SECRET_KEY);
+      const vipUser: User = {
+        ...CREATOR_VIP_USER,
+        email: cleanEmail.includes('@') ? cleanEmail : CREATOR_VIP_USER.email,
+        name: 'Créateur Invité',
+        credits: 500,
+        isPro: true,
+        plan: 'pro',
+      };
+      setUser(vipUser);
+      setTransactions([
+        {
+          id: 'tx_vip_' + Date.now(),
+          type: 'addition',
+          category: 'subscription',
+          actionName: 'Solde Créateur Invité (500 crédits Pro)',
+          amount: 500,
+          date: new Date().toISOString(),
+          balanceAfter: 500,
+        },
+      ]);
+      setIsAuthModalOpen(false);
+      toastSuccess('Session Créateur Débloquée', '👑 Bienvenue Créateur Invité ! Vos 500 crédits Pro sont disponibles.', 'crown');
+      return true;
+    }
+
+    // Utilisateur public normal
     const existingName = email.split('@')[0];
     const newUser: User = {
       id: 'usr_' + Date.now(),
@@ -395,7 +392,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         id: 'tx_' + Date.now(),
         type: 'addition',
         category: 'bonus',
-        actionName: 'Création de compte (Plan Free)',
+        actionName: 'Connexion (Plan Free)',
         amount: PRICING_CONFIG.FREE_PLAN_CREDITS,
         date: new Date().toISOString(),
         balanceAfter: PRICING_CONFIG.FREE_PLAN_CREDITS,
@@ -438,14 +435,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (secret.trim() === ADMIN_SECRET_KEY) {
       localStorage.setItem(STORAGE_ADMIN_KEY, ADMIN_SECRET_KEY);
       const admin: User = {
-        ...ADMIN_USER,
+        ...CREATOR_VIP_USER,
+        name: 'Créateur Invité',
         credits: 500,
         isPro: true,
         plan: 'pro',
       };
       setUser(admin);
+      setTransactions([
+        {
+          id: 'tx_vip_' + Date.now(),
+          type: 'addition',
+          category: 'subscription',
+          actionName: 'Accès Compte Créateur Invité VIP (500 crédits Pro)',
+          amount: 500,
+          date: new Date().toISOString(),
+          balanceAfter: 500,
+        },
+      ]);
       setIsAuthModalOpen(false);
-      toastSuccess('Accès Administrateur Débloqué', '👑 Bienvenue Alexandre Studio ! Compte Pro permanent (500 crédits).', 'crown');
+      toastSuccess('Accès Administrateur Débloqué', '👑 Bienvenue Créateur Invité ! Compte Pro permanent (500 crédits).', 'crown');
       return true;
     }
     toastWarning('Code Incorrect', 'Accès administrateur refusé.');
@@ -453,16 +462,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const loginDemo = () => {
-    // Normal guest login, never Alexandre Studio publicly
-    setUser(DEFAULT_GUEST_USER);
+    // Normal guest login, 25 credits
+    setUser(DEFAULT_PUBLIC_VISITOR);
     setIsAuthModalOpen(false);
-    toastSuccess('Session Démarée', `Connecté en mode invité (${DEFAULT_GUEST_USER.credits} crédits disponibles).`, 'sparkles');
+    toastSuccess('Session Démarée', `Connecté en mode visiteur (${DEFAULT_PUBLIC_VISITOR.credits} crédits d'essai disponibles).`, 'sparkles');
   };
 
   const logout = () => {
     localStorage.removeItem(STORAGE_ADMIN_KEY);
     localStorage.removeItem(STORAGE_KEYS.USER);
-    setUser(DEFAULT_GUEST_USER);
+    setUser(DEFAULT_PUBLIC_VISITOR);
     toastInfo('Session terminée', 'Vous avez été déconnecté avec succès.');
   };
 
@@ -537,7 +546,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // 2. Utilisateurs normaux : bloque si crédits insuffisants, jamais en négatif
     if (user.credits < amount) {
       setIsSubscriptionModalOpen(true);
-      toastWarning('Crédits insuffisants', 'Crédits insuffisants, passez Pro (500 crédits).');
+      toastWarning('Crédits insuffisants', `Crédits insuffisants. Vous avez ${user.credits} crédits. 1 vidéo = ${amount} crédits. Passez Pro pour 500 crédits à 5$.`);
       return false;
     }
 

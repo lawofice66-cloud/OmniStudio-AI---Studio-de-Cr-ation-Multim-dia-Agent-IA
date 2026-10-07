@@ -154,6 +154,6 @@ export const PRICING_CONFIG = {
     STORY_GENERATOR: 3,
     TEXT_TO_IMAGE: 2,
     MUSIC_GENERATOR: 5,  // 1 musique symphonique = 5 crédits
-    TEXT_TO_VIDEO: 5,    // 1 vidéo 5s = 5 crédits (accessible dès le Plan Free avec 25 crédits)
+    TEXT_TO_VIDEO: 25,   // 1 vidéo 5s = 25 crédits (Plan Free avec 25 crédits = 1 vidéo gratuite)
   },
 };

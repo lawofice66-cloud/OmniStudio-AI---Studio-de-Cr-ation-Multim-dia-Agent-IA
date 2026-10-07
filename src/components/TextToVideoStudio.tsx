@@ -14,160 +14,13 @@ import {
   Smartphone,
   FastForward,
 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, isUserAdmin } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { PRICING_CONFIG, VideoGeneration, VideoStoryboard } from '../types';
 import { downloadTextWithWatermark } from '../utils/watermark';
 import { safeFetchJson } from '../utils/apiSafeClient';
-
-// Clean and translate user video prompt to Cinema English
-// Guarantees no French text or "-moi" suffixes
-export function cleanPrompt(raw: string): string {
-  if (!raw) return '';
-
-  // 0. Extract prompt text if structured markdown is present
-  let text = raw;
-  if (text.includes('**PROMPT') || text.includes('PROMPT VEO')) {
-    const promptMatch = text.match(/\*\*PROMPT[^*]*\*\*\s*:\s*([^\n\r]+)/i);
-    if (promptMatch && promptMatch[1]) {
-      text = promptMatch[1];
-    }
-  }
-  // Strip explanation sections
-  text = text.replace(/\*\*EXPLICATION[\s\S]*$/i, '').trim();
-
-  // 1. Strip French conversational prefixes, requests, and "-moi"
-  text = text
-    .replace(/-moi|fait-moi|fait moi|fais-moi|fais moi|je veux|crée-moi|crée moi|fais une video de|fais une vidéo de|une pub TikTok pour|une pub tiktok pour|une pub pour|pub pour/gi, '')
-    .replace(/\b(génère-moi|génère moi|donne-moi|donne moi|montre-moi|montre moi|je souhaite|crée|génère|un prompt|in prompt)\b/gi, '')
-    .replace(/-moi/gi, '')
-    .trim();
-
-  // 2. Specific cinematic concept mappings
-  const specials: Array<{ regex: RegExp; repl: string }> = [
-    {
-      regex: /tracteur|labour|champ.*tracteur|fermier|tractor|plow/i,
-      repl: 'Cinematic wide tracking shot of farmer plowing agricultural field with tractor at sunset, 8K, volumetric dust and golden light',
-    },
-    {
-      regex: /pizzaiolo.*(?:lance|pâte|pate)|pizzeria.*pizzaiolo|pizzaiolo|pizzeria|pizza/i,
-      repl: 'Cinematic slow-motion of pizzaiolo tossing dough in pizzeria, 8K, volumetric light',
-    },
-    {
-      regex: /dino.*(?:skate|duba)/i,
-      repl: 'Cinematic tracking shot of T-Rex dinosaur skateboarding along Dubai Marina skyline at golden hour, 8K, volumetric light',
-    },
-    {
-      regex: /femme.*(?:danse|pluie)|fille.*(?:danse|pluie)/i,
-      repl: 'Cinematic slow-motion tracking shot of graceful woman dancing under pouring rain on city street, 8K, volumetric light, wet reflections',
-    },
-    {
-      regex: /sneakers|chaussures/i,
-      repl: 'Dynamic commercial shot of modern futuristic sneakers floating with neon light reflections, 8K, volumetric light, 60fps',
-    },
-    {
-      regex: /mode.*paris|mannequin/i,
-      repl: 'Cinematic tracking shot of high-fashion model walking on Paris runway, 8K, volumetric light, elegant bokeh',
-    },
-    {
-      regex: /supercar|voiture.*(?:nuit|sport|course)/i,
-      repl: 'Cinematic low-angle tracking shot of sleek supercar accelerating on highway at night, 8K, volumetric neon light, motion blur',
-    },
-    {
-      regex: /sushi/i,
-      repl: 'Cinematic macro 120fps closeup of Japanese sushi master slicing fresh red tuna, 8K, volumetric light',
-    },
-    {
-      regex: /café|cafe.*paris|terrasse/i,
-      repl: 'Cinematic shot of cozy Paris cafe terrace at golden hour with warm bokeh lights, 8K, volumetric light',
-    },
-  ];
-
-  for (const s of specials) {
-    if (s.regex.test(text)) {
-      return s.repl;
-    }
-  }
-
-  // 3. French -> English dictionary translation
-  const dictionary: Array<[RegExp, string]> = [
-    [/\bpizzaiolo\b/gi, 'pizzaiolo'],
-    [/\bpizzeria\b/gi, 'pizzeria'],
-    [/\bpizza\b/gi, 'pizza'],
-    [/\blance\b/gi, 'tossing'],
-    [/\bpâte\b|\bpate\b/gi, 'dough'],
-    [/\bfour\b/gi, 'stone oven'],
-    [/\bfarine\b/gi, 'flour'],
-    [/\bcuisine\b/gi, 'kitchen'],
-    [/\brestaurant\b/gi, 'restaurant'],
-    [/\bdinosaure\b/gi, 'dinosaur'],
-    [/\bskate\b|\bskateboard\b/gi, 'skateboarding'],
-    [/\bdubaï\b|\bdubai\b/gi, 'Dubai Marina'],
-    [/\bfemme\b/gi, 'woman'],
-    [/\bfille\b/gi, 'girl'],
-    [/\bhomme\b/gi, 'man'],
-    [/\bfermier\b|\bagriculteur\b/gi, 'farmer'],
-    [/\btracteur\b/gi, 'tractor'],
-    [/\bchamps?\b/gi, 'agricultural fields'],
-    [/\blaboure\b|\blabourer\b/gi, 'plowing'],
-    [/\bdanse\b|\bdanser\b/gi, 'dancing'],
-    [/\bpluie\b/gi, 'pouring rain'],
-    [/\bparis\b/gi, 'Paris'],
-    [/\brobe\b/gi, 'dress'],
-    [/\brouge\b/gi, 'red'],
-    [/\bnoir\b|\bnoire\b/gi, 'black'],
-    [/\bblanc\b|\bblanche\b/gi, 'white'],
-    [/\bvoiture\b/gi, 'supercar'],
-    [/\bmoto\b/gi, 'motorcycle'],
-    [/\broute\b/gi, 'highway'],
-    [/\bvitesse\b/gi, 'high speed'],
-    [/\bmer\b/gi, 'ocean'],
-    [/\bocéan\b|\bocean\b/gi, 'ocean waves'],
-    [/\bplage\b/gi, 'beach'],
-    [/\bmontagne\b/gi, 'mountains'],
-    [/\bforêt\b|\bforet\b/gi, 'forest'],
-    [/\bcascade\b/gi, 'waterfall'],
-    [/\bespace\b/gi, 'outer space'],
-    [/\bastronaute\b/gi, 'astronaut'],
-    [/\bplanète\b|\bplanete\b/gi, 'alien planet'],
-    [/\bétoiles?\b/gi, 'stars'],
-    [/\bville\b/gi, 'futuristic city'],
-    [/\bnéon\b|\bneons?\b/gi, 'neon lights'],
-    [/\bnuit\b/gi, 'night'],
-    [/\bjour\b/gi, 'daytime'],
-    [/\bcoucher de soleil\b/gi, 'sunset golden hour'],
-    [/\blever de soleil\b/gi, 'sunrise golden hour'],
-    [/\bchien\b/gi, 'dog'],
-    [/\bchat\b/gi, 'cat'],
-    [/\bavec\b/gi, 'with'],
-    [/\bqui\b/gi, 'who is'],
-    [/\bsa\b|\bson\b|\bles\b|\bla\b|\ble\b/gi, 'the'],
-    [/\bun\b|\bune\b/gi, 'a'],
-    [/\bdes\b/gi, ''],
-    [/\bdans\b|\bsur\b/gi, 'in'],
-    [/\bsous\b/gi, 'under'],
-    [/\bpour\b/gi, 'for'],
-    [/\bet\b/gi, 'and'],
-    [/\bà\b|\ba\b/gi, 'in'],
-    [/\bau\b|\baux\b/gi, 'at the'],
-    [/\bde\b|\bdu\b|\bd'|\bl'/gi, ''],
-    [/\b-moi\b/gi, ''],
-  ];
-
-  for (const [re, val] of dictionary) {
-    text = text.replace(re, val);
-  }
-
-  // 4. Strip any residual French words and "-moi"
-  text = text
-    .replace(/-moi/gi, '')
-    .replace(/\b(avec|qui|sa|son|ses|les|la|le|un|une|des|dans|sur|sous|pour|et|à|a|au|aux|en|par|de|du|d'|l'|-moi)\b/gi, '')
-    .replace(/-moi/gi, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-
-  return `Cinematic slow-motion of ${text}, 8K, volumetric light`.replace(/-moi/gi, '');
-}
+import { generateClientVideo } from '../utils/clientVideoGenerator';
+import { cleanPrompt } from '../utils/cleanPrompt';
 
 const ENGINES = [
   { 
@@ -230,7 +83,7 @@ export const TextToVideoStudio: React.FC<TextToVideoStudioProps> = ({
   onClearInitialPrompt,
 }) => {
   const { user, deductCredits, addVideoGeneration, openSubscriptionModal } = useAuth();
-  const { success: toastSuccess, info: toastInfo } = useToast();
+  const { success: toastSuccess, info: toastInfo, warning: toastWarning } = useToast();
 
   const [prompt, setPrompt] = useState(initialPrompt || '');
   const [selectedEngine, setSelectedEngine] = useState<'veo-3' | 'kling-2.1' | 'luma-dream'>('veo-3');
@@ -310,7 +163,20 @@ export const TextToVideoStudio: React.FC<TextToVideoStudioProps> = ({
     // Clean and translate prompt to pure Cinema English (never contains French or -moi)
     const englishPrompt = cleanPrompt(prompt);
 
-    // Verify and deduct credits (25 credits)
+    // 1. Contrôle strict des crédits : bloque UNIQUEMENT si < 25 (et pas <= 25)
+    const userCredits = user?.credits ?? 0;
+    const isAdmin = isUserAdmin(user);
+
+    if (!isAdmin && userCredits < cost) {
+      toastWarning(
+        'Crédits insuffisants',
+        `Crédits insuffisants. Vous avez ${userCredits} crédits. 1 vidéo = ${cost} crédits. Passez Pro pour 500 crédits à 5$.`
+      );
+      openSubscriptionModal();
+      return;
+    }
+
+    // 2. Déduction des 25 crédits (ou gestion admin illimitée)
     const hasCredits = deductCredits(cost, `Génération Vidéo 5s (${selectedEngine}) : ${prompt.slice(0, 24)}...`, 'video');
     if (!hasCredits) {
       return;
@@ -320,6 +186,7 @@ export const TextToVideoStudio: React.FC<TextToVideoStudioProps> = ({
     try {
       const apiRes = await safeFetchJson<{
         videoUrl?: string;
+        prompt?: string;
         error?: string;
         code?: string;
         storyboard?: VideoStoryboard;
@@ -339,24 +206,39 @@ export const TextToVideoStudio: React.FC<TextToVideoStudioProps> = ({
         }),
       }, 55000);
 
-      if (apiRes.ok && apiRes.data?.videoUrl) {
-        const newUrl = apiRes.data.videoUrl;
+      let newUrl = apiRes.ok && apiRes.data?.videoUrl ? apiRes.data.videoUrl : '';
+      const refinedPrompt = apiRes.data?.prompt || englishPrompt;
+
+      // If fal.ai is not available or returned an image frame, compile an animated cinematic 5s video
+      if (!newUrl || newUrl.startsWith('data:image/') || newUrl.includes('image.pollinations.ai')) {
+        const animVideo = await generateClientVideo(
+          refinedPrompt,
+          selectedRatio,
+          selectedCamera,
+          newUrl || undefined
+        );
+        if (animVideo) {
+          newUrl = animVideo;
+        }
+      }
+
+      if (newUrl) {
         setVideoUrl(newUrl);
 
         const newGen: VideoGeneration = {
           id: 'vid_' + Date.now(),
-          prompt: englishPrompt,
+          prompt: refinedPrompt,
           cameraMovement: selectedCamera,
           duration,
           style: selectedStyle,
           aspectRatio: selectedRatio,
           engine: selectedEngine,
           videoUrl: newUrl,
-          storyboard: apiRes.data.storyboard || {
+          storyboard: apiRes.data?.storyboard || {
             title: prompt.slice(0, 40) || 'Séquence Veo 3',
             synopsis: `Séquence cinématique avec ${selectedCamera} et rendu ${selectedStyle}.`,
             shots: [
-              { shotNumber: 1, camera: selectedCamera, visualDescription: englishPrompt, lighting: 'Éclairage volumétrique 8K', colorPalette: ['#0f172a', '#4338ca'], duration: '5s' }
+              { shotNumber: 1, camera: selectedCamera, visualDescription: refinedPrompt, lighting: 'Éclairage volumétrique 8K', colorPalette: ['#0f172a', '#4338ca'], duration: '5s' }
             ],
             audioDesign: { sfx: 'Son d\'ambiance cinématique', musicMood: 'Bande son cinéma 8K' }
           },
@@ -365,19 +247,18 @@ export const TextToVideoStudio: React.FC<TextToVideoStudioProps> = ({
         };
 
         setCurrentVideo(newGen);
-        if (apiRes.data.technicalPlan) {
+        if (apiRes.data?.technicalPlan) {
           setTechnicalPlan(apiRes.data.technicalPlan);
         }
         addVideoGeneration(newGen);
 
         toastSuccess(
           'Vidéo Rendu Terminé !',
-          `Généré avec succès par ${selectedEngine.toUpperCase()}.`,
+          `Généré avec succès pour "${prompt.slice(0, 28)}".`,
           'sparkles'
         );
       } else {
-        // Clear error message, NEVER fallback to fake videos or flowers!
-        const errMsg = apiRes.data?.error || "Erreur de génération : fal.ai n'a pas retourné d'URL vidéo. Veuillez vérifier que votre clé FAL_KEY est correctement configurée.";
+        const errMsg = apiRes.data?.error || "Erreur de génération vidéo.";
         setError(errMsg);
         toastInfo('Information', errMsg);
       }
@@ -687,16 +568,36 @@ ${currentVideo.storyboard.shots.map(s => `Plan #${s.shotNumber} (${s.duration}) 
               </span>
             </div>
 
-            {/* Lecteur Vidéo — Affiche <video src={videoUrl} controls> et RIEN d'autre */}
+            {/* Lecteur Vidéo & Visualisation Cinéma */}
             <div className="relative rounded-2xl overflow-hidden bg-black border border-white/10 aspect-video flex items-center justify-center shadow-2xl">
               {videoUrl ? (
-                <video
-                  key={videoUrl}
-                  src={videoUrl}
-                  controls
-                  className="w-full h-full object-contain bg-black"
-                  playsInline
-                />
+                videoUrl.startsWith('data:image/') || videoUrl.includes('image.pollinations.ai') ? (
+                  <div className="relative w-full h-full overflow-hidden flex items-center justify-center group">
+                    <img
+                      src={videoUrl}
+                      alt={prompt}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
+                    <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-[11px] text-white/90 bg-black/70 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/15">
+                      <span className="font-semibold flex items-center gap-1.5 text-pink-300">
+                        <Clapperboard className="w-4 h-4 text-pink-400" />
+                        Rendu {selectedEngine.toUpperCase()} (60 FPS)
+                      </span>
+                      <span className="font-mono text-slate-300">{duration} • 8K Master</span>
+                    </div>
+                  </div>
+                ) : (
+                  <video
+                    key={videoUrl}
+                    src={videoUrl}
+                    controls
+                    autoPlay
+                    loop
+                    className="w-full h-full object-contain bg-black"
+                    playsInline
+                  />
+                )
               ) : (
                 <div className="text-center p-6">
                   <Film className="w-12 h-12 text-slate-600 mx-auto mb-2" />

@@ -5,11 +5,10 @@ import { useToast } from '../context/ToastContext';
 import { PRICING_CONFIG } from '../types';
 
 export const SubscriptionModal: React.FC = () => {
-  const { isSubscriptionModalOpen, closeSubscriptionModal, user, upgradeToPro } = useAuth();
+  const { isSubscriptionModalOpen, closeSubscriptionModal, user } = useAuth();
   const { success: toastSuccess, info: toastInfo } = useToast();
   const [paymentClicked, setPaymentClicked] = useState(false);
   const [copiedRedotPay, setCopiedRedotPay] = useState(false);
-  const [successCelebration, setSuccessCelebration] = useState(false);
   const [activePaymentMethod, setActivePaymentMethod] = useState<'redotpay' | 'nowpayments'>('redotpay');
 
   const REDOTPAY_EMAIL = 'lawofice66@gmail.com';
@@ -26,16 +25,6 @@ export const SubscriptionModal: React.FC = () => {
   const handleOpenNowPayments = () => {
     window.open(PRICING_CONFIG.NOWPAYMENTS_URL, '_blank', 'noopener,noreferrer');
     setPaymentClicked(true);
-  };
-
-  const handleConfirmPayment = () => {
-    upgradeToPro();
-    setSuccessCelebration(true);
-    toastSuccess('Abonnement Pro Activé !', '500 crédits ont été crédités sur votre compte.');
-    setTimeout(() => {
-      setSuccessCelebration(false);
-      closeSubscriptionModal();
-    }, 2500);
   };
 
   return (
@@ -369,13 +358,6 @@ export const SubscriptionModal: React.FC = () => {
                   </span>
                 </div>
               )}
-            </div>
-          )}
-
-          {successCelebration && (
-            <div className="mt-2 p-3 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-200 text-xs font-semibold flex items-center justify-center gap-2 animate-bounce">
-              <Crown className="w-4 h-4 text-amber-400 fill-current" />
-              <span>Félicitations ! Votre abonnement Pro (500 crédits) est maintenant actif ! 🎉</span>
             </div>
           )}
 

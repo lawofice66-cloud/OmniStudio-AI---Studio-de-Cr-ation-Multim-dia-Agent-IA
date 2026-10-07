@@ -55,8 +55,7 @@ export const UsageDashboard: React.FC = () => {
     storyHistory, 
     musicHistory, 
     transcriptionHistory, 
-    openSubscriptionModal, 
-    upgradeToPro 
+    openSubscriptionModal
   } = useAuth();
 
   const { success: toastSuccess, info: toastInfo } = useToast();
@@ -68,7 +67,6 @@ export const UsageDashboard: React.FC = () => {
   const [timeRange, setTimeRange] = useState<'7d' | '14d' | '30d'>('7d');
   const [hoveredDay, setHoveredDay] = useState<{ date: string; amount: number; count: number } | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [quickTopupSuccess, setQuickTopupSuccess] = useState(false);
 
   // Project History states
   const [historySearch, setHistorySearch] = useState('');
@@ -276,12 +274,6 @@ export const UsageDashboard: React.FC = () => {
     window.open(PRICING_CONFIG.NOWPAYMENTS_URL, '_blank', 'noopener,noreferrer');
   };
 
-  const handleQuickActivate = () => {
-    upgradeToPro();
-    setQuickTopupSuccess(true);
-    setTimeout(() => setQuickTopupSuccess(false), 3000);
-  };
-
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
       
@@ -340,12 +332,6 @@ export const UsageDashboard: React.FC = () => {
                 <ExternalLink className="w-3.5 h-3.5" />
               </button>
             </div>
-
-            {quickTopupSuccess && (
-              <p className="text-[11px] text-emerald-400 font-semibold text-center animate-pulse">
-                ✨ Statut Pro activé ! +500 crédits ajoutés à votre compte.
-              </p>
-            )}
           </div>
 
         </div>

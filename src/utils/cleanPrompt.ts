@@ -1,142 +1,202 @@
 /**
- * Clean and translate user video prompts to Cinema English
- * Guarantees no French text or "-moi" suffixes
+ * Faithful, accurate translation & cinematic enhancement of video prompts.
+ * Converts conversational French to English without replacing the user's idea
+ * with hardcoded or canned templates.
  */
+
+// Comprehensive phrase & idiom mappings (longest match first to avoid fragmented substitutions)
+const IDIOMATIC_MAP: Array<[RegExp, string]> = [
+  // Conversational command strippers
+  [/\b(fais[- ]moi une vid[eé]o (de |d'|pour )?|g[eé]n[eè]re[- ]moi une vid[eé]o (de |d'|pour )?|cr[eé]e[- ]moi une vid[eé]o (de |d'|pour )?)\b/gi, ''],
+  [/\b(fais[- ]moi|g[eé]n[eè]re[- ]moi|cr[eé]e[- ]moi|donne[- ]moi|montre[- ]moi)\b/gi, ''],
+  [/\b(je veux une vid[eé]o (de |d'|pour )?|je veux voir|je souhaite une vid[eé]o)\b/gi, ''],
+  [/\b(une vid[eé]o (de |d'|pour )?|court[- ]m[eé]trage (de |d'|pour )?|clip (de |d'|pour )?)\b/gi, ''],
+  [/\b(une pub tiktok (pour |de )?|pub (pour |de )?)\b/gi, ''],
+  [/-moi\b/gi, ''],
+
+  // Complex multi-word phrases (MUST be replaced before individual words!)
+  [/\bqui sort du four\b|\bsortant du four\b/gi, 'freshly pulled from the hot oven'],
+  [/\bqui sort de\b|\bsortant de\b/gi, 'emerging from'],
+  [/\bsort du four\b/gi, 'freshly taken out of the wood-fired oven'],
+  [/\bpâte à pizza\b|\bpate a pizza\b/gi, 'pizza dough'],
+  [/\blance sa pâte\b|\blance la pâte\b|\blançant sa pâte\b/gi, 'tossing and spinning pizza dough in the air'],
+  [/\bfour à bois\b|\bfour a bois\b/gi, 'wood-fired stone pizza oven with glowing flames'],
+  [/\bfromage coulant\b|\bfromage fondu\b|\bfromage fondant\b/gi, 'bubbling stringy melted mozzarella cheese'],
+  [/\bau coucher du soleil\b|\bau coucher de soleil\b/gi, 'at golden hour sunset with warm amber lighting'],
+  [/\bau lever du soleil\b|\bau lever de soleil\b/gi, 'at early morning sunrise with soft golden rays'],
+  [/\bsous la pluie battante\b|\bsous une pluie battante\b/gi, 'under heavy cinematic rain with glistening wet reflections'],
+  [/\bsous la pluie\b/gi, 'under gentle falling rain with glossy reflections'],
+  [/\bà toute vitesse\b|\ba toute vitesse\b|\bà pleine vitesse\b/gi, 'at high speed with dynamic motion blur'],
+  [/\ben pleine nuit\b|\bde nuit\b/gi, 'at night under dramatic moody lighting'],
+  [/\bface caméra\b|\bface a la camera\b|\bface à la caméra\b/gi, 'facing directly into the camera'],
+  [/\ben gros plan\b/gi, 'in extreme detailed close-up'],
+  [/\ben ralenti\b|\bau ralenti\b/gi, 'in ultra slow-motion 120fps'],
+  [/\bvue du ciel\b|\bvue aérienne\b|\bvue aerienne\b/gi, 'aerial cinematic drone bird-eye view'],
+  [/\bsur la route\b|\bsur l'autoroute\b/gi, 'along the highway asphalt road'],
+  [/\bdans les rues de\b|\bdans la rue de\b/gi, 'through the scenic streets of'],
+  [/\bdans l'espace\b|\bdans le cosmos\b/gi, 'in deep outer space surrounded by vibrant nebulae'],
+  [/\bsur la lune\b/gi, 'on the lunar surface of the Moon'],
+  [/\bdans un champ de blé\b|\bdans un champ de ble\b/gi, 'in a vast golden wheat field swayed by gentle wind'],
+  [/\bdans un champ\b|\bdans les champs\b/gi, 'across scenic countryside green fields'],
+  [/\bqui marche\b|\bmarchant\b/gi, 'walking smoothly forward'],
+  [/\bqui court\b|\bcourant\b/gi, 'sprinting fast dynamically'],
+  [/\bqui vole\b|\bvolant\b/gi, 'flying gracefully in mid-air'],
+  [/\bqui nage\b|\bnageant\b/gi, 'swimming through crystal clear water'],
+  [/\bqui danse\b|\bdansant\b/gi, 'dancing with elegant fluid movements'],
+  [/\bqui roule\b|\broulant\b/gi, 'cruising dynamically on asphalt'],
+  [/\bqui conduit\b|\bconduisant\b/gi, 'driving focused behind the wheel'],
+  [/\bqui joue de la guitare\b/gi, 'playing acoustic electric guitar passionately'],
+  [/\bqui joue\b|\bjouant\b/gi, 'playing joyfully'],
+  [/\bavec des lunettes de soleil\b/gi, 'wearing stylish dark sunglasses'],
+  [/\bavec des reflets\b/gi, 'with realistic mirror-like puddle reflections'],
+  [/\ben train de manger\b|\bmangeant\b/gi, 'savoring delicious food'],
+  [/\ben train de\b/gi, 'actively'],
+];
+
+// Single word contextual dictionary (applied carefully)
+const VOCABULARY_MAP: Array<[RegExp, string]> = [
+  // Food & Kitchen
+  [/\bpizzaiolo\b/gi, 'Italian pizzaiolo chef in apron'],
+  [/\bpizzeria\b/gi, 'traditional rustic Italian pizzeria'],
+  [/\bpizza\b/gi, 'hot artisanal gourmet pizza'],
+  [/\bpâte\b|\bpate\b/gi, 'dough'],
+  [/\bfour\b/gi, 'stone brick oven'],
+  [/\bfromage\b/gi, 'melted cheese'],
+  [/\btomates?\b/gi, 'fresh ripe tomatoes'],
+  [/\bfarine\b/gi, 'airborne flour dust particles'],
+  [/\bcuisine\b/gi, 'professional kitchen'],
+  [/\bcuisinier\b|\bchef\b/gi, 'master chef'],
+  [/\brestaurant\b/gi, 'restaurant'],
+  [/\bterrasse\b/gi, 'cafe terrace'],
+  [/\bsushi\b/gi, 'fresh salmon sashimi sushi'],
+  [/\bburger\b|\bhamburger\b/gi, 'gourmet juicy burger'],
+  [/\bchocolat\b/gi, 'rich glossy melted chocolate'],
+  [/\bcafé\b|\bcafe\b/gi, 'steaming espresso coffee cup'],
+  [/\bcroissant\b/gi, 'golden flaky French croissant'],
+
+  // Characters
+  [/\bhomme\b/gi, 'man'],
+  [/\bfemme\b/gi, 'woman'],
+  [/\bfille\b/gi, 'girl'],
+  [/\bgarçon\b|\bgarcon\b/gi, 'young boy'],
+  [/\benfant\b|\benfants\b/gi, 'children'],
+  [/\bastronaute\b/gi, 'astronaut in modern high-tech EVA suit'],
+  [/\bguerrier\b|\bguerrière\b/gi, 'armored epic warrior'],
+  [/\bsamuraï\b|\bsamourai\b|\bsamurai\b/gi, 'honorable samurai with katana blade'],
+  [/\brobot\b|\bcyborg\b/gi, 'futuristic sleek android robot'],
+  [/\bmannequin\b/gi, 'high-fashion runway model'],
+
+  // Animals
+  [/\bdinosaure\b|\bt[- ]rex\b/gi, 'giant Tyrannosaurus Rex dinosaur'],
+  [/\blion\b/gi, 'majestic male lion with full mane'],
+  [/\btigre\b/gi, 'bengal tiger'],
+  [/\bloup\b/gi, 'wild wolf with silver fur'],
+  [/\bours\b/gi, 'grizzly bear in wilderness'],
+  [/\baigle\b/gi, 'bald eagle soaring'],
+  [/\bcheval\b|\bchevaux\b/gi, 'wild galloping horse'],
+  [/\bchien\b/gi, 'golden retriever dog'],
+  [/\bchat\b/gi, 'feline cat'],
+  [/\brequin\b/gi, 'great white shark underwater'],
+  [/\bdauphin\b/gi, 'leaping dolphin'],
+  [/\bdragon\b/gi, 'mythical fire-breathing dragon'],
+
+  // Vehicles
+  [/\bvoiture de sport\b|\bsupercar\b/gi, 'sleek aerodynamic luxury supercar'],
+  [/\bvoiture\b|\bautomobile\b/gi, 'modern car'],
+  [/\bmoto\b/gi, 'high-performance sport motorcycle'],
+  [/\bcamion\b/gi, 'semi-truck'],
+  [/\bvaisseau spatial\b|\bvaisseau\b/gi, 'interstellar starship vessel'],
+  [/\bavion\b/gi, 'airplane'],
+  [/\bavion de chasse\b/gi, 'stealth fighter jet'],
+  [/\bhélicoptère\b|\bhelicoptere\b/gi, 'helicopter'],
+  [/\bbateau\b|\bnavire\b/gi, 'wooden sailboat'],
+  [/\byacht\b/gi, 'luxury yacht'],
+  [/\bskateboard\b|\bskate\b/gi, 'skateboard'],
+  [/\bvélo\b|\bvelo\b/gi, 'bicycle'],
+
+  // Places
+  [/\brocher\b|\brochers\b/gi, 'weathered stone cliff rock'],
+  [/\bmer\b|\bocéan\b|\bocean\b/gi, 'ocean waves'],
+  [/\bplage\b/gi, 'tropical beach with fine sand'],
+  [/\bmontagne\b|\bmontagnes\b/gi, 'snow-capped mountain summit'],
+  [/\bforêt\b|\bforet\b/gi, 'misty pine forest'],
+  [/\bjungle\b/gi, 'dense tropical jungle'],
+  [/\bdésert\b|\bdesert\b/gi, 'vast sand dunes desert'],
+  [/\bcascade\b/gi, 'waterfall'],
+  [/\bville\b|\bmétropole\b/gi, 'city metropolis'],
+  [/\brue\b/gi, 'urban street'],
+  [/\bparis\b/gi, 'Paris with Haussmann architecture'],
+  [/\bdubaï\b|\bdubai\b/gi, 'futuristic Dubai skyline'],
+  [/\btokyo\b/gi, 'neon-lit Tokyo Shibuya crossing'],
+  [/\bnew york\b/gi, 'New York City skyline'],
+  [/\bchâteau\b|\bchateau\b/gi, 'medieval stone castle'],
+
+  // Weather & Atmosphere
+  [/\borage\b|\béclair\b|\beclair\b/gi, 'thunderstorm with lightning'],
+  [/\bbrouillard\b|\bbrume\b/gi, 'atmospheric volumetric mist and fog'],
+  [/\bnéon\b|\bneons?\b/gi, 'radiant vibrant neon lights'],
+  [/\bflammes?\b|\bfeu\b/gi, 'blazing cinematic fire and glowing embers'],
+  [/\bfuturiste\b|\bcyberpunk\b/gi, 'futuristic cyberpunk sci-fi'],
+
+  // Prepositions & common connectors
+  [/\bavec (du|de la|des|de l'|un|une)?\b|\bavec\b/gi, 'with'],
+  [/\bdans (le|la|les|un|une)?\b|\bdans\b/gi, 'in'],
+  [/\bsur (le|la|les|un|une)?\b|\bsur\b/gi, 'on'],
+  [/\bsous (le|la|les|un|une)?\b|\bsous\b/gi, 'under'],
+  [/\bet\b/gi, 'and'],
+  [/\b(un|une|le|la|les|du|de la|des)\b/gi, ''],
+
+  // Colors
+  [/\brouge\b/gi, 'red'],
+  [/\bbleu\b|\bbleue\b/gi, 'deep blue'],
+  [/\bvert\b|\bverte\b/gi, 'vivid green'],
+  [/\bjaune\b/gi, 'golden yellow'],
+  [/\bnoir\b|\bnoire\b/gi, 'sleek black'],
+  [/\bblanc\b|\bblanche\b/gi, 'pure white'],
+  [/\bdor[eé]\b|\bdor[eé]e\b/gi, 'shimmering gold'],
+  [/\bargent[eé]\b|\bargent[eé]e\b/gi, 'metallic silver'],
+  [/\bviolet\b|\bviolette\b/gi, 'neon violet purple'],
+  [/\brose\b/gi, 'vivid pink'],
+];
+
 export function cleanPrompt(raw: string): string {
   if (!raw) return '';
-  
-  // 1. Strip French conversational prefixes and suffixes
-  let text = raw
-    .replace(/\b(fais-moi|crée-moi|génère-moi|donne-moi|montre-moi)\b/gi, '')
-    .replace(/\b(je veux|fais une vidéo de|fais une video de|une vidéo de|une video de|vidéo de|video de|génère une vidéo de|génère une video de|crée une vidéo de|crée une video de|une pub tiktok pour|une pub tiktok|une pub pour|pub pour)\b/gi, '')
-    .replace(/-moi/gi, '')
-    .trim();
 
-  // 2. Specialized cinematic concept mappings
-  const specials: Array<{ regex: RegExp; repl: string }> = [
-    {
-      regex: /pizzaiolo.*(?:lance|pâte|pate)|pizzeria.*pizzaiolo/i,
-      repl: 'Cinematic slow-motion of pizzaiolo tossing dough in pizzeria, 8K, volumetric light',
-    },
-    {
-      regex: /pizzaiolo/i,
-      repl: 'Cinematic slow-motion of pizzaiolo tossing dough in pizzeria, 8K, volumetric light',
-    },
-    {
-      regex: /pizzeria/i,
-      repl: 'Cinematic slow-motion of pizzaiolo tossing dough in pizzeria, 8K, volumetric light',
-    },
-    {
-      regex: /pizza/i,
-      repl: 'Cinematic slow-motion of pizzaiolo tossing dough in pizzeria, 8K, volumetric light',
-    },
-    {
-      regex: /dino.*(?:skate|duba)/i,
-      repl: 'Cinematic tracking shot of T-Rex dinosaur skateboarding along Dubai Marina skyline at golden hour, 8K, volumetric light',
-    },
-    {
-      regex: /femme.*(?:danse|pluie)|fille.*(?:danse|pluie)/i,
-      repl: 'Cinematic slow-motion tracking shot of graceful woman dancing under pouring rain on city street, 8K, volumetric light, wet reflections',
-    },
-    {
-      regex: /sneakers|chaussures/i,
-      repl: 'Dynamic commercial shot of modern futuristic sneakers floating with neon light reflections, 8K, volumetric light, 60fps',
-    },
-    {
-      regex: /mode.*paris|mannequin/i,
-      repl: 'Cinematic tracking shot of high-fashion model walking on Paris runway, 8K, volumetric light, elegant bokeh',
-    },
-    {
-      regex: /supercar|voiture.*(?:nuit|sport|course)/i,
-      repl: 'Cinematic low-angle tracking shot of sleek supercar accelerating on highway at night, 8K, volumetric neon light, motion blur',
-    },
-    {
-      regex: /sushi/i,
-      repl: 'Cinematic macro 120fps closeup of Japanese sushi master slicing fresh red tuna, 8K, volumetric light',
-    },
-    {
-      regex: /café|cafe.*paris|terrasse/i,
-      repl: 'Cinematic shot of cozy Paris cafe terrace at golden hour with warm bokeh lights, 8K, volumetric light',
-    },
-  ];
-
-  for (const s of specials) {
-    if (s.regex.test(text)) {
-      return s.repl;
+  // 1. Extract prompt text if structured markdown or tags are present
+  let text = raw;
+  if (text.includes('**PROMPT') || text.includes('PROMPT VEO') || text.includes('Prompt :')) {
+    const promptMatch = text.match(/\*\*(?:PROMPT[^*]*|Prompt)\*\*\s*:\s*([^\n\r]+)/i);
+    if (promptMatch && promptMatch[1]) {
+      text = promptMatch[1];
     }
   }
+  text = text.replace(/\*\*EXPLICATION[\s\S]*$/i, '').trim();
 
-  // 3. Word-by-word French -> English translation
-  const dictionary: Array<[RegExp, string]> = [
-    [/\bpizzaiolo\b/gi, 'pizzaiolo'],
-    [/\bpizzeria\b/gi, 'pizzeria'],
-    [/\bpizza\b/gi, 'pizza'],
-    [/\blance\b/gi, 'tossing'],
-    [/\bpâte\b/gi, 'dough'],
-    [/\bpate\b/gi, 'dough'],
-    [/\bfour\b/gi, 'stone oven'],
-    [/\bfarine\b/gi, 'flour'],
-    [/\bcuisine\b/gi, 'kitchen'],
-    [/\brestaurant\b/gi, 'restaurant'],
-    [/\bdinosaure\b/gi, 'dinosaur'],
-    [/\bskate\b/gi, 'skateboarding'],
-    [/\bdubaï\b|\bdubai\b/gi, 'Dubai Marina'],
-    [/\bfemme\b/gi, 'woman'],
-    [/\bfille\b/gi, 'girl'],
-    [/\bhomme\b/gi, 'man'],
-    [/\bdanse\b|\bdanser\b/gi, 'dancing'],
-    [/\bpluie\b/gi, 'pouring rain'],
-    [/\bparis\b/gi, 'Paris'],
-    [/\brobe\b/gi, 'dress'],
-    [/\brouge\b/gi, 'red'],
-    [/\bnoir\b|\bnoire\b/gi, 'black'],
-    [/\bblanc\b|\bblanche\b/gi, 'white'],
-    [/\bvoiture\b/gi, 'supercar'],
-    [/\bmoto\b/gi, 'motorcycle'],
-    [/\broute\b/gi, 'highway'],
-    [/\bvitesse\b/gi, 'high speed'],
-    [/\bmer\b/gi, 'ocean'],
-    [/\bocéan\b|\bocean\b/gi, 'ocean waves'],
-    [/\bplage\b/gi, 'beach'],
-    [/\bmontagne\b/gi, 'mountains'],
-    [/\bforêt\b|\bforet\b/gi, 'forest'],
-    [/\bcascade\b/gi, 'waterfall'],
-    [/\bespace\b/gi, 'outer space'],
-    [/\bastronaute\b/gi, 'astronaut'],
-    [/\bplanète\b|\bplanete\b/gi, 'alien planet'],
-    [/\bétoiles?\b/gi, 'stars'],
-    [/\bville\b/gi, 'futuristic city'],
-    [/\bnéon\b|\bneons?\b/gi, 'neon lights'],
-    [/\bnuit\b/gi, 'night'],
-    [/\bjour\b/gi, 'daytime'],
-    [/\bcoucher de soleil\b/gi, 'sunset golden hour'],
-    [/\blever de soleil\b/gi, 'sunrise golden hour'],
-    [/\bchien\b/gi, 'dog'],
-    [/\bchat\b/gi, 'cat'],
-    [/\bavec\b/gi, 'with'],
-    [/\bqui\b/gi, 'who is'],
-    [/\bsa\b|\bson\b|\bles\b|\bla\b|\ble\b/gi, 'the'],
-    [/\bun\b|\bune\b/gi, 'a'],
-    [/\bdes\b/gi, ''],
-    [/\bdans\b|\bsur\b/gi, 'in'],
-    [/\bsous\b/gi, 'under'],
-    [/\bpour\b/gi, 'for'],
-    [/\bet\b/gi, 'and'],
-    [/\bà\b|\ba\b/gi, 'in'],
-    [/\bau\b|\baux\b/gi, 'at the'],
-    [/\bde\b|\bdu\b|\bd'|\bl'/gi, ''],
-    [/\b-moi\b/gi, ''],
-  ];
-
-  for (const [re, val] of dictionary) {
+  // 2. Apply Idiomatic multi-word phrases first (e.g. "qui sort du four" -> "freshly pulled from the hot oven")
+  for (const [re, val] of IDIOMATIC_MAP) {
     text = text.replace(re, val);
   }
 
-  // 4. Strip leftover French words, extra spaces and punctuation
+  // 3. Apply single word vocabulary mapping
+  for (const [re, val] of VOCABULARY_MAP) {
+    text = text.replace(re, val);
+  }
+
+  // 4. Clean up remaining conversational filler words and extra spacing
   text = text
     .replace(/-moi/gi, '')
     .replace(/\s+/g, ' ')
     .trim();
 
-  return `Cinematic slow-motion of ${text}, 8K, volumetric light`;
+  // 5. Return high-impact cinematic prompt
+  if (!text) {
+    return 'Cinematic 8K slow-motion tracking shot, volumetric lighting, photorealistic textures';
+  }
+
+  // If already contains cinematic descriptors or English, don't duplicate
+  if (/cinematic|8k|volumetric|photorealistic/i.test(text)) {
+    return text;
+  }
+
+  return `Cinematic 8K slow-motion shot of ${text}, photorealistic, volumetric cinematic lighting, high-definition textures`;
 }

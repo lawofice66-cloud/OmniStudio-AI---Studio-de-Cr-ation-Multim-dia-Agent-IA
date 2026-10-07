@@ -5,9 +5,8 @@ import { useToast } from '../context/ToastContext';
 import { PRICING_CONFIG } from '../types';
 
 export const PricingPage: React.FC = () => {
-  const { user, upgradeToPro, openSubscriptionModal } = useAuth();
-  const { info: toastInfo, success: toastSuccess } = useToast();
-  const [activatedSuccess, setActivatedSuccess] = useState(false);
+  const { user, openSubscriptionModal } = useAuth();
+  const { info: toastInfo } = useToast();
   const [copiedRedotPay, setCopiedRedotPay] = useState(false);
 
   const REDOTPAY_EMAIL = 'lawofice66@gmail.com';
@@ -21,13 +20,6 @@ export const PricingPage: React.FC = () => {
 
   const handleOpenNowPayments = () => {
     window.open(PRICING_CONFIG.NOWPAYMENTS_URL, '_blank', 'noopener,noreferrer');
-  };
-
-  const handleActivatePro = () => {
-    upgradeToPro();
-    setActivatedSuccess(true);
-    toastSuccess('Abonnement Pro Activé !', '500 crédits ont été crédités sur votre compte.');
-    setTimeout(() => setActivatedSuccess(false), 4000);
   };
 
   return (
@@ -46,13 +38,6 @@ export const PricingPage: React.FC = () => {
           Démarrez gratuitement avec {PRICING_CONFIG.FREE_PLAN_CREDITS} crédits sans engagement. Passez à la formule Pro pour débloquer 500 crédits et l'Agent IA Nova en illimité.
         </p>
       </div>
-
-      {activatedSuccess && (
-        <div className="p-4 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-200 text-center font-bold text-sm animate-bounce flex items-center justify-center gap-2">
-          <Crown className="w-5 h-5 text-amber-400 fill-current" />
-          <span>Félicitations ! Votre abonnement Pro (500 crédits) est maintenant actif ! 🎉</span>
-        </div>
-      )}
 
       {/* Pricing Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
