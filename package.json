@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler pages deploy dist || wrangler deploy",
+    "deploy:pages": "wrangler pages deploy dist",
+    "deploy:worker": "wrangler deploy"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
