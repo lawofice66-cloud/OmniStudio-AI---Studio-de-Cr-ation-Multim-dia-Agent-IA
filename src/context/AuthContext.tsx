@@ -8,6 +8,7 @@ interface AuthContextType {
   login: (email: string, pass: string) => Promise<boolean>;
   register: (name: string, email: string, pass: string) => Promise<boolean>;
   loginDemo: () => void;
+  loginWithAdminSecret: (secret: string) => boolean;
   logout: () => void;
   upgradeToPro: () => void;
   deductCredits: (amount: number, reason: string, category?: CreditTransaction['category']) => boolean;
@@ -43,17 +44,43 @@ const STORAGE_KEYS = {
   TRANSACTIONS: 'omnistudio_transactions',
 };
 
-// Initial default user for seamless instant testing
-const DEFAULT_USER: User = {
-  id: 'usr_demo_101',
+export const ADMIN_SECRET_KEY = 'fallen75_secret_2024';
+const STORAGE_ADMIN_KEY = 'omnistudio_admin_secret';
+
+export const ADMIN_USER: User = {
+  id: 'usr_admin_alexandre',
   email: 'lawofice66@gmail.com',
   name: 'Alexandre Studio',
+  plan: 'pro',
+  credits: 500, // Toujours 500 crédits
+  avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+  createdAt: new Date().toISOString(),
+  isPro: true, // Toujours Pro
+};
+
+// Default user for standard public visitors (normal Free user)
+export const DEFAULT_GUEST_USER: User = {
+  id: 'usr_guest_demo',
+  email: 'createur@omnistudio.ai',
+  name: 'Créateur Invité',
   plan: 'free',
   credits: PRICING_CONFIG.FREE_PLAN_CREDITS,
-  avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+  avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
   createdAt: new Date().toISOString(),
   isPro: false,
 };
+
+export function isUserAdmin(u?: User | null): boolean {
+  if (!u) return false;
+  return (
+    u.name === 'Alexandre Studio' ||
+    u.email === 'alexandre@studio.com' ||
+    u.email === 'lawofice66@gmail.com'
+  );
+}
+
+// Initial default user fallback (never Alexandre Studio publicly)
+const DEFAULT_USER: User = DEFAULT_GUEST_USER;
 
 // Seed historical usage data for the past 7 days to give vibrant immediate charts
 const getInitialTransactions = (): CreditTransaction[] => {
@@ -209,11 +236,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const [user, setUser] = useState<User | null>(() => {
     try {
+      // 1. Check URL for secret admin parameter (?admin=fallen75_secret_2024 or #admin=fallen75_secret_2024)
+      let hasUrlAdmin = false;
+      if (typeof window !== 'undefined') {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('admin') === ADMIN_SECRET_KEY || window.location.hash.includes(ADMIN_SECRET_KEY)) {
+          hasUrlAdmin = true;
+          localStorage.setItem(STORAGE_ADMIN_KEY, ADMIN_SECRET_KEY);
+        }
+      }
+
+      // 2. Check secret key in localStorage
+      const storedSecret = localStorage.getItem(STORAGE_ADMIN_KEY);
+      if (hasUrlAdmin || storedSecret === ADMIN_SECRET_KEY) {
+        return { ...ADMIN_USER, credits: 500, isPro: true, plan: 'pro' };
+      }
+
+      // 3. For normal users, read standard user or fallback to guest
       const saved = localStorage.getItem(STORAGE_KEYS.USER);
-      if (saved) return JSON.parse(saved);
-      return DEFAULT_USER;
+      if (saved) {
+        const parsed: User = JSON.parse(saved);
+        // Security: If account is named Alexandre Studio but secret is missing, do NOT grant admin
+        if (isUserAdmin(parsed)) {
+          if (storedSecret !== ADMIN_SECRET_KEY) {
+            return DEFAULT_GUEST_USER;
+          }
+          return { ...parsed, isPro: true, plan: 'pro', credits: 500 };
+        }
+        return parsed;
+      }
+      return DEFAULT_GUEST_USER;
     } catch {
-      return DEFAULT_USER;
+      return DEFAULT_GUEST_USER;
     }
   });
 
@@ -274,6 +328,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
+
+  // Enforce Alexandre Studio is ALWAYS Pro and 500 credits
+  useEffect(() => {
+    if (user && isUserAdmin(user)) {
+      if (!user.isPro || user.plan !== 'pro' || user.credits < 25) {
+        setUser({
+          ...user,
+          isPro: true,
+          plan: 'pro',
+          credits: 500,
+        });
+      }
+    }
+  }, [user]);
 
   // Persist user
   useEffect(() => {
@@ -366,14 +434,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return true;
   };
 
+  const loginWithAdminSecret = (secret: string): boolean => {
+    if (secret.trim() === ADMIN_SECRET_KEY) {
+      localStorage.setItem(STORAGE_ADMIN_KEY, ADMIN_SECRET_KEY);
+      const admin: User = {
+        ...ADMIN_USER,
+        credits: 500,
+        isPro: true,
+        plan: 'pro',
+      };
+      setUser(admin);
+      setIsAuthModalOpen(false);
+      toastSuccess('Accès Administrateur Débloqué', '👑 Bienvenue Alexandre Studio ! Compte Pro permanent (500 crédits).', 'crown');
+      return true;
+    }
+    toastWarning('Code Incorrect', 'Accès administrateur refusé.');
+    return false;
+  };
+
   const loginDemo = () => {
-    setUser(DEFAULT_USER);
+    // Normal guest login, never Alexandre Studio publicly
+    setUser(DEFAULT_GUEST_USER);
     setIsAuthModalOpen(false);
-    toastSuccess('Mode Démo Activé', `Connecté avec succès (${DEFAULT_USER.credits} crédits disponibles).`, 'sparkles');
+    toastSuccess('Session Démarée', `Connecté en mode invité (${DEFAULT_GUEST_USER.credits} crédits disponibles).`, 'sparkles');
   };
 
   const logout = () => {
-    setUser(null);
+    localStorage.removeItem(STORAGE_ADMIN_KEY);
+    localStorage.removeItem(STORAGE_KEYS.USER);
+    setUser(DEFAULT_GUEST_USER);
     toastInfo('Session terminée', 'Vous avez été déconnecté avec succès.');
   };
 
@@ -413,14 +502,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return false;
     }
 
+    // 1. Compte ADMIN (Alexandre Studio) : toujours Pro, 500 crédits, ne descend jamais en négatif
+    if (isUserAdmin(user)) {
+      let currentCredits = user.credits;
+      if (typeof currentCredits !== 'number' || currentCredits < 25) {
+        currentCredits = 500;
+      }
+      const newCredits = Math.max(25, Math.round((currentCredits - amount) * 10) / 10);
+      setUser({
+        ...user,
+        isPro: true,
+        plan: 'pro',
+        credits: newCredits < 25 ? 500 : newCredits,
+      });
+
+      const tx: CreditTransaction = {
+        id: 'tx_' + Date.now(),
+        type: 'deduction',
+        category,
+        actionName: `[Admin] ${reason}`,
+        amount,
+        date: new Date().toISOString(),
+        balanceAfter: newCredits < 25 ? 500 : newCredits,
+      };
+      setTransactions((prev) => [tx, ...prev]);
+      return true;
+    }
+
     // Pro users get free agent chat
     if (user.isPro && amount === PRICING_CONFIG.CREDIT_COSTS.AGENT_CHAT) {
       return true;
     }
 
+    // 2. Utilisateurs normaux : bloque si crédits insuffisants, jamais en négatif
     if (user.credits < amount) {
       setIsSubscriptionModalOpen(true);
-      toastWarning('Crédits insuffisants', `Cette action nécessite ${amount} crédit(s). Passez au Plan Pro pour 5 USD ou rechargez vos crédits.`);
+      toastWarning('Crédits insuffisants', 'Crédits insuffisants, passez Pro (500 crédits).');
       return false;
     }
 
@@ -494,6 +611,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         login,
         register,
         loginDemo,
+        loginWithAdminSecret,
         logout,
         upgradeToPro,
         deductCredits,

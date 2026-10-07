@@ -25,15 +25,30 @@ import { safeFetchJson } from '../utils/apiSafeClient';
 export function cleanPrompt(raw: string): string {
   if (!raw) return '';
 
+  // 0. Extract prompt text if structured markdown is present
+  let text = raw;
+  if (text.includes('**PROMPT') || text.includes('PROMPT VEO')) {
+    const promptMatch = text.match(/\*\*PROMPT[^*]*\*\*\s*:\s*([^\n\r]+)/i);
+    if (promptMatch && promptMatch[1]) {
+      text = promptMatch[1];
+    }
+  }
+  // Strip explanation sections
+  text = text.replace(/\*\*EXPLICATION[\s\S]*$/i, '').trim();
+
   // 1. Strip French conversational prefixes, requests, and "-moi"
-  let text = raw
-    .replace(/-moi|fais-moi|je veux|crée-moi|fais une video de|fais une vidéo de|une pub TikTok pour|une pub tiktok pour|une pub pour|pub pour/gi, '')
-    .replace(/\b(génère-moi|donne-moi|montre-moi|je souhaite|crée|génère)\b/gi, '')
+  text = text
+    .replace(/-moi|fait-moi|fait moi|fais-moi|fais moi|je veux|crée-moi|crée moi|fais une video de|fais une vidéo de|une pub TikTok pour|une pub tiktok pour|une pub pour|pub pour/gi, '')
+    .replace(/\b(génère-moi|génère moi|donne-moi|donne moi|montre-moi|montre moi|je souhaite|crée|génère|un prompt|in prompt)\b/gi, '')
     .replace(/-moi/gi, '')
     .trim();
 
   // 2. Specific cinematic concept mappings
   const specials: Array<{ regex: RegExp; repl: string }> = [
+    {
+      regex: /tracteur|labour|champ.*tracteur|fermier|tractor|plow/i,
+      repl: 'Cinematic wide tracking shot of farmer plowing agricultural field with tractor at sunset, 8K, volumetric dust and golden light',
+    },
     {
       regex: /pizzaiolo.*(?:lance|pâte|pate)|pizzeria.*pizzaiolo|pizzaiolo|pizzeria|pizza/i,
       repl: 'Cinematic slow-motion of pizzaiolo tossing dough in pizzeria, 8K, volumetric light',
@@ -91,6 +106,10 @@ export function cleanPrompt(raw: string): string {
     [/\bfemme\b/gi, 'woman'],
     [/\bfille\b/gi, 'girl'],
     [/\bhomme\b/gi, 'man'],
+    [/\bfermier\b|\bagriculteur\b/gi, 'farmer'],
+    [/\btracteur\b/gi, 'tractor'],
+    [/\bchamps?\b/gi, 'agricultural fields'],
+    [/\blaboure\b|\blabourer\b/gi, 'plowing'],
     [/\bdanse\b|\bdanser\b/gi, 'dancing'],
     [/\bpluie\b/gi, 'pouring rain'],
     [/\bparis\b/gi, 'Paris'],

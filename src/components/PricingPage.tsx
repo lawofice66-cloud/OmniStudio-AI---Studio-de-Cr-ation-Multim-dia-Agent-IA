@@ -204,15 +204,6 @@ export const PricingPage: React.FC = () => {
               <span>Payer 6 USD sur NOWPayments (5$ + 1$ frais réseau)</span>
               <ExternalLink className="w-4 h-4" />
             </button>
-
-            {/* Instant Activation */}
-            <button
-              onClick={handleActivatePro}
-              className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-            >
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-              <span>J'ai déjà payé : Activer mes 500 crédits Pro</span>
-            </button>
           </div>
         </div>
 

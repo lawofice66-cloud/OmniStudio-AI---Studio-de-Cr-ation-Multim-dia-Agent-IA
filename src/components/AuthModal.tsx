@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
-import { X, Sparkles, Mail, Lock, User, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { X, Sparkles, Mail, Lock, User, ArrowRight, CheckCircle2, KeyRound } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { PRICING_CONFIG } from '../types';
 
 export const AuthModal: React.FC = () => {
-  const { isAuthModalOpen, closeAuthModal, login, register, loginDemo } = useAuth();
+  const { isAuthModalOpen, closeAuthModal, login, register, loginWithAdminSecret } = useAuth();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [adminSecretInput, setAdminSecretInput] = useState('');
+  const [showAdminBox, setShowAdminBox] = useState(false);
 
   if (!isAuthModalOpen) return null;
 
@@ -172,16 +174,54 @@ export const AuthModal: React.FC = () => {
           </button>
         </form>
 
-        {/* Demo Fast Login */}
+        {/* Secret Admin Access (Alexandre Studio Pro) */}
         <div className="mt-5 pt-4 border-t border-white/10 text-center">
-          <p className="text-xs text-slate-400 mb-2">Envie de tester sans inscription ?</p>
-          <button
-            type="button"
-            onClick={loginDemo}
-            className="w-full py-2 px-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-200 text-xs font-medium border border-white/5 transition-colors"
-          >
-            ⚡ Tester immédiatement avec le Compte Démo
-          </button>
+          {!showAdminBox ? (
+            <button
+              type="button"
+              onClick={() => setShowAdminBox(true)}
+              className="text-[11px] text-slate-500 hover:text-slate-300 transition-colors flex items-center justify-center gap-1.5 mx-auto cursor-pointer"
+            >
+              <KeyRound className="w-3.5 h-3.5" />
+              <span>Accès Administrateur Développeur</span>
+            </button>
+          ) : (
+            <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-amber-500/30 text-left space-y-2 animate-in fade-in">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-amber-300 flex items-center gap-1">
+                  <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+                  Authentification Admin
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowAdminBox(false)}
+                  className="text-[10px] text-slate-500 hover:text-white"
+                >
+                  Annuler
+                </button>
+              </div>
+              <input
+                type="password"
+                value={adminSecretInput}
+                onChange={(e) => setAdminSecretInput(e.target.value)}
+                placeholder="Entrez le mot de passe admin secret..."
+                className="w-full bg-slate-950 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    loginWithAdminSecret(adminSecretInput);
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => loginWithAdminSecret(adminSecretInput)}
+                className="w-full py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold text-xs shadow-md transition-all cursor-pointer"
+              >
+                Valider l'Accès Admin (Alexandre Studio Pro)
+              </button>
+            </div>
+          )}
         </div>
 
       </div>

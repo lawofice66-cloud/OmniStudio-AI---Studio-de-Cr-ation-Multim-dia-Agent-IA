@@ -311,9 +311,9 @@ export const SubscriptionModal: React.FC = () => {
                   <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold flex items-center justify-center text-[10px] mb-1">
                     3
                   </span>
-                  <strong className="text-white block text-[11px]">Activation Directe</strong>
+                  <strong className="text-white block text-[11px]">Validation Sécurisée</strong>
                   <p className="text-slate-400 text-[10px] leading-tight">
-                    Cliquez sur le bouton ci-dessous pour valider vos 500 crédits Pro instantanément.
+                    Vos 500 crédits Pro sont activés dès réception du transfert.
                   </p>
                 </div>
               </div>
@@ -321,16 +321,15 @@ export const SubscriptionModal: React.FC = () => {
               <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3">
                 <span className="text-[11px] text-slate-400 flex items-center gap-1.5">
                   <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                  Validation garantie & activation prioritaire des 500 crédits
+                  Paiement sécurisé vérifié par notre équipe
                 </span>
-
                 <button
                   type="button"
-                  onClick={handleConfirmPayment}
-                  className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs shadow-lg shadow-emerald-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer hover:scale-105 active:scale-95"
+                  onClick={handleCopyRedotPayEmail}
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-white/10 flex items-center justify-center gap-2 cursor-pointer transition-colors"
                 >
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>J'ai envoyé 5 USD via RedotPay : Activer mon Pro (+500 cr)</span>
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>{copiedRedotPay ? 'ID Copié !' : 'Copier l\'ID RedotPay'}</span>
                 </button>
               </div>
             </div>
@@ -354,28 +353,19 @@ export const SubscriptionModal: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleOpenNowPayments}
-                    className="px-5 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-extrabold text-xs shadow-lg shadow-amber-500/30 transition-all flex items-center justify-center gap-2 hover:scale-105 active:scale-95 cursor-pointer"
+                    className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/30 transition-all flex items-center justify-center gap-2 hover:scale-105 active:scale-95 cursor-pointer"
                   >
                     <span>Payer 6 USD sur NOWPayments (5$ + 1$ frais)</span>
                     <ExternalLink className="w-4 h-4" />
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleConfirmPayment}
-                    className="px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md shadow-emerald-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Activer mon Pro (+500 cr)</span>
                   </button>
                 </div>
               </div>
 
               {paymentClicked && (
-                <div className="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2">
+                <div className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
                   <span>
-                    La passerelle NOWPayments est ouverte. Dès votre règlement de 6 USD validé, cliquez sur <strong>"Activer mon Pro"</strong> ci-dessus pour profiter instantanément de vos 500 crédits !
+                    La passerelle sécurisée NOWPayments a été ouverte. Dès validation du paiement, votre compte reçoit ses 500 crédits Pro automatiquement.
                   </span>
                 </div>
               )}

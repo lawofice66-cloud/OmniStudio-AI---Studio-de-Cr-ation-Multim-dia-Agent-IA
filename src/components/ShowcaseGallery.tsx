@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { generateShowcaseWav } from '../utils/audioSynthesizer';
 import { useToast } from '../context/ToastContext';
+import { TutorialVideoSection } from './TutorialVideoSection';
 
 export interface ShowcaseItem {
   id: string;
@@ -333,38 +334,16 @@ export const ShowcaseGallery: React.FC<ShowcaseGalleryProps> = ({ onSelectSample
           <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
             Explorez des créations complètes générées par nos moteurs : bandes originales orchestrales, storyboards vidéo découpés, récits littéraires immersifs et visuels 8K. Cliquez sur un échantillon pour l'écouter, le lire ou le cloner instantanément dans votre studio !
           </p>
+        </div>
 
-          {/* YouTube Video Demo Feature Banner */}
-          {onOpenYouTubeDemo && (
-            <div className="p-4 rounded-2xl bg-gradient-to-r from-red-950/60 via-slate-900/80 to-purple-950/60 border border-red-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-red-600 flex items-center justify-center shrink-0 shadow-lg shadow-red-600/40">
-                  <Youtube className="w-5 h-5 text-white animate-pulse" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-black text-white uppercase tracking-wider">
-                      Vidéo de Démonstration Complète
-                    </span>
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-500/20 text-red-300 border border-red-500/30">
-                      YouTube 4K
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-300">
-                    Regardez la visite guidée interactive 2m15s avec voix-off et script complet plan par plan.
-                  </p>
-                </div>
-              </div>
+        {/* Video Tutorial Section with YouTube 16:9 & Interactive Walkthrough */}
+        <div className="pt-4 max-w-5xl mx-auto">
+          <TutorialVideoSection 
+            onStartFreeVideo={(prompt) => onSelectSample('video', prompt || 'pizzeria avec pizzaiolo qui lance sa pâte sous éclairage volumétrique')} 
+          />
+        </div>
 
-              <button
-                onClick={onOpenYouTubeDemo}
-                className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold text-xs shadow-lg shadow-red-600/30 transition-transform hover:scale-105 cursor-pointer"
-              >
-                <Play className="w-3.5 h-3.5 ml-0.5" />
-                <span>Lancer la Démo YouTube</span>
-              </button>
-            </div>
-          )}
+        <div className="pt-2">
 
           {/* Filter Pills */}
           <div className="flex flex-wrap items-center gap-2 pt-2">

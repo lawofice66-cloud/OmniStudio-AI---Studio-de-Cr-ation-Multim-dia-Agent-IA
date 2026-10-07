@@ -330,24 +330,14 @@ export const UsageDashboard: React.FC = () => {
               Obtenez +500 crédits immédiats, débloquez l'Agent IA illimité et téléchargez vos créations sans filigrane.
             </p>
 
-            <div className="grid grid-cols-2 gap-2 pt-1">
+            <div className="pt-1">
               <button
                 type="button"
                 onClick={handleOpenNowPayments}
-                className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold text-xs shadow-lg transition-transform hover:scale-105 flex items-center justify-center gap-1.5 cursor-pointer"
+                className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs shadow-lg transition-transform hover:scale-105 flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                <span>Payer 5$</span>
-                <ExternalLink className="w-3 h-3" />
-              </button>
-
-              <button
-                type="button"
-                onClick={handleQuickActivate}
-                className="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-white/10 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                title="Activer mon statut Pro"
-              >
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Activer Pro</span>
+                <span>Souscrire via NOWPayments (5 USD / 6 USD)</span>
+                <ExternalLink className="w-3.5 h-3.5" />
               </button>
             </div>
 
