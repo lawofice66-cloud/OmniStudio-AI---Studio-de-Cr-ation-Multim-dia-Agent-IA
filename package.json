@@ -15,7 +15,6 @@
     "deploy:worker": "wrangler deploy"
   },
   "dependencies": {
-    "@fal-ai/client": "^1.10.1",
     "@google/genai": "^2.4.0",
     "@tailwindcss/vite": "^4.3.3",
     "@vitejs/plugin-react": "^4.3.4",
