@@ -53,7 +53,7 @@ export const SubscriptionModal: React.FC = () => {
             Boostez votre créativité pour seulement <span className="bg-gradient-to-r from-amber-300 via-orange-400 to-amber-500 bg-clip-text text-transparent">5 USD / mois</span>
           </h2>
           <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-lg mx-auto">
-            Rechargez 500 crédits Pro pour alimenter vos créations Vidéo Photoréaliste 8K Google Flare et Scénarios Cinématographiques.
+            Rechargez 500 crédits Pro pour alimenter vos créations de Récits & Scénarios Cinématographiques.
           </p>
         </div>
 
@@ -81,15 +81,15 @@ export const SubscriptionModal: React.FC = () => {
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-slate-400 shrink-0" />
-                  <span>Accès aux 2 studios Flare (Vidéo Photoréaliste 8K & Scénarios)</span>
+                  <span>Accès au Studio d'Écriture Scénaristique & Histoires</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-slate-400 shrink-0" />
-                  <span>Résolution standard</span>
+                  <span>Récits complets multi-chapitres</span>
                 </li>
                 <li className="flex items-center gap-2 text-slate-400">
                   <X className="w-4 h-4 text-slate-600 shrink-0" />
-                  <span>File d'attente standard</span>
+                  <span>Génération prioritaire instantanée</span>
                 </li>
               </ul>
             </div>
@@ -132,19 +132,19 @@ export const SubscriptionModal: React.FC = () => {
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span><strong>Agent IA Nova illimité</strong> (0 crédit déduit)</span>
+                  <span><strong>Générations d'histoires illimitées & prioritaires</strong></span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span>Priorité Turbo ultra-rapide sur les serveurs</span>
+                  <span>Découpage cinématographique Hollywood et fiches personnages</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span>Générations HD / 4K sans filigrane</span>
+                  <span>Sauvegarde et bibliothèque de projets illimitées</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span>Exports illimités des vidéos et sous-titres SRT</span>
+                  <span>Exports illimités des récits en formats Markdown & TXT</span>
                 </li>
               </ul>
             </div>
@@ -168,31 +168,16 @@ export const SubscriptionModal: React.FC = () => {
             </p>
             <span className="text-[10px] text-amber-400 font-bold">500 crédits rechargeables</span>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
-            <div className="p-2 rounded-xl bg-slate-950/70 border border-white/5">
-              <span className="text-slate-400 block text-[10px]">Agent Nova</span>
-              <span className="font-bold text-white">0.5 crédit</span>
-              <span className="text-[10px] text-emerald-400 block font-bold">(Illimité en Pro)</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+            <div className="p-3 rounded-xl bg-slate-950/70 border border-purple-500/20">
+              <span className="text-purple-300 block text-[11px] font-bold">Récit & Histoire Complète</span>
+              <span className="font-extrabold text-white text-base">2 crédits</span>
+              <span className="text-[10px] text-slate-400 block mt-0.5">Multi-chapitres, univers immersif, dialogues</span>
             </div>
-            <div className="p-2 rounded-xl bg-slate-950/70 border border-white/5">
-              <span className="text-slate-400 block text-[10px]">Image 8K</span>
-              <span className="font-bold text-white">2 crédits</span>
-              <span className="text-[10px] text-slate-400 block">/ image 8K</span>
-            </div>
-            <div className="p-2 rounded-xl bg-slate-950/70 border border-white/5">
-              <span className="text-slate-400 block text-[10px]">Vidéo 5s Veo 3</span>
-              <span className="font-bold text-white">25 crédits</span>
-              <span className="text-[10px] text-pink-400 block font-medium">/ vidéo 5s</span>
-            </div>
-            <div className="p-2 rounded-xl bg-slate-950/70 border border-white/5">
-              <span className="text-slate-400 block text-[10px]">Musique Lyria 3</span>
-              <span className="font-bold text-white">15 crédits</span>
-              <span className="text-[10px] text-cyan-400 block font-medium">/ piste 48kHz</span>
-            </div>
-            <div className="p-2 rounded-xl bg-slate-950/70 border border-white/5">
-              <span className="text-slate-400 block text-[10px]">Transcription</span>
-              <span className="font-bold text-white">1 crédit</span>
-              <span className="text-[10px] text-slate-400 block">/ audio analysé</span>
+            <div className="p-3 rounded-xl bg-slate-950/70 border border-indigo-500/20">
+              <span className="text-indigo-300 block text-[11px] font-bold">Scénario Cinématographique</span>
+              <span className="font-extrabold text-white text-base">3 crédits</span>
+              <span className="text-[10px] text-slate-400 block mt-0.5">Découpage de scènes, sluglines, vision réalisateur</span>
             </div>
           </div>
         </div>

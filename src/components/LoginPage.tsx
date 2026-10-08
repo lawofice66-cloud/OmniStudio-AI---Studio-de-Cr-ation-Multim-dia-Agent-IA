@@ -120,7 +120,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>Zéro filigrane sur tous les exports vidéo et récits</span>
+              <span>Zéro filigrane sur tous les exports de scénarios et récits</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />

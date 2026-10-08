@@ -120,7 +120,7 @@ Nombre total de récits créés : ${storyHistory.length}
             Exporter Mon Besoin Créatif
           </h2>
           <p className="text-xs text-slate-400">
-            Téléchargez un document de spécifications complet regroupant tous vos prompts, storyboards vidéo et analyses audio pour votre équipe ou vos clients.
+            Téléchargez un document de spécifications complet regroupant tous vos récits, scénarios cinématographiques et découpages de scènes pour votre équipe ou vos réalisations.
           </p>
         </div>
 

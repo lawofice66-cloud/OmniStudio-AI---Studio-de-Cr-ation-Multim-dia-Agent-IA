@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, CheckCircle2, Crown, Coins, Video, ShieldCheck } from 'lucide-react';
+import { X, CheckCircle2, Crown, Coins, BookOpen, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export const AuthModal: React.FC = () => {
@@ -66,16 +66,16 @@ export const AuthModal: React.FC = () => {
 
           <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2.5 text-xs text-emerald-300">
             <ShieldCheck className="w-4 h-4 shrink-0" />
-            <span>Votre compte est opérationnel, prêt pour toutes vos réalisations vidéo et scénarios.</span>
+            <span>Votre compte est opérationnel, prêt pour toutes vos créations de récits et scénarios.</span>
           </div>
         </div>
 
         <button
           onClick={closeAuthModal}
-          className="w-full py-3 rounded-xl bg-gradient-to-r from-pink-600 via-rose-600 to-amber-500 hover:from-pink-500 hover:to-amber-400 text-white font-bold text-xs shadow-lg shadow-pink-600/30 transition-all cursor-pointer flex items-center justify-center gap-2"
+          className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-xs shadow-lg shadow-purple-600/30 transition-all cursor-pointer flex items-center justify-center gap-2"
         >
-          <Video className="w-4 h-4" />
-          <span>Accéder au Studio Vidéo Flare</span>
+          <BookOpen className="w-4 h-4" />
+          <span>Accéder au Studio Histoires Flare</span>
         </button>
 
       </div>
