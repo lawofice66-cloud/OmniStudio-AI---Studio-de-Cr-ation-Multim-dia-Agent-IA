@@ -208,49 +208,30 @@ export const PricingPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
-          <div className="p-4 rounded-2xl bg-slate-900/80 border border-white/5 space-y-2">
-            <span className="text-xs font-semibold text-purple-400">Agent Nova</span>
-            <div className="text-2xl font-black text-white">0.5 crédit</div>
-            <p className="text-[11px] text-slate-400">Par échange ou prompt rédigé.</p>
-            <span className="inline-block text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">
-              100% Gratuit pour les abonnés Pro
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="p-5 rounded-2xl bg-slate-900/80 border border-pink-500/30 space-y-2">
+            <span className="text-xs font-bold text-pink-400 flex items-center gap-1.5">
+              <span>🎬 Studio Vidéo Google Flare & Veo 3</span>
+            </span>
+            <div className="text-3xl font-black text-white">25 crédits</div>
+            <p className="text-xs text-slate-300">
+              Par vidéo cinématique 5s à 60 FPS, rendu 8K pur, mouvements de caméra précis (Dolly, FPV) et storyboard complet.
+            </p>
+            <span className="inline-block text-[11px] font-bold text-pink-300 bg-pink-500/10 px-2.5 py-1 rounded-lg">
+              ✨ 20 vidéos 8K complètes par mois avec vos 500 crédits Pro
             </span>
           </div>
 
-          <div className="p-4 rounded-2xl bg-slate-900/80 border border-white/5 space-y-2">
-            <span className="text-xs font-semibold text-indigo-400">Texte vers Image 8K</span>
-            <div className="text-2xl font-black text-white">2 crédits</div>
-            <p className="text-[11px] text-slate-400">Par image 8K photoréaliste.</p>
-            <span className="inline-block text-[10px] text-slate-400">
-              Jusqu'à 250 images 8K / mois en Pro
+          <div className="p-5 rounded-2xl bg-slate-900/80 border border-purple-500/30 space-y-2">
+            <span className="text-xs font-bold text-purple-400 flex items-center gap-1.5">
+              <span>📖 Scénarios & Histoires Flare</span>
             </span>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-slate-900/80 border border-white/5 space-y-2">
-            <span className="text-xs font-semibold text-pink-400">Texte vers Vidéo Veo 3</span>
-            <div className="text-2xl font-black text-white">25 crédits</div>
-            <p className="text-[11px] text-slate-400">Par vidéo 5s cinématique & plan TXT.</p>
-            <span className="inline-block text-[10px] text-pink-400 font-semibold">
-              Rendu Veo 3 &lt; 35 sec
-            </span>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-slate-900/80 border border-white/5 space-y-2">
-            <span className="text-xs font-semibold text-cyan-400">Musique Lyria 3 Pro</span>
-            <div className="text-2xl font-black text-white">15 crédits</div>
-            <p className="text-[11px] text-slate-400">Par piste symphonique 48kHz.</p>
-            <span className="inline-block text-[10px] text-cyan-400 font-semibold">
-              Export WAV 48k + MP3
-            </span>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-slate-900/80 border border-white/5 space-y-2">
-            <span className="text-xs font-semibold text-emerald-400">Transcription Audio</span>
-            <div className="text-2xl font-black text-white">1 crédit</div>
-            <p className="text-[11px] text-slate-400">Par audio importé ou enregistré.</p>
-            <span className="inline-block text-[10px] text-slate-400">
-              Jusqu'à 500 transcriptions / mois
+            <div className="text-3xl font-black text-white">3 crédits</div>
+            <p className="text-xs text-slate-300">
+              Par scénario complet multi-actes avec vision réalisateur, sluglines Hollywood, dialogues, et découpage technique plan par plan.
+            </p>
+            <span className="inline-block text-[11px] font-bold text-purple-300 bg-purple-500/10 px-2.5 py-1 rounded-lg">
+              ✨ Plus de 160 scénarios cinématographiques complets par mois
             </span>
           </div>
         </div>

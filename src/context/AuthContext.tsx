@@ -338,20 +338,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const cleanEmail = email.trim().toLowerCase();
     const cleanPass = pass.trim();
 
-    // Vérification des identifiants exclusifs du compte Créateur Invité (500 crédits Pro)
+    // Vérification stricte des identifiants exclusifs du compte Créateur Invité (500 crédits Pro)
     const isOwnerEmail = cleanEmail === 'lawofice66@gmail.com' || cleanEmail === 'createur@omnistudio.ai' || cleanEmail === 'alexandre@studio.com';
     const isSecretPass = cleanPass === ADMIN_SECRET_KEY;
 
-    if (isOwnerEmail || isSecretPass) {
-      if (!isSecretPass && cleanPass.length < 4) {
-        toastWarning('Mot de passe requis', 'Veuillez saisir votre mot de passe pour accéder au compte Créateur Invité.');
+    if (isOwnerEmail) {
+      // Seul le détenteur du mot de passe secret administrateur peut accéder à ce compte VIP
+      if (!isSecretPass) {
+        toastWarning(
+          'Accès Créateur Verrouillé',
+          'Mot de passe secret incorrect pour le compte Créateur Invité. Seul l\'administrateur possède les identifiants de ce compte.'
+        );
         return false;
       }
 
       localStorage.setItem(STORAGE_ADMIN_KEY, ADMIN_SECRET_KEY);
       const vipUser: User = {
         ...CREATOR_VIP_USER,
-        email: cleanEmail.includes('@') ? cleanEmail : CREATOR_VIP_USER.email,
+        email: cleanEmail,
+        name: 'Créateur Invité',
+        credits: 500,
+        isPro: true,
+        plan: 'pro',
+      };
+      setUser(vipUser);
+      setTransactions([
+        {
+          id: 'tx_vip_' + Date.now(),
+          type: 'addition',
+          category: 'subscription',
+          actionName: 'Solde Créateur Invité (500 crédits Pro)',
+          amount: 500,
+          date: new Date().toISOString(),
+          balanceAfter: 500,
+        },
+      ]);
+      setIsAuthModalOpen(false);
+      toastSuccess('Session Créateur Débloquée', '👑 Bienvenue Créateur Invité ! Vos 500 crédits Pro sont disponibles.', 'crown');
+      return true;
+    }
+
+    if (isSecretPass) {
+      // Connexion directe par mot de passe secret
+      localStorage.setItem(STORAGE_ADMIN_KEY, ADMIN_SECRET_KEY);
+      const vipUser: User = {
+        ...CREATOR_VIP_USER,
         name: 'Créateur Invité',
         credits: 500,
         isPro: true,

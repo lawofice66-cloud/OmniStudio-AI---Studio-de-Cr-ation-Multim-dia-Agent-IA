@@ -12,8 +12,7 @@ import {
   Compass, 
   Volume2, 
   VolumeX, 
-  Image as ImageIcon, 
-  Music, 
+  Clapperboard, 
   ChevronRight, 
   Flame, 
   ShieldAlert, 
@@ -27,6 +26,13 @@ import { useToast } from '../context/ToastContext';
 import { PRICING_CONFIG, StoryGeneration } from '../types';
 import { downloadTextWithWatermark } from '../utils/watermark';
 import { safeFetchJson } from '../utils/apiSafeClient';
+
+const STORY_DIRECTORS = [
+  { id: 'Denis Villeneuve & Christopher Nolan (IMAX 70mm)', label: 'Denis Villeneuve & Christopher Nolan', desc: 'Réalisme viscéral, tension IMAX 70mm, optiques anamorphiques et silences chargés' },
+  { id: 'Ridley Scott & Les Wachowski (Sci-Fi & Cyberpunk)', label: 'Ridley Scott & Wachowski', desc: 'Atmosphère néo-noir, pluie battante, architecture vertigineuse et géopolitique' },
+  { id: 'David Fincher (Thriller au Scalpel)', label: 'David Fincher', desc: 'Précision chirurgicale, dialogues au couteau, clair-obscur et paranoïa' },
+  { id: 'Guillermo del Toro (Dark Fantasy & Poésie)', label: 'Guillermo del Toro', desc: 'Monstres mélancoliques, textures organiques, or patiné et poésie gothique' },
+];
 
 const STORY_GENRES = [
   { id: 'Science-Fiction', label: 'Science-Fiction', desc: 'Voyage interstellaire, IA et futurs lointains' },
@@ -53,13 +59,11 @@ const STORY_INSPIRATIONS = [
 ];
 
 interface StoryGeneratorStudioProps {
-  onNavigateToImageStudio?: (prompt: string) => void;
-  onNavigateToMusicStudio?: (mood: string) => void;
+  onNavigateToVideoStudio?: (prompt: string) => void;
 }
 
 export const StoryGeneratorStudio: React.FC<StoryGeneratorStudioProps> = ({
-  onNavigateToImageStudio,
-  onNavigateToMusicStudio,
+  onNavigateToVideoStudio,
 }) => {
   const { user, deductCredits, addStoryGeneration, openSubscriptionModal } = useAuth();
   const { success: toastSuccess, error: toastError, info: toastInfo } = useToast();
@@ -67,8 +71,9 @@ export const StoryGeneratorStudio: React.FC<StoryGeneratorStudioProps> = ({
   const [prompt, setPrompt] = useState('');
   const [genre, setGenre] = useState('Science-Fiction');
   const [tone, setTone] = useState('Épique & Captivant');
+  const [directorStyle, setDirectorStyle] = useState('Denis Villeneuve & Christopher Nolan (IMAX 70mm)');
   const [protagonist, setProtagonist] = useState('');
-  const [format, setFormat] = useState('Roman à Chapitres (3 Actes)');
+  const [format, setFormat] = useState('Scénario Cinématographique (3 Actes)');
   const [chaptersCount, setChaptersCount] = useState(3);
 
   const [loading, setLoading] = useState(false);
@@ -87,7 +92,7 @@ export const StoryGeneratorStudio: React.FC<StoryGeneratorStudioProps> = ({
 
     const hasCredits = deductCredits(
       cost,
-      `Histoire IA : ${prompt.slice(0, 28)}...`,
+      `Scénario Flare : ${prompt.slice(0, 28)}...`,
       'story'
     );
     if (!hasCredits) return;
@@ -101,6 +106,7 @@ export const StoryGeneratorStudio: React.FC<StoryGeneratorStudioProps> = ({
           prompt,
           genre,
           tone,
+          directorStyle,
           protagonist,
           format,
           chaptersCount,
@@ -285,17 +291,17 @@ EMBRANCHEMENTS & DILEMMES INTERACTIFS
         <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-gradient-to-br from-purple-500/15 via-pink-500/10 to-indigo-500/10 blur-3xl pointer-events-none" />
 
         <div className="max-w-3xl space-y-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs font-semibold">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 text-purple-300 text-xs font-bold">
             <BookOpen className="w-3.5 h-3.5 text-purple-400" />
-            <span>Moteur Narratif Haute Puissance • Gemini 3.8</span>
+            <span>⚡ Google Flare Narrative Engine • Multi-Actes & Scénario 8K</span>
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-            Générateur d'Histoires IA Très Puissant
+            Studio Scénario & Histoires IA (Google Flare)
           </h1>
 
           <p className="text-sm text-slate-300 leading-relaxed">
-            Donnez vie à des romans immersifs, univers de science-fiction, épopées dark fantasy et scénarios interactifs. Notre moteur conçoit l'univers, la psychologie des personnages, l'arc dramatique et les prompts visuels associés.
+            Moteur d'écriture cinématographique ultra-puissant : univers vivant, psychologie des personnages, arcs narratifs captivants et prompts vidéo Veo 3 & Flare prêts pour la réalisation.
           </p>
 
           <div className="flex flex-wrap items-center gap-4 pt-2 text-xs text-slate-400">
@@ -346,6 +352,30 @@ EMBRANCHEMENTS & DILEMMES INTERACTIFS
                   className="w-full text-left p-2.5 rounded-xl bg-slate-900/50 hover:bg-purple-500/10 border border-white/5 hover:border-purple-500/30 text-xs text-slate-300 hover:text-white transition-all line-clamp-1 cursor-pointer"
                 >
                   "{idea}"
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Director Style Selector */}
+          <div>
+            <label className="block text-xs font-bold text-slate-300 mb-2">
+              Style de Réalisation Cinématographique (Flare Director)
+            </label>
+            <div className="space-y-1.5">
+              {STORY_DIRECTORS.map((d) => (
+                <button
+                  key={d.id}
+                  type="button"
+                  onClick={() => setDirectorStyle(d.id)}
+                  className={`w-full text-left p-2.5 rounded-xl border transition-all cursor-pointer ${
+                    directorStyle === d.id
+                      ? 'bg-purple-600/25 border-purple-500 text-white shadow-md'
+                      : 'bg-slate-900/60 border-white/5 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <span className="font-bold text-xs block text-purple-200">{d.label}</span>
+                  <span className="text-[10px] text-slate-400 block line-clamp-1">{d.desc}</span>
                 </button>
               ))}
             </div>
@@ -502,6 +532,19 @@ EMBRANCHEMENTS & DILEMMES INTERACTIFS
                 </p>
               </div>
 
+              {/* Director Vision Box */}
+              {currentStory.directorVision && (
+                <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-1.5">
+                  <span className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                    <Clapperboard className="w-4 h-4 text-amber-400" />
+                    Note d'Intention & Vision Réalisateur (Google Flare Cinema) :
+                  </span>
+                  <p className="text-xs text-amber-100/90 leading-relaxed font-sans">
+                    {currentStory.directorVision}
+                  </p>
+                </div>
+              )}
+
               {/* World Lore Box */}
               <div className="p-4 rounded-2xl bg-purple-950/30 border border-purple-500/20 space-y-1.5">
                 <span className="text-xs font-bold text-purple-300 flex items-center gap-1.5">
@@ -572,51 +615,97 @@ EMBRANCHEMENTS & DILEMMES INTERACTIFS
                 {/* Active Chapter Card */}
                 {currentStory.chapters[activeChapterIndex] && (
                   <div className="p-5 sm:p-6 rounded-2xl bg-slate-900/60 border border-white/10 space-y-4">
-                    <div className="flex items-center justify-between border-b border-white/5 pb-2">
-                      <h3 className="text-base font-bold text-white">
-                        {currentStory.chapters[activeChapterIndex].title}
-                      </h3>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-white/5 pb-2.5 gap-2">
+                      <div>
+                        {currentStory.chapters[activeChapterIndex].slugline && (
+                          <span className="text-[11px] font-mono uppercase tracking-wider text-amber-400 block font-bold mb-0.5">
+                            🎬 {currentStory.chapters[activeChapterIndex].slugline}
+                          </span>
+                        )}
+                        <h3 className="text-base font-bold text-white">
+                          {currentStory.chapters[activeChapterIndex].title}
+                        </h3>
+                      </div>
                       {currentStory.chapters[activeChapterIndex].soundtrackMood && (
                         <span className="text-[11px] text-pink-300 flex items-center gap-1">
                           <Volume2 className="w-3 h-3 text-pink-400" />
-                          Ambiance sonore : {currentStory.chapters[activeChapterIndex].soundtrackMood}
+                          Ambiance : {currentStory.chapters[activeChapterIndex].soundtrackMood}
                         </span>
                       )}
                     </div>
+
+                    {/* Director Notes */}
+                    {currentStory.chapters[activeChapterIndex].directorNotes && (
+                      <div className="p-3 rounded-xl bg-purple-950/40 border border-purple-500/30 text-xs space-y-1">
+                        <span className="font-bold text-purple-300 flex items-center gap-1">
+                          <Clapperboard className="w-3.5 h-3.5 text-purple-400" />
+                          Indications Réalisateur (Cadrage & Optique) :
+                        </span>
+                        <p className="text-slate-300 text-[11px]">
+                          {currentStory.chapters[activeChapterIndex].directorNotes}
+                        </p>
+                      </div>
+                    )}
 
                     <div className="font-serif text-sm text-slate-200 leading-relaxed whitespace-pre-wrap space-y-3">
                       {currentStory.chapters[activeChapterIndex].narrative}
                     </div>
 
-                    {/* Scene Illustration Shortcut */}
+                    {/* Dialogues List */}
+                    {currentStory.chapters[activeChapterIndex].dialogues && currentStory.chapters[activeChapterIndex].dialogues!.length > 0 && (
+                      <div className="p-3.5 rounded-xl bg-slate-950/80 border border-white/5 space-y-2">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+                          💬 Script des Dialogues Clés :
+                        </span>
+                        <div className="space-y-1.5">
+                          {currentStory.chapters[activeChapterIndex].dialogues!.map((d, dIdx) => (
+                            <div key={dIdx} className="text-xs bg-slate-900/60 p-2 rounded-lg border border-white/5">
+                              <span className="font-bold text-indigo-300">{d.character} : </span>
+                              <span className="text-slate-200 italic">"{d.line}"</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Multi-Shot Breakdown (Flare Storyboard) */}
+                    {currentStory.chapters[activeChapterIndex].shots && currentStory.chapters[activeChapterIndex].shots!.length > 0 && (
+                      <div className="p-3.5 rounded-xl bg-slate-950/90 border border-pink-500/20 space-y-2">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-pink-300 flex items-center gap-1">
+                          <Layers className="w-3.5 h-3.5 text-pink-400" />
+                          Découpage Plans Flare (Multi-Shot) :
+                        </span>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {currentStory.chapters[activeChapterIndex].shots!.map((s, sIdx) => (
+                            <div key={sIdx} className="p-2.5 rounded-lg bg-slate-900/90 border border-white/5 text-[11px] space-y-1">
+                              <div className="flex items-center justify-between text-slate-400 font-bold">
+                                <span className="text-white">Plan #{s.shotNumber} ({s.duration})</span>
+                                <span className="text-amber-400">{s.camera}</span>
+                              </div>
+                              <p className="text-slate-300 line-clamp-2">{s.visualPrompt}</p>
+                              <span className="text-[10px] text-pink-400/90 block">💡 {s.lighting}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Scene Video Generation Shortcut */}
                     <div className="pt-3 border-t border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                       <span className="text-slate-400 italic text-[11px] line-clamp-1 max-w-sm">
-                        🎨 Prompt d'illustration : "{currentStory.chapters[activeChapterIndex].sceneVisualPrompt}"
+                        🎬 Prompt Scène Flare : "{currentStory.chapters[activeChapterIndex].sceneVisualPrompt}"
                       </span>
 
-                      <div className="flex flex-wrap items-center gap-2">
-                        {onNavigateToImageStudio && (
-                          <button
-                            type="button"
-                            onClick={() => onNavigateToImageStudio(currentStory.chapters[activeChapterIndex].sceneVisualPrompt)}
-                            className="px-3 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 text-indigo-300 font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
-                          >
-                            <ImageIcon className="w-3.5 h-3.5" />
-                            <span>Illustrer (Image)</span>
-                          </button>
-                        )}
-
-                        {onNavigateToMusicStudio && (
-                          <button
-                            type="button"
-                            onClick={() => onNavigateToMusicStudio(currentStory.chapters[activeChapterIndex].soundtrackMood || currentStory.tone)}
-                            className="px-3 py-1.5 rounded-xl bg-pink-600/20 hover:bg-pink-600/30 border border-pink-500/30 text-pink-300 font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
-                          >
-                            <Volume2 className="w-3.5 h-3.5" />
-                            <span>Générer le Son d'Ambiance</span>
-                          </button>
-                        )}
-                      </div>
+                      {onNavigateToVideoStudio && (
+                        <button
+                          type="button"
+                          onClick={() => onNavigateToVideoStudio(currentStory.chapters[activeChapterIndex].sceneVisualPrompt)}
+                          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-pink-600 via-rose-600 to-amber-500 hover:from-pink-500 hover:to-amber-400 text-white font-bold flex items-center gap-2 shadow-lg shadow-pink-600/30 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer shrink-0"
+                        >
+                          <Clapperboard className="w-4 h-4 text-white" />
+                          <span>Tourner cette Scène dans le Studio Vidéo Flare</span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 )}

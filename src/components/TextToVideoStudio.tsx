@@ -22,12 +22,33 @@ import { safeFetchJson } from '../utils/apiSafeClient';
 import { generateClientVideo } from '../utils/clientVideoGenerator';
 import { cleanPrompt } from '../utils/cleanPrompt';
 
+const FLARE_LENSES = [
+  { id: 'Anamorphique 35mm Hollywood', label: 'Anamorphique 35mm (Flare Bleu)', desc: 'Flare horizontal bleu classique, bokeh ovale cinématique et contraste profond' },
+  { id: 'Panavision 70mm IMAX', label: 'Panavision 70mm (IMAX 8K)', desc: 'Piqué optique extrême, plage dynamique monumentale et immersion totale' },
+  { id: 'Grand Angle 24mm Cinéma', label: 'Grand Angle 24mm', desc: 'Profondeur dramatique et présence physique de l\'environnement' },
+  { id: 'Focale 85mm F/1.2 Portrait', label: 'Objectif 85mm F/1.2 Bokeh', desc: 'Détachement du sujet ultra-net et flou d\'arrière-plan crémeux' },
+  { id: 'Drone FPV Haute Vitesse', label: 'Drone FPV Haute Vitesse', desc: 'Trajectoire dynamique et survol cinématique à grande vitesse' },
+];
+
+const FLARE_LIGHTINGS = [
+  { id: 'Golden Hour & Éclat Solaire', label: 'Golden Hour & Flare Solaire', desc: 'Lumière dorée rasante avec halo lumineux chaleureux' },
+  { id: 'Cyberpunk Néon & Pluie', label: 'Néo-Tokyo & Reflets Pluie', desc: 'Lueurs néons bleues et violettes avec asphalte mouillé' },
+  { id: 'Volumétrique Brume 8K', label: 'Brume Volumétrique & Faisceaux', desc: 'Rayons de lumière divins traversant la brume et particules' },
+  { id: 'Chiaroscuro Ombres Ciselées', label: 'Clair-obscur Dramatique', desc: 'Contraste saisissant, ombres portées et mystère' },
+];
+
 const ENGINES = [
+  { 
+    id: 'google-flare', 
+    label: 'Google Flare Cine 8K', 
+    badge: 'Moteur Suprême Flare',
+    desc: 'Physique cinématique avancée, optiques 8K et respect absolu du prompt' 
+  },
   { 
     id: 'veo-3', 
     label: 'Google Veo 3 Cinéma', 
-    badge: 'Moteur Principal',
-    desc: 'Cinématographie 4K, physique ultra-réaliste & cohérence temporelle' 
+    badge: 'Référence Hollywood',
+    desc: 'Cinématographie 4K/8K, physique ultra-réaliste & cohérence temporelle' 
   },
   { 
     id: 'kling-2.1', 
@@ -86,8 +107,10 @@ export const TextToVideoStudio: React.FC<TextToVideoStudioProps> = ({
   const { success: toastSuccess, info: toastInfo, warning: toastWarning } = useToast();
 
   const [prompt, setPrompt] = useState(initialPrompt || '');
-  const [selectedEngine, setSelectedEngine] = useState<'veo-3' | 'kling-2.1' | 'luma-dream'>('veo-3');
+  const [selectedEngine, setSelectedEngine] = useState<'google-flare' | 'veo-3' | 'kling-2.1' | 'luma-dream'>('google-flare');
   const [selectedCamera, setSelectedCamera] = useState('Auto IA');
+  const [selectedLens, setSelectedLens] = useState('Anamorphique 35mm Hollywood');
+  const [selectedLighting, setSelectedLighting] = useState('Golden Hour & Éclat Solaire');
   const [selectedStyle, setSelectedStyle] = useState('Photoréalisme 8K');
   const [selectedRatio, setSelectedRatio] = useState<'16:9' | '9:16'>(initialRatio || '16:9');
   const [duration, setDuration] = useState('5s');
@@ -201,6 +224,8 @@ export const TextToVideoStudio: React.FC<TextToVideoStudioProps> = ({
           aspectRatio: selectedRatio,
           engine: selectedEngine,
           cameraMovement: selectedCamera,
+          lens: selectedLens,
+          lighting: selectedLighting,
           duration,
           style: selectedStyle,
         }),
@@ -340,19 +365,19 @@ ${currentVideo.storyboard.shots.map(s => `Plan #${s.shotNumber} (${s.duration}) 
             <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
               Studio Vidéo Photoréaliste
             </h2>
-            <span className="px-2.5 py-0.5 rounded-full bg-pink-500/20 text-pink-300 text-xs font-bold border border-pink-500/30">
-              Veo 3 & Kling 2.1
+            <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-pink-500/30 to-amber-500/30 text-amber-300 text-xs font-black border border-amber-500/40">
+              ⚡ Google Flare & Veo 3 Cine Master
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            Génération cinématique 5s à 60 FPS avec prompt en anglais cinéma ultra-détaillé.
+            Génération cinématique 5s à 60 FPS avec physique avancée, respect absolu du prompt et rendu 8K pur.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           <div className="px-3 py-1.5 rounded-xl bg-slate-900 border border-white/10 text-xs text-slate-300 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Serveurs Veo 3 / Kling Opérationnels</span>
+            <span>Moteurs Google Flare & Veo 3 Opérationnels</span>
           </div>
         </div>
       </div>
@@ -460,6 +485,54 @@ ${currentVideo.storyboard.shots.map(s => `Plan #${s.shotNumber} (${s.duration}) 
                   >
                     <span className="block text-xs font-bold text-white">{cam.label}</span>
                     <span className="text-[10px] text-slate-400 block">{cam.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Flare Optical & Lens Selector */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-2">
+                Optique & Focale Cinéma (Google Flare)
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {FLARE_LENSES.map((l) => (
+                  <button
+                    key={l.id}
+                    type="button"
+                    onClick={() => setSelectedLens(l.id)}
+                    className={`text-left p-2.5 rounded-xl border transition-all cursor-pointer ${
+                      selectedLens === l.id
+                        ? 'bg-amber-500/20 border-amber-500 text-white shadow-md ring-1 ring-amber-500/40'
+                        : 'bg-slate-900/60 border-white/5 text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <span className="block text-xs font-bold text-amber-200">{l.label}</span>
+                    <span className="text-[10px] text-slate-400 block line-clamp-1">{l.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Flare Lighting Selector */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-2">
+                Éclairage & Atmosphère Cinématographique
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {FLARE_LIGHTINGS.map((li) => (
+                  <button
+                    key={li.id}
+                    type="button"
+                    onClick={() => setSelectedLighting(li.id)}
+                    className={`text-left p-2.5 rounded-xl border transition-all cursor-pointer ${
+                      selectedLighting === li.id
+                        ? 'bg-pink-600/20 border-pink-500 text-white shadow-md ring-1 ring-pink-500/40'
+                        : 'bg-slate-900/60 border-white/5 text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <span className="block text-xs font-bold text-pink-200">{li.label}</span>
+                    <span className="text-[10px] text-slate-400 block line-clamp-1">{li.desc}</span>
                   </button>
                 ))}
               </div>

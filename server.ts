@@ -785,7 +785,7 @@ function createSynthesizedWav(durationSeconds = 15, style = 'Cinematic'): { wavU
   };
 }
 
-// 6. Endpoint: Générateur d'Histoires IA Très Puissant (AI Story Studio)
+// 6. Endpoint: Générateur d'Histoires & Scénarios IA Google Flare (Flare Screenplay & Storyboard Studio)
 app.post('/api/generate-story', async (req, res) => {
   try {
     const {
@@ -793,7 +793,8 @@ app.post('/api/generate-story', async (req, res) => {
       genre = 'Science-Fiction',
       tone = 'Épique & Mystérieux',
       protagonist = '',
-      format = 'Roman à Chapitres',
+      directorStyle = 'Denis Villeneuve & Christopher Nolan (IMAX 70mm)',
+      format = 'Scénario Cinématographique (3 Actes)',
       chaptersCount = 3,
     } = req.body;
 
@@ -801,55 +802,73 @@ app.post('/api/generate-story', async (req, res) => {
       return res.status(400).json({ error: 'Le prompt ou sujet de l\'histoire est requis' });
     }
 
-    const systemPrompt = `Tu es un romancier et scénariste de renommée mondiale, spécialiste de la narration immersive, de la psychologie des personnages, du world-building et des rebondissements captivants.
-Tu dois concevoir une histoire riche, profonde et palpitante basée sur la demande de l'utilisateur.
+    const systemPrompt = `Tu es le Directeur Créatif et Scénariste en chef du Moteur "Google Flare AI Cinema Studio".
+Tu écris un scénario et un storyboard cinématographique d'une puissance narrative et visuelle inégalée.
 
-Paramètres de l'histoire :
-- Sujet / Idée : "${prompt}"
-- Genre littéraire : ${genre}
+Paramètres de l'œuvre :
+- Sujet / Idée de départ : "${prompt}"
+- Genre : ${genre}
 - Tonalité : ${tone}
-- Protagoniste spécifié : ${protagonist || 'À concevoir de façon mémorable'}
-- Format narratif : ${format}
-- Nombre de chapitres clés : ${chaptersCount}
+- Style de Réalisation / Directeur : ${directorStyle}
+- Format : ${format}
+- Protagoniste spécifié : ${protagonist || 'Créer un protagoniste mémorable avec de vraies failles'}
+- Nombre de scènes / chapitres clés : ${chaptersCount}
 
-Instructions impératives :
-1. Construis un univers vivant avec des détails sensoriels, des tensions politiques ou mystiques.
-2. Crée des personnages complexes aux motivations crédibles avec des failles et secrets.
-3. Rédige chaque chapitre avec de la prose évocatrice, des dialogues percutants et un pic dramatique.
-4. Pour chaque chapitre, fournis un prompt visuel ("sceneVisualPrompt") optimisé pour le studio "Texte vers Image" pour illustrer la scène.
-5. Propose 2 ou 3 choix de dilemmes moraux ("branches") pour prolonger l'histoire de façon interactive.
+Instructions Flare Cinéma :
+1. "directorVision" : Analyse stylistique et note d'intention du réalisateur (optiques, contrastes, parti pris chromatique).
+2. Chaque scène / chapitre doit être structuré comme un véritable script de cinéma :
+   - "slugline" : Entête standard Hollywood en majuscules (ex: EXT. OBSERVATOIRE D'OBSIDIENNE - CRÉPUSCULE)
+   - "narrative" : Prose cinématographique descriptive, immersive et sensorielle.
+   - "directorNotes" : Instructions de cadrage, focale (ex: Anamorphique 35mm), gestion du son et jeu d'acteur.
+   - "dialogues" : Liste des répliques percutantes avec les personnages.
+   - "shots" : Découpage technique en plans précis (plan 1, plan 2, plan 3) avec cadrage caméra, prompt visuel Flare en anglais, éclairage volumétrique et durée.
+   - "sceneVisualPrompt" : Le prompt cinématique en anglais ultra-détaillé prêt pour le moteur Vidéo Google Flare (Veo 3 & Cine Master), incluant les optiques 35mm, l'éclairage, la profondeur de champ.
+   - "soundtrackMood" : Conception sonore et partition musicale (ambiance sonore, thèmes instrumentaux).
+   - "tensionLevel" : Entier de 1 à 10.
+3. Personnages avec conflits internes et motivations profondes.
+4. "branches" : 2 ou 3 choix de dilemmes moraux majeurs pour explorer des suites alternatives.
 
 Retourne UNIQUEMENT un objet JSON valide suivant exactement cette structure :
 {
-  "title": "Titre captivant et évocateur",
-  "logline": "Accroche en une ou deux phrases percutantes",
-  "worldSetting": "Description immersive du monde, époque, technologie/magie et atmosphère",
+  "title": "Titre cinématographique percutant",
+  "logline": "Accroche percutante en une ou deux phrases",
+  "worldSetting": "Description immersive du monde et de l'atmosphère",
+  "directorVision": "Note d'intention du réalisateur (lumière, optiques et tension)",
   "characters": [
     {
-      "name": "Nom du personnage",
-      "role": "Protagoniste / Antagoniste / Guide / Allié",
-      "description": "Apparence et personnalité",
-      "motivation": "Quête principale ou désir profond",
-      "secret": "Secret inavouable ou faiblesse"
+      "name": "Nom",
+      "role": "Rôle",
+      "description": "Apparence et psychologie",
+      "motivation": "Désir profond",
+      "secret": "Faiblesse ou secret"
     }
   ],
   "chapters": [
     {
       "chapterNumber": 1,
-      "title": "Titre du chapitre",
-      "narrative": "Texte narratif immersif (au moins 2 à 4 paragraphes riches avec descriptions et dialogues)",
-      "sceneVisualPrompt": "Prompt artistique détaillé en anglais pour générer l'illustration du chapitre dans le studio image",
-      "soundtrackMood": "Ambiance musicale recommandée (ex: Violoncelle sombre, synthés néon, orchestre épique)",
+      "title": "Titre de la scène",
+      "slugline": "EXT. LOCALISATION - MOMENT",
+      "narrative": "Texte narratif immersif (2 à 4 paragraphes riches)",
+      "directorNotes": "Instructions de mise en scène, optique et atmosphère",
+      "dialogues": [
+        { "character": "Nom", "line": "Réplique marquante" }
+      ],
+      "shots": [
+        { "shotNumber": 1, "camera": "Travelling Dolly avant", "visualPrompt": "Cinematic shot in English...", "lighting": "Éclairage volumétrique", "duration": "3s" },
+        { "shotNumber": 2, "camera": "Gros plan contre-plongée", "visualPrompt": "Dramatic close up in English...", "lighting": "Chiaroscuro néon", "duration": "2s" }
+      ],
+      "sceneVisualPrompt": "Ultra detailed English cinema prompt for Google Flare video engine, 8K 35mm anamorphic...",
+      "soundtrackMood": "Ambiance sonore détaillée",
       "tensionLevel": 7
     }
   ],
   "branches": [
     {
-      "text": "Choix d'action interactif pour le protagoniste",
-      "consequence": "Conséquence dramatique envisagée si ce choix est pris"
+      "text": "Choix dramatique 1",
+      "consequence": "Conséquence dramatique"
     }
   ],
-  "summary": "Synthèse globale de l'œuvre"
+  "summary": "Synthèse de l'arc narratif"
 }`;
 
     let storyData: any = null;
@@ -857,7 +876,7 @@ Retourne UNIQUEMENT un objet JSON valide suivant exactement cette structure :
       const response = await generateContentWithFallback({
         model: 'gemini-3.8-flash',
         contents: systemPrompt,
-      }, 14000);
+      }, 16000);
 
       const rawText = response?.text || '';
       const jsonMatch = rawText.match(/```(?:json)?\s*([\s\S]*?)\s*```/) || rawText.match(/\{[\s\S]*\}/);
@@ -870,16 +889,17 @@ Retourne UNIQUEMENT un objet JSON valide suivant exactement cette structure :
 
     if (!storyData || !storyData.chapters) {
       storyData = {
-        title: `Chroniques de ${genre} : L'Éveil de l'Ombre`,
+        title: `Chroniques Flare : L'Éveil de l'Ombre`,
         logline: `Dans un monde où chaque choix résonne à travers les âges, un secret millénaire refait surface face à "${prompt.slice(0, 50)}".`,
-        worldSetting: `Un univers mêlant vestiges antiques et technologies étranges, où la brume perpétuelle dissimule des vérités oubliées.`,
+        worldSetting: `Un univers cinématographique mêlant vestiges monumentaux et technologies étranges, où la brume perpétuelle dissimule des vérités oubliées.`,
+        directorVision: `Cinématographie contemplative inspirée du format IMAX 70mm : contrastes profonds, lumière dorée rasante et silences chargés de tension dramatique.`,
         characters: [
           {
             name: protagonist || 'Kaelen Thorne',
             role: 'Protagoniste',
             description: 'Regard acéré, manteau usé par les tempêtes, portant un artefact énigmatique.',
             motivation: 'Découvrir la vérité sur la disparition des siens.',
-            secret: 'Entend la voix de l\'ancienne cité dans ses songes.',
+            secret: 'Entend la pulsation de l\'ancienne cité dans ses songes.',
           },
           {
             name: 'Vespera Nyx',
@@ -893,25 +913,53 @@ Retourne UNIQUEMENT un objet JSON valide suivant exactement cette structure :
           {
             chapterNumber: 1,
             title: 'L\'Étincelle dans le Silence',
-            narrative: `Le vent glacé hurlait contre les parois de pierre noire. Kaelen serra les poings, contemplant les ruines illuminées par une aurore spectrale. C'était ici que tout devait commencer. L'inscription gravée sur le seuil palpitait d'une lueur indigo. "Ne franchis pas ce seuil sans avoir renoncé à ta certitude", murmurait le texte.\n\nSoudain, une ombre se détacha du pilier nord. Vespera s'avança, une lueur d'inquiétude dans ses yeux augmentés. "Ils sont plus proches que prévu", chuchota-t-elle. Les échos de pas métalliques résonnaient déjà au fond de la vallée.`,
-            sceneVisualPrompt: `Cinematic wide shot of an ancient obsidian ruin under an indigo aurora sky, solitary wanderer holding a glowing cipher key, 35mm lens, volumetric mist, hyper-detailed fantasy sci-fi concept art`,
-            soundtrackMood: 'Cordes graves et nappes de synthé analogique mystérieuses',
+            slugline: 'EXT. RUINES D\'OBSIDIENNE - CRÉPUSCULE SPECTRAL',
+            narrative: `Le vent glacé hurlait contre les parois de pierre noire. Kaelen serra les poings, contemplant les ruines illuminées par une aurore spectrale. C'était ici que tout devait commencer. L'inscription gravée sur le seuil palpitait d'une lueur indigo. "Ne franchis pas ce seuil sans avoir renoncé à ta certitude", murmurait le texte.\n\nSoudain, une ombre se détacha du pilier nord. Vespera s'avança, une lueur d'inquiétude dans ses yeux augmentés. Les échos de pas métalliques résonnaient déjà au fond de la vallée.`,
+            directorNotes: 'Focale anamorphique 35mm. Travelling avant lent, contre-plongée dramatique révélant le gigantisme de l\'architecture.',
+            dialogues: [
+              { character: 'Vespera', line: 'Ils sont plus proches que prévu. Le compte à rebours a déjà débuté.' },
+              { character: 'Kaelen', line: 'Alors nous franchirons le seuil avant qu\'ils ne nous atteignent.' }
+            ],
+            shots: [
+              { shotNumber: 1, camera: 'Plan d\'ensemble majestueux', visualPrompt: 'Cinematic wide shot of an ancient obsidian ruin under an indigo aurora sky, solitary wanderer holding a glowing cipher key, 35mm lens, volumetric mist, 8K ultra detail', lighting: 'Lumière rasante d\'aurore boréale indigo', duration: '3s' },
+              { shotNumber: 2, camera: 'Gros plan visage avec reflet néon', visualPrompt: 'Cinematic close up of protagonist face reflecting mystical cyan light, intense determined expression, 85mm portrait lens, shallow depth of field', lighting: 'Chiaroscuro néon cyan', duration: '2s' }
+            ],
+            sceneVisualPrompt: `Cinematic wide shot of an ancient obsidian ruin under an indigo aurora sky, solitary wanderer holding a glowing cipher key, 35mm anamorphic lens, volumetric mist, hyper-detailed fantasy sci-fi concept art, Google Flare 8K render`,
+            soundtrackMood: 'Cordes graves dissonantes et nappes de synthé analogique mystérieuses',
             tensionLevel: 6,
           },
           {
             chapterNumber: 2,
             title: 'Le Sanctuaire des Échos',
+            slugline: 'INT. DÔME GRAVITATIONNEL - NUIT',
             narrative: `L'intérieur du dôme défiait les lois physiques. Des sphères gravitationnelles flottaient au-dessus d'un abîme sans fond. Kaelen avança sur la passerelle d'énergie pure. Chaque pas provoquait une pulsation lumineuse répercutée dans l'obscurité.\n\n"L'archive est intacte", s'exclama Vespera en activant la console centrale. Mais à peine les données s'affichèrent-elles qu'un grondement sourd ébranla les fondations. Le système de défense automatique s'était réveillé, braquant des faisceaux d'un rouge écarlate sur les intrus.`,
-            sceneVisualPrompt: `Interior of an epic celestial observatory with floating glowing gravitational orbs and holographic runes, characters standing on an energy bridge, dramatic cinematic lighting`,
-            soundtrackMood: 'Percussions tribales montantes et cuivres épiques',
+            directorNotes: 'Éclairage 360° avec ombres mouvantes. Accélération du rythme de montage, caméra portée nerveuse.',
+            dialogues: [
+              { character: 'Vespera', line: 'Ne touche à rien d\'autre ! Le noyau réagit à notre présence !' },
+              { character: 'Kaelen', line: 'C\'est trop tard. Nous sommes déjà à l\'intérieur de sa mémoire.' }
+            ],
+            shots: [
+              { shotNumber: 1, camera: 'Travelling circulaire 360°', visualPrompt: 'Interior of celestial observatory with floating glowing gravitational orbs, characters standing on an energy bridge, dramatic cinematic lighting', lighting: 'Pulsations dorées et faisceaux lasers d\'alerte', duration: '3s' }
+            ],
+            sceneVisualPrompt: `Interior of an epic celestial observatory with floating glowing gravitational orbs and holographic runes, characters standing on an energy bridge, dramatic cinematic lighting, 8K IMAX format`,
+            soundtrackMood: 'Percussions tribales montantes et cuivres épiques en crescendo',
             tensionLevel: 8,
           },
           {
             chapterNumber: 3,
             title: 'L\'Ultime Confluence',
+            slugline: 'INT. NOYAU TEMPOREL - CLIMAX',
             narrative: `Le choix ne pouvait plus être différé. Face au noyau temporel, la réalité se fracturait en filaments dorés. Kaelen sentit le poids de la décision : sceller l'énergie pour préserver la paix actuelle, ou la libérer au risque de bouleverser l'ordre du monde à jamais.\n\n"Quelle que soit ta décision, je te suivrai", murmura Vespera alors que le compte à rebours atteignait ses dernières secondes. Les yeux fixés sur l'horizon naissant, la main de Kaelen s'abaissa sur l'interrupteur.`,
-            sceneVisualPrompt: `Epic climax scene, hero touching a celestial energy core fracturing into golden rays of light, dramatic cinematic angle, 8K ultra detail`,
-            soundtrackMood: 'Chœur symphonique et apothéose orchestrale',
+            directorNotes: 'Ralenti 120fps sur l\'instant décisif. Flare lumineux horizontal et apothéose orchestrale.',
+            dialogues: [
+              { character: 'Vespera', line: 'Quelle que soit ta décision, le monde d\'hier n\'existera plus.' },
+              { character: 'Kaelen', line: 'Alors nous construirons celui de demain.' }
+            ],
+            shots: [
+              { shotNumber: 1, camera: 'Plongée vertigineuse', visualPrompt: 'Epic climax scene, hero touching a celestial energy core fracturing into golden rays of light, dramatic cinematic angle, 8K ultra detail', lighting: 'Éruption de lumière dorée aveuglante', duration: '4s' }
+            ],
+            sceneVisualPrompt: `Epic climax scene, hero touching a celestial energy core fracturing into golden rays of light, dramatic cinematic angle, flare lens, 8K ultra detail Google Flare engine`,
+            soundtrackMood: 'Chœur symphonique et apothéose orchestrale avec violons épiques',
             tensionLevel: 9,
           }
         ],
@@ -935,6 +983,8 @@ Retourne UNIQUEMENT un objet JSON valide suivant exactement cette structure :
       prompt,
       genre,
       tone,
+      format,
+      directorStyle,
       createdAt: new Date().toISOString(),
     });
   } catch (error: unknown) {

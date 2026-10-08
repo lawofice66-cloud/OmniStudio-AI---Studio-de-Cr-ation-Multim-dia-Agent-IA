@@ -266,23 +266,23 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               </button>
             </form>
 
-            {/* Secret Admin Access (Alexandre Studio Pro) */}
+            {/* Secret Admin Access (Créateur Invité VIP - 500 crédits) */}
             <div className="pt-4 border-t border-white/10 text-center">
               {!showAdminBox ? (
                 <button
                   type="button"
                   onClick={() => setShowAdminBox(true)}
-                  className="text-[11px] text-slate-500 hover:text-slate-300 transition-colors flex items-center justify-center gap-1.5 mx-auto cursor-pointer"
+                  className="text-[11px] text-slate-500 hover:text-amber-400 transition-colors flex items-center justify-center gap-1.5 mx-auto cursor-pointer"
                 >
-                  <KeyRound className="w-3.5 h-3.5" />
-                  <span>Accès Administrateur Développeur</span>
+                  <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Accès Réservé Créateur Invité (500 crédits)</span>
                 </button>
               ) : (
                 <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-amber-500/30 text-left space-y-2 animate-in fade-in">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-amber-300 flex items-center gap-1">
                       <KeyRound className="w-3.5 h-3.5 text-amber-400" />
-                      Authentification Administrateur
+                      Authentification Créateur Invité (500 cr)
                     </span>
                     <button
                       type="button"
@@ -296,7 +296,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                     type="password"
                     value={adminSecretInput}
                     onChange={(e) => setAdminSecretInput(e.target.value)}
-                    placeholder="Entrez le mot de passe admin secret..."
+                    placeholder="Entrez le mot de passe secret créateur..."
                     className="w-full bg-slate-950 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
@@ -310,7 +310,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                     onClick={() => loginWithAdminSecret(adminSecretInput)}
                     className="w-full py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold text-xs shadow-md transition-all cursor-pointer"
                   >
-                    Valider l'Accès Administrateur
+                    Débloquer le Compte Créateur Invité (500 cr)
                   </button>
                 </div>
               )}

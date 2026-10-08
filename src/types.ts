@@ -50,11 +50,14 @@ export interface VideoGeneration {
   duration: string;
   style: string;
   aspectRatio: string;
-  engine?: 'veo-3' | 'kling-2.1' | 'luma-dream';
+  engine?: 'google-flare' | 'veo-3' | 'kling-2.1' | 'luma-dream';
   resolution?: string;
   videoUrl?: string;
   imageUrl?: string;
   technicalPlan?: string;
+  lens?: string;
+  lighting?: string;
+  flareEffects?: string;
   storyboard: VideoStoryboard;
   createdAt: string;
   creditsUsed: number;
@@ -87,9 +90,13 @@ export interface StoryCharacter {
 export interface StoryChapter {
   chapterNumber: number;
   title: string;
+  slugline?: string;
   narrative: string;
   sceneVisualPrompt: string;
   soundtrackMood?: string;
+  directorNotes?: string;
+  dialogues?: { character: string; line: string }[];
+  shots?: { shotNumber: number; camera: string; visualPrompt: string; lighting: string; duration: string }[];
   tensionLevel: number; // 1-10
 }
 
@@ -106,6 +113,8 @@ export interface StoryGeneration {
   title: string;
   logline: string;
   worldSetting: string;
+  directorVision?: string;
+  format?: string;
   characters: StoryCharacter[];
   chapters: StoryChapter[];
   branches?: StoryBranchChoice[];

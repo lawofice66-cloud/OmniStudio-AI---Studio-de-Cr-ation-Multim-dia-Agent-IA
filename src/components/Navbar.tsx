@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
-import { Sparkles, Crown, Coins, User as UserIcon, LogOut, ArrowRight, Zap, Menu, X, Video, Image, Mic, Bot, BarChart3, FileDown, BookOpen, Volume2, Youtube } from 'lucide-react';
+import { Sparkles, Crown, Coins, User as UserIcon, LogOut, ArrowRight, Zap, Menu, X, Video, BookOpen, BarChart3, FileDown, Youtube } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { PRICING_CONFIG } from '../types';
 
 interface NavbarProps {
-  activeTab: 'showcase' | 'image' | 'video' | 'transcribe' | 'story' | 'music' | 'agent' | 'pricing' | 'dashboard' | 'login' | 'youtube-demo';
-  setActiveTab: (tab: 'showcase' | 'image' | 'video' | 'transcribe' | 'story' | 'music' | 'agent' | 'pricing' | 'dashboard' | 'login' | 'youtube-demo') => void;
-  openAgentDrawer: () => void;
+  activeTab: 'showcase' | 'video' | 'story' | 'pricing' | 'dashboard' | 'login' | 'youtube-demo';
+  setActiveTab: (tab: 'showcase' | 'video' | 'story' | 'pricing' | 'dashboard' | 'login' | 'youtube-demo') => void;
   openExportModal: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, openAgentDrawer, openExportModal }) => {
+export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, openExportModal }) => {
   const { user, isAuthenticated, logout, openAuthModal, openSubscriptionModal } = useAuth();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -22,112 +21,75 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, openAge
         {/* Brand Logo */}
         <div className="flex items-center gap-6">
           <button
-            onClick={() => setActiveTab('showcase')}
+            onClick={() => setActiveTab('video')}
             className="flex items-center gap-2.5 text-left group focus:outline-none cursor-pointer"
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 p-0.5 shadow-lg shadow-indigo-500/30 group-hover:scale-105 transition-transform">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-pink-600 via-rose-600 to-amber-500 p-0.5 shadow-lg shadow-pink-500/30 group-hover:scale-105 transition-transform">
               <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-indigo-400 group-hover:text-pink-400 transition-colors animate-pulse" />
+                <Video className="w-5 h-5 text-pink-400 group-hover:text-amber-400 transition-colors" />
               </div>
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-white via-indigo-100 to-indigo-300 bg-clip-text text-transparent">
+                <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-white via-pink-100 to-amber-200 bg-clip-text text-transparent">
                   OmniStudio
                 </span>
-                <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                  AI 3.8
+                <span className="text-[10px] uppercase font-black tracking-wider px-1.5 py-0.5 rounded-full bg-gradient-to-r from-pink-500/20 to-amber-500/20 text-pink-300 border border-pink-500/30">
+                  Google Flare
                 </span>
               </div>
-              <span className="text-[10px] text-slate-400 block -mt-0.5">Studio Créatif & Agent IA</span>
+              <span className="text-[10px] text-slate-400 block -mt-0.5">Vidéo Photoréaliste & Histoires IA</span>
             </div>
           </button>
 
           {/* Desktop Navigation Links */}
           <nav className="hidden lg:flex items-center gap-1 bg-slate-900/60 p-1 rounded-xl border border-white/5">
             <button
-              onClick={() => setActiveTab('showcase')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold transition-all cursor-pointer ${
-                activeTab === 'showcase'
-                  ? 'bg-gradient-to-r from-pink-600 to-purple-600 text-white shadow-md shadow-pink-500/20'
+              onClick={() => setActiveTab('video')}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-sm font-bold transition-all cursor-pointer ${
+                activeTab === 'video'
+                  ? 'bg-gradient-to-r from-pink-600 via-rose-600 to-amber-500 text-white shadow-md shadow-pink-500/20'
                   : 'text-pink-300 hover:text-white hover:bg-slate-800/60'
               }`}
             >
-              <Sparkles className="w-4 h-4 text-pink-400 animate-pulse" />
+              <Video className="w-4 h-4 text-pink-400" />
+              <span>🎬 Studio Vidéo Flare</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('story')}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-sm font-bold transition-all cursor-pointer ${
+                activeTab === 'story'
+                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-500/20'
+                  : 'text-purple-300 hover:text-white hover:bg-slate-800/60'
+              }`}
+            >
+              <BookOpen className="w-4 h-4 text-purple-400" />
+              <span>📖 Histoires & Scénarios</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('showcase')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all cursor-pointer ${
+                activeTab === 'showcase'
+                  ? 'bg-slate-800 text-white'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+              }`}
+            >
+              <Sparkles className="w-4 h-4 text-amber-400" />
               <span>Démos</span>
             </button>
 
             <button
               onClick={() => setActiveTab('youtube-demo')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all cursor-pointer ${
                 activeTab === 'youtube-demo'
-                  ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-md shadow-red-500/30'
+                  ? 'bg-red-600/30 text-red-200 border border-red-500/40'
                   : 'text-red-400 hover:text-white hover:bg-slate-800/60'
               }`}
             >
               <Youtube className="w-4 h-4 text-red-500" />
-              <span>Démo YouTube</span>
-              <span className="text-[9px] bg-red-500/20 text-red-300 px-1 py-0.5 rounded font-black uppercase">4K</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('image')}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all cursor-pointer ${
-                activeTab === 'image'
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-              }`}
-            >
-              <Image className="w-4 h-4" />
-              <span>Image</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('video')}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all cursor-pointer ${
-                activeTab === 'video'
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-              }`}
-            >
-              <Video className="w-4 h-4" />
-              <span>Vidéo</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('transcribe')}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all cursor-pointer ${
-                activeTab === 'transcribe'
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-              }`}
-            >
-              <Mic className="w-4 h-4" />
-              <span>Audio</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('story')}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all cursor-pointer ${
-                activeTab === 'story'
-                  ? 'bg-purple-600 text-white shadow-md shadow-purple-500/20'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-              }`}
-            >
-              <BookOpen className="w-4 h-4 text-purple-400" />
-              <span>Histoire IA</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('music')}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all cursor-pointer ${
-                activeTab === 'music'
-                  ? 'bg-pink-600 text-white shadow-md shadow-pink-500/20'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-              }`}
-            >
-              <Volume2 className="w-4 h-4 text-pink-400" />
-              <span>Sons IA</span>
+              <span>Démo 4K</span>
             </button>
 
             <button
@@ -139,15 +101,15 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, openAge
               }`}
             >
               <BarChart3 className="w-4 h-4 text-indigo-400" />
-              <span>Usage</span>
+              <span>Tableau de bord</span>
             </button>
 
             <button
               onClick={() => setActiveTab('pricing')}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all cursor-pointer ${
                 activeTab === 'pricing'
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                  : 'text-slate-400 hover:text-amber-300 hover:bg-slate-800/60'
               }`}
             >
               <Crown className="w-4 h-4 text-amber-400" />
@@ -174,22 +136,11 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, openAge
           {/* Exporter mon besoin button */}
           <button
             onClick={openExportModal}
-            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-white/10 text-xs font-semibold shadow-sm transition-all hover:border-indigo-500/50 cursor-pointer"
+            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-white/10 text-xs font-semibold shadow-sm transition-all hover:border-pink-500/50 cursor-pointer"
             title="Exporter tout mon besoin et mes créations (Cahier des charges)"
           >
-            <FileDown className="w-3.5 h-3.5 text-indigo-400" />
+            <FileDown className="w-3.5 h-3.5 text-pink-400" />
             <span>Exporter mon besoin</span>
-          </button>
-
-          {/* Agent IA Quick Trigger */}
-          <button
-            onClick={openAgentDrawer}
-            className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 text-xs font-semibold shadow-sm transition-all hover:scale-105 cursor-pointer"
-            title="Ouvrir l'Agent IA d'accompagnement"
-          >
-            <Bot className="w-4 h-4 text-purple-400 animate-bounce" />
-            <span>Agent IA Nova</span>
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
           </button>
 
           {/* Credits Counter Pill -> Click to view Dashboard */}
@@ -350,14 +301,38 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, openAge
         <div className="lg:hidden border-t border-white/10 bg-slate-950 p-4 space-y-2">
           <button
             onClick={() => {
-              setActiveTab('showcase');
+              setActiveTab('video');
               setMobileMenuOpen(false);
             }}
             className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-bold ${
-              activeTab === 'showcase' ? 'bg-gradient-to-r from-pink-600 to-purple-600 text-white' : 'text-pink-300 hover:bg-slate-900'
+              activeTab === 'video' ? 'bg-gradient-to-r from-pink-600 via-rose-600 to-amber-500 text-white' : 'text-pink-300 hover:bg-slate-900'
             }`}
           >
-            <Sparkles className="w-4 h-4 text-pink-400" />
+            <Video className="w-4 h-4 text-pink-400" />
+            <span>🎬 Studio Vidéo Google Flare</span>
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab('story');
+              setMobileMenuOpen(false);
+            }}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-bold ${
+              activeTab === 'story' ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white' : 'text-purple-300 hover:bg-slate-900'
+            }`}
+          >
+            <BookOpen className="w-4 h-4 text-purple-400" />
+            <span>📖 Histoires & Scénarios Flare</span>
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab('showcase');
+              setMobileMenuOpen(false);
+            }}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium ${
+              activeTab === 'showcase' ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-900'
+            }`}
+          >
+            <Sparkles className="w-4 h-4 text-amber-400" />
             <span>✨ Démos & Vitrine Créative</span>
           </button>
           <button
@@ -365,72 +340,12 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, openAge
               setActiveTab('youtube-demo');
               setMobileMenuOpen(false);
             }}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-bold ${
-              activeTab === 'youtube-demo' ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white' : 'text-red-300 hover:bg-slate-900'
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium ${
+              activeTab === 'youtube-demo' ? 'bg-red-600/30 text-red-200' : 'text-red-300 hover:bg-slate-900'
             }`}
           >
             <Youtube className="w-4 h-4 text-red-500" />
             <span>🎬 Démo Vidéo YouTube (4K)</span>
-          </button>
-          <button
-            onClick={() => {
-              setActiveTab('image');
-              setMobileMenuOpen(false);
-            }}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium ${
-              activeTab === 'image' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-900'
-            }`}
-          >
-            <Image className="w-4 h-4" />
-            <span>Texte vers Image</span>
-          </button>
-          <button
-            onClick={() => {
-              setActiveTab('video');
-              setMobileMenuOpen(false);
-            }}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium ${
-              activeTab === 'video' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-900'
-            }`}
-          >
-            <Video className="w-4 h-4" />
-            <span>Texte vers Vidéo</span>
-          </button>
-          <button
-            onClick={() => {
-              setActiveTab('transcribe');
-              setMobileMenuOpen(false);
-            }}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium ${
-              activeTab === 'transcribe' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-900'
-            }`}
-          >
-            <Mic className="w-4 h-4" />
-            <span>Transcrire Audio</span>
-          </button>
-          <button
-            onClick={() => {
-              setActiveTab('story');
-              setMobileMenuOpen(false);
-            }}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium ${
-              activeTab === 'story' ? 'bg-purple-600 text-white' : 'text-slate-300 hover:bg-slate-900'
-            }`}
-          >
-            <BookOpen className="w-4 h-4 text-purple-400" />
-            <span>Générateur d'Histoire IA</span>
-          </button>
-          <button
-            onClick={() => {
-              setActiveTab('music');
-              setMobileMenuOpen(false);
-            }}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium ${
-              activeTab === 'music' ? 'bg-pink-600 text-white' : 'text-slate-300 hover:bg-slate-900'
-            }`}
-          >
-            <Volume2 className="w-4 h-4 text-pink-400" />
-            <span>Générateur de Sons IA</span>
           </button>
           <button
             onClick={() => {
@@ -451,7 +366,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, openAge
             }}
             className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-900"
           >
-            <FileDown className="w-4 h-4 text-indigo-400" />
+            <FileDown className="w-4 h-4 text-pink-400" />
             <span>Exporter mon besoin (Cahier des charges)</span>
           </button>
           <button
@@ -464,7 +379,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, openAge
             }`}
           >
             <UserIcon className="w-4 h-4 text-indigo-400" />
-            <span>Page de Connexion / Inscription</span>
+            <span>Connexion / Compte Créateur</span>
           </button>
           <button
             onClick={() => {
@@ -472,21 +387,11 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, openAge
               setMobileMenuOpen(false);
             }}
             className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium ${
-              activeTab === 'pricing' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-900'
+              activeTab === 'pricing' ? 'bg-amber-500/20 text-amber-300' : 'text-slate-300 hover:bg-slate-900'
             }`}
           >
             <Crown className="w-4 h-4 text-amber-400" />
             <span>Tarifs & Abonnement (5$)</span>
-          </button>
-          <button
-            onClick={() => {
-              openAgentDrawer();
-              setMobileMenuOpen(false);
-            }}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-purple-300 bg-purple-500/10 border border-purple-500/30"
-          >
-            <Bot className="w-4 h-4 text-purple-400" />
-            <span>Agent IA Nova d'accompagnement</span>
           </button>
         </div>
       )}

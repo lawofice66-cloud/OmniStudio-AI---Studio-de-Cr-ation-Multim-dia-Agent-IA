@@ -355,55 +355,31 @@ export const ShowcaseGallery: React.FC<ShowcaseGalleryProps> = ({ onSelectSample
                   : 'bg-slate-900/80 text-slate-300 hover:text-white border border-white/5'
               }`}
             >
-              Tous les Échantillons ({SHOWCASE_ITEMS.length})
+              Tous les Échantillons Cinéma
             </button>
 
             <button
               onClick={() => setFilter('video')}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 filter === 'video'
-                  ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30 scale-105'
-                  : 'bg-slate-900/80 text-slate-300 hover:text-white border border-white/5'
-              }`}
-            >
-              <Video className="w-3.5 h-3.5 text-purple-400" />
-              <span>Vidéos IA (2)</span>
-            </button>
-
-            <button
-              onClick={() => setFilter('music')}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                filter === 'music'
                   ? 'bg-pink-600 text-white shadow-lg shadow-pink-600/30 scale-105'
                   : 'bg-slate-900/80 text-slate-300 hover:text-white border border-white/5'
               }`}
             >
-              <Music className="w-3.5 h-3.5 text-pink-400" />
-              <span>Sons & Audio IA (3)</span>
+              <Video className="w-3.5 h-3.5 text-pink-400" />
+              <span>🎬 Vidéos Google Flare (Veo 3)</span>
             </button>
 
             <button
               onClick={() => setFilter('story')}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 filter === 'story'
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 scale-105'
+                  ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30 scale-105'
                   : 'bg-slate-900/80 text-slate-300 hover:text-white border border-white/5'
               }`}
             >
-              <BookOpen className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Histoires IA (2)</span>
-            </button>
-
-            <button
-              onClick={() => setFilter('image')}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                filter === 'image'
-                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 scale-105'
-                  : 'bg-slate-900/80 text-slate-300 hover:text-white border border-white/5'
-              }`}
-            >
-              <ImageIcon className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Images 8K (2)</span>
+              <BookOpen className="w-3.5 h-3.5 text-purple-400" />
+              <span>📖 Scénarios & Histoires Flare</span>
             </button>
           </div>
         </div>

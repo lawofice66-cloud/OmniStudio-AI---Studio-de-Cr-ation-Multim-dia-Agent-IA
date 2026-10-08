@@ -1,6 +1,6 @@
 {
-  "name": "OmniStudio AI - Studio de Création Multimédia & Agent IA",
-  "description": "Studio IA tout-en-un : Générateur d'Histoires IA, Musique Lyria 3, Texte vers Image, Texte vers Vidéo, Transcription Audio, Agent IA Nova, gestion de crédits et abonnement Pro.",
+  "name": "OmniStudio AI - Studio Vidéo & Histoires IA (Google Flare)",
+  "description": "Plateforme ultra-puissante propulsée par Google Flare : Studio Vidéo Photoréaliste 8K (Veo 3 & Flare Cine Master) et Studio Scénarios & Histoires IA profonds.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
