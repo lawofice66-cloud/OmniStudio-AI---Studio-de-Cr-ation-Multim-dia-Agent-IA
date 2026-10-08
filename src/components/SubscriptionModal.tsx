@@ -53,7 +53,7 @@ export const SubscriptionModal: React.FC = () => {
             Boostez votre créativité pour seulement <span className="bg-gradient-to-r from-amber-300 via-orange-400 to-amber-500 bg-clip-text text-transparent">5 USD / mois</span>
           </h2>
           <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-lg mx-auto">
-            Passez au niveau supérieur avec 500 crédits mensuels, un accès illimité à l'Agent IA Nova et des rendus ultra-rapides.
+            Rechargez 500 crédits Pro pour alimenter vos créations Vidéo Photoréaliste 8K Google Flare et Scénarios Cinématographiques.
           </p>
         </div>
 
@@ -81,7 +81,7 @@ export const SubscriptionModal: React.FC = () => {
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-slate-400 shrink-0" />
-                  <span>Accès aux 4 outils IA (Image, Vidéo, Audio, Agent)</span>
+                  <span>Accès aux 2 studios Flare (Vidéo Photoréaliste 8K & Scénarios)</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-slate-400 shrink-0" />

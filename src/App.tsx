@@ -4,19 +4,17 @@ import { AuthProvider } from './context/AuthContext';
 import { Navbar } from './components/Navbar';
 import { TextToVideoStudio } from './components/TextToVideoStudio';
 import { StoryGeneratorStudio } from './components/StoryGeneratorStudio';
-import { YouTubeDemoStudio } from './components/YouTubeDemoStudio';
-import { ShowcaseGallery } from './components/ShowcaseGallery';
 import { PricingPage } from './components/PricingPage';
 import { UsageDashboard } from './components/UsageDashboard';
 import { LoginPage } from './components/LoginPage';
 import { ExportProjectBriefModal } from './components/ExportProjectBriefModal';
 import { AuthModal } from './components/AuthModal';
 import { SubscriptionModal } from './components/SubscriptionModal';
-import { Sparkles, Shield, Video, BookOpen } from 'lucide-react';
+import { Video, Shield } from 'lucide-react';
 import { PRICING_CONFIG } from './types';
 
 function MainApp() {
-  const [activeTab, setActiveTab] = useState<'video' | 'story' | 'showcase' | 'pricing' | 'dashboard' | 'login' | 'youtube-demo'>('video');
+  const [activeTab, setActiveTab] = useState<'video' | 'story' | 'pricing' | 'dashboard' | 'login'>('video');
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [videoPromptContext, setVideoPromptContext] = useState<string>('');
   const [videoRatioContext, setVideoRatioContext] = useState<'16:9' | '9:16'>('16:9');
@@ -27,15 +25,6 @@ function MainApp() {
     if (ratio) setVideoRatioContext(ratio);
     setVideoAutoGenerate(autoStart);
     setActiveTab('video');
-  };
-
-  const handleSelectSample = (type: 'image' | 'video' | 'music' | 'story', samplePrompt: string) => {
-    if (type === 'story') {
-      setActiveTab('story');
-    } else {
-      setVideoPromptContext(samplePrompt);
-      setActiveTab('video');
-    }
   };
 
   return (
@@ -65,13 +54,6 @@ function MainApp() {
             onNavigateToVideoStudio={(prompt) => handleApplyPromptToVideo(prompt, '16:9', true)}
           />
         )}
-        {activeTab === 'showcase' && (
-          <ShowcaseGallery 
-            onSelectSample={handleSelectSample} 
-            onOpenYouTubeDemo={() => setActiveTab('youtube-demo')}
-          />
-        )}
-        {activeTab === 'youtube-demo' && <YouTubeDemoStudio />}
         {activeTab === 'dashboard' && <UsageDashboard />}
         {activeTab === 'pricing' && <PricingPage />}
         {activeTab === 'login' && (
@@ -114,7 +96,7 @@ function MainApp() {
               </a>
             </span>
             <span>•</span>
-            <span>Plan Free 25 cr | Plan Pro 500 cr</span>
+            <span className="text-slate-300 font-medium">Azzoula Ali</span>
           </div>
         </div>
       </footer>

@@ -43,6 +43,14 @@ export interface VideoStoryboard {
   };
 }
 
+export interface VideoSegmentItem {
+  shotNumber: number;
+  prompt: string;
+  cameraMovement: string;
+  duration: string;
+  imageUrl?: string;
+}
+
 export interface VideoGeneration {
   id: string;
   prompt: string;
@@ -61,6 +69,9 @@ export interface VideoGeneration {
   storyboard: VideoStoryboard;
   createdAt: string;
   creditsUsed: number;
+  segments?: VideoSegmentItem[];
+  extendedCount?: number;
+  totalDurationSeconds?: number;
 }
 
 export interface TranscriptionItem {

@@ -35,7 +35,7 @@ export const PricingPage: React.FC = () => {
           Un abonnement unique à <span className="bg-gradient-to-r from-amber-300 via-orange-400 to-amber-500 bg-clip-text text-transparent">5 USD / mois</span>
         </h1>
         <p className="text-base text-slate-400">
-          Démarrez gratuitement avec {PRICING_CONFIG.FREE_PLAN_CREDITS} crédits sans engagement. Passez à la formule Pro pour débloquer 500 crédits et l'Agent IA Nova en illimité.
+          Compte <strong>Azzoula Ali</strong> avec 500 crédits renouvelés. Accès exclusif aux moteurs Google Flare Vidéo 8K et Scénarios Cinématographiques.
         </p>
       </div>
 

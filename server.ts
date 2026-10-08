@@ -631,6 +631,113 @@ Plan #1 (5s) : ${cameraMovement} - ${englishPrompt}
   }
 });
 
+// 4b. Endpoint: Extend Video (+5s auto or manual with prompt)
+app.post('/api/extend-video', async (req, res) => {
+  try {
+    const {
+      previousPrompt = '',
+      mode = 'auto', // 'auto' | 'manual'
+      manualPrompt = '',
+      cameraMovement = 'Travelling Dolly',
+      style = 'Photoréalisme 8K',
+      ratio = '16:9',
+      currentDurationSeconds = 5,
+      extensionSeconds = 5,
+      shotNumber = 2,
+    } = req.body;
+
+    if (!previousPrompt && !manualPrompt) {
+      return res.status(400).json({ error: 'Un prompt initial ou un prompt d\'extension est requis.' });
+    }
+
+    const chosenRatio = ratio === '9:16' ? '9:16' : '16:9';
+    let continuationPromptEn = '';
+    let continuationPromptFr = '';
+    let suggestedCamera = cameraMovement || 'Travelling Dolly';
+
+    if (mode === 'auto') {
+      try {
+        const autoRes = await generateContentWithFallback({
+          model: 'gemini-3.8-flash',
+          contents: `You are an expert Hollywood film director for Google Veo 3 / Google Flare.
+The previous 5-second scene was: "${previousPrompt}".
+Generate the immediate, seamless 5-second continuation (shot #${shotNumber}) of this exact sequence.
+Maintain high temporal and visual continuity of subjects, environment, style (${style}), and lighting.
+Return a clean JSON object with:
+{
+  "continuationFr": "Description concise en français des 5 secondes suivantes",
+  "continuationEn": "Detailed cinematic 8K prompt in English for the next 5 seconds, subject action, camera movement, lighting",
+  "cameraMovement": "Camera motion (Travelling Dolly, Panoramique Cinéma, Drone FPV, Zoom Dramatique, or Orbite 360°)"
+}
+Output strictly valid JSON, without any markdown formatting.`,
+        }, 5000);
+
+        const raw = autoRes?.text?.trim() || '';
+        const cleaned = raw.replace(/```json/g, '').replace(/```/g, '').trim();
+        const parsed = JSON.parse(cleaned);
+        continuationPromptFr = parsed.continuationFr || `Suite immédiate du plan : l'action s'intensifie avec continuité cinématique.`;
+        continuationPromptEn = parsed.continuationEn || `${previousPrompt}, continuous seamless sequence, smooth cinematic motion, photorealistic 8k`;
+        suggestedCamera = parsed.cameraMovement || cameraMovement || 'Travelling Dolly';
+      } catch (e) {
+        console.warn('Auto extension fallback to heuristic:', e);
+        continuationPromptFr = `Suite cinématique automatique du plan #${shotNumber}`;
+        continuationPromptEn = `${cleanPrompt(previousPrompt)}, direct seamless chronological continuation, dynamic smooth camera motion, cinematic 8k masterpiece`;
+      }
+    } else {
+      // Manual mode with user-provided prompt
+      const userPrompt = manualPrompt || 'La suite de la scène';
+      continuationPromptFr = userPrompt;
+      try {
+        const transRes = await generateContentWithFallback({
+          model: 'gemini-3.8-flash',
+          contents: `You are an expert Hollywood cinematographer for Google Veo 3.
+Translate and refine this continuation prompt into a photorealistic 8K cinema video prompt in English for a 5-second extension shot.
+Previous scene context: "${previousPrompt}".
+Continuation prompt: "${userPrompt}".
+Style: ${style}. Camera: ${cameraMovement}.
+Return ONLY the English refined prompt text, no quotes.`,
+        }, 4000);
+        continuationPromptEn = transRes?.text?.trim() || cleanPrompt(userPrompt);
+      } catch (e) {
+        continuationPromptEn = cleanPrompt(userPrompt);
+      }
+    }
+
+    // Generate high quality keyframe for the continuation shot
+    const width = chosenRatio === '16:9' ? 1280 : 720;
+    const height = chosenRatio === '16:9' ? 720 : 1280;
+    const seed = Math.floor(Math.random() * 999999);
+    const encodedPrompt = encodeURIComponent(continuationPromptEn.slice(0, 350));
+    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${seed}&nologo=true&model=flux`;
+
+    const totalSeconds = (currentDurationSeconds || 5) + (extensionSeconds || 5);
+    const newShot = {
+      shotNumber,
+      camera: suggestedCamera,
+      visualDescription: continuationPromptEn,
+      lighting: 'Éclairage cinématique continu 8K',
+      colorPalette: ['#0f172a', '#4338ca', '#f59e0b'],
+      duration: `${extensionSeconds || 5}s`,
+    };
+
+    return res.json({
+      mode,
+      continuationPromptFr,
+      continuationPromptEn,
+      cameraMovement: suggestedCamera,
+      imageUrl,
+      newShot,
+      duration: `${totalSeconds}s`,
+      extensionSeconds: extensionSeconds || 5,
+      totalSeconds,
+      createdAt: new Date().toISOString(),
+    });
+  } catch (error: unknown) {
+    console.error('Extend video error:', error);
+    return res.status(500).json({ error: getErrorMessage(error) });
+  }
+});
+
 // 5. Endpoint: Transcribe Audio
 app.post('/api/transcribe', async (req, res) => {
   try {
