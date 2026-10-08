@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { ToastProvider } from './context/ToastContext';
 import { AuthProvider } from './context/AuthContext';
 import { Navbar } from './components/Navbar';
-import { TextToVideoStudio } from './components/TextToVideoStudio';
 import { StoryGeneratorStudio } from './components/StoryGeneratorStudio';
 import { PricingPage } from './components/PricingPage';
 import { UsageDashboard } from './components/UsageDashboard';
@@ -10,25 +9,15 @@ import { LoginPage } from './components/LoginPage';
 import { ExportProjectBriefModal } from './components/ExportProjectBriefModal';
 import { AuthModal } from './components/AuthModal';
 import { SubscriptionModal } from './components/SubscriptionModal';
-import { Video, Shield } from 'lucide-react';
+import { BookOpen, Shield } from 'lucide-react';
 import { PRICING_CONFIG } from './types';
 
 function MainApp() {
-  const [activeTab, setActiveTab] = useState<'video' | 'story' | 'pricing' | 'dashboard' | 'login'>('video');
+  const [activeTab, setActiveTab] = useState<'story' | 'pricing' | 'dashboard' | 'login'>('story');
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-  const [videoPromptContext, setVideoPromptContext] = useState<string>('');
-  const [videoRatioContext, setVideoRatioContext] = useState<'16:9' | '9:16'>('16:9');
-  const [videoAutoGenerate, setVideoAutoGenerate] = useState(false);
-
-  const handleApplyPromptToVideo = (promptText: string, ratio?: '16:9' | '9:16', autoStart = false) => {
-    setVideoPromptContext(promptText);
-    if (ratio) setVideoRatioContext(ratio);
-    setVideoAutoGenerate(autoStart);
-    setActiveTab('video');
-  };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between selection:bg-pink-500 selection:text-white">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between selection:bg-purple-500 selection:text-white">
       {/* Top Navbar */}
       <Navbar
         activeTab={activeTab}
@@ -38,27 +27,12 @@ function MainApp() {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === 'video' && (
-          <TextToVideoStudio 
-            initialPrompt={videoPromptContext} 
-            initialRatio={videoRatioContext}
-            autoGenerate={videoAutoGenerate}
-            onClearInitialPrompt={() => {
-              setVideoPromptContext('');
-              setVideoAutoGenerate(false);
-            }} 
-          />
-        )}
-        {activeTab === 'story' && (
-          <StoryGeneratorStudio
-            onNavigateToVideoStudio={(prompt) => handleApplyPromptToVideo(prompt, '16:9', true)}
-          />
-        )}
+        {activeTab === 'story' && <StoryGeneratorStudio />}
         {activeTab === 'dashboard' && <UsageDashboard />}
         {activeTab === 'pricing' && <PricingPage />}
         {activeTab === 'login' && (
           <LoginPage
-            onNavigateToStudio={() => setActiveTab('video')}
+            onNavigateToStudio={() => setActiveTab('story')}
             onNavigateToDashboard={() => setActiveTab('dashboard')}
             onNavigateToPricing={() => setActiveTab('pricing')}
           />
@@ -69,11 +43,11 @@ function MainApp() {
       <footer className="border-t border-white/10 bg-slate-950/80 backdrop-blur-md py-8 mt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-pink-600/30 border border-pink-500/40 flex items-center justify-center">
-              <Video className="w-3.5 h-3.5 text-pink-400" />
+            <div className="w-6 h-6 rounded-lg bg-purple-600/30 border border-purple-500/40 flex items-center justify-center">
+              <BookOpen className="w-3.5 h-3.5 text-purple-400" />
             </div>
-            <span className="font-semibold text-slate-300">OmniStudio Google Flare</span>
-            <span>— Studio Cinématique Vidéo 8K & Scénarios IA</span>
+            <span className="font-semibold text-slate-300">OmniStudio Flare</span>
+            <span>— Studio d'Écriture & Générateur de Récits et Scénarios IA</span>
           </div>
 
           <div className="flex items-center gap-6">

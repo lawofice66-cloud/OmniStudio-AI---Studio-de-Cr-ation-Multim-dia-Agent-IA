@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI, Modality } from '@google/genai';
-import { cleanPrompt } from './src/utils/cleanPrompt';
+import { cleanPrompt, engineerCinematicPrompt, MANDATORY_NEGATIVE_PROMPT } from './src/utils/cleanPrompt';
 
 dotenv.config();
 
@@ -34,11 +34,11 @@ function getErrorMessage(error: unknown): string {
   return String(error);
 }
 
-// Helper to call Gemini with automatic fallback and fast timeout
-async function generateContentWithFallback(params: any, timeoutMs = 7000): Promise<any> {
+// Helper to call Gemini with automatic fallback and resilient timeout
+async function generateContentWithFallback(params: any, timeoutMs = 15000): Promise<any> {
   const modelsToTry = [
     params.model || 'gemini-3.8-flash',
-    'gemini-2.5-flash',
+    'gemini-3.1-flash-lite',
   ];
 
   let lastError: any = null;
@@ -445,7 +445,22 @@ IMPORTANT: Renvoie UNIQUEMENT le code SVG commençant par <svg et finissant par 
 // Clean and translate user video prompts to Cinema English handled by import
 
 
-// 4. Endpoint: Text to Video (fal.ai Veo 3 & Kling 2.1 API with Gemini Cinema Director)
+// 3b. Endpoint: Video Engine Status
+app.get('/api/video-status', (req, res) => {
+  const falKey = !!(process.env.FAL_KEY || process.env.VITE_FAL_KEY);
+  return res.json({
+    hasFalKey: falKey,
+    engines: [
+      { id: 'veo-3', name: 'Google Veo 3 Cinéma', endpoint: 'fal-ai/veo3', isRealAI: true },
+      { id: 'kling-2.1', name: 'Kling Video v2.1 Master', endpoint: 'fal-ai/kling-video/v2.1/master/text-to-video', isRealAI: true }
+    ],
+    message: falKey 
+      ? 'Moteur vidéo IA connecté et prêt.'
+      : 'Clé FAL_KEY absente. Configurez votre secret FAL_KEY pour activer les moteurs Veo 3 / Kling.'
+  });
+});
+
+// 4. Endpoint: Text to Video (Google Veo 3 & Kling 2.1 via fal.ai API with Cinema Director)
 app.post('/api/generate-video', async (req, res) => {
   try {
     const {
@@ -453,9 +468,10 @@ app.post('/api/generate-video', async (req, res) => {
       ratio = '16:9',
       aspectRatio = ratio || '16:9',
       engine = 'veo-3',
-      cameraMovement = 'Travelling Dolly',
+      cameraMovement = 'cinematic side tracking shot, smooth forward motion',
       style = 'Photoréalisme 8K',
       duration = '5s',
+      negativePrompt,
     } = req.body;
 
     if (!prompt) {
@@ -464,26 +480,36 @@ app.post('/api/generate-video', async (req, res) => {
 
     const chosenRatio = (aspectRatio === '9:16' || ratio === '9:16') ? '9:16' : '16:9';
 
-    // 1. High-fidelity translation & cinematic enhancement via Gemini
-    let englishPrompt = cleanPrompt(prompt);
+    // 1. High-fidelity cinematic engineering & negative prompt enforcement
+    const engineered = engineerCinematicPrompt(prompt, cameraMovement);
+    let englishPrompt = engineered.prompt;
+    const finalNegativePrompt = negativePrompt || engineered.negativePrompt || MANDATORY_NEGATIVE_PROMPT;
+
     try {
       const translationRes = await generateContentWithFallback({
         model: 'gemini-3.8-flash',
-        contents: `You are an expert Hollywood cinematographer and French-to-English translator for Google Veo 3 and Kling 2.1.
+        contents: `You are an expert Hollywood cinematographer and prompt engineer for Google Veo 3 and Kling 2.1.
 Translate and refine this user prompt into a photorealistic, highly detailed, vivid 8K cinema video prompt in English.
-IMPORTANT RULES:
-1. PRESERVE EVERY SUBJECT, CHARACTER, OBJECT, ACTION, VEHICLE, FOOD, OR SETTING requested in the user prompt. Do not replace pizza with something else, do not omit words.
-2. Style: ${style}. Camera movement: ${cameraMovement}. Ratio: ${chosenRatio}.
-3. Return ONLY the English prompt text. No markdown, no quotes, no conversational filler.
+CRITICAL RULES:
+1. DO NOT translate word-for-word. Fix broken expressions (e.g. remove "agricole labour" in double, fix "fast at high speed").
+2. If the prompt describes a vehicle or machinery (e.g., tractor, plow, car, truck):
+   Specify exact, realistic models and details (e.g., John Deere 8R heavy tractor, closed driver cabin with farmer inside, multi-blade steel plow turning dark rich fertile soil, airborne dust particles, massive rear tread tires with realistic mechanical proportions).
+3. CAMERA MOTION: Enforce "cinematic side tracking shot, smooth forward motion, smooth dolly". PROHIBIT "zoom only".
+4. NO DEFORMATIONS: Ensure solid vehicle geometry, sharp focus, volumetric golden hour or realistic lighting.
+5. Style: ${style}. Ratio: ${chosenRatio}.
+6. Return ONLY the English prompt text. No markdown, no quotes, no conversational filler.
 
 User Prompt: "${prompt}"`,
-      }, 4000);
+      }, 12000);
 
       if (translationRes?.text && translationRes.text.trim()) {
-        englishPrompt = translationRes.text.trim();
+        const candidate = translationRes.text.trim();
+        if (candidate.length > 20) {
+          englishPrompt = candidate;
+        }
       }
     } catch (transErr) {
-      console.warn('Gemini prompt translation fallback to cleanPrompt:', transErr);
+      console.warn('Gemini prompt translation fallback to engineeredPrompt:', transErr);
     }
 
     // 2. Generate a professional storyboard
@@ -493,7 +519,7 @@ User Prompt: "${prompt}"`,
       shots: [
         {
           shotNumber: 1,
-          camera: cameraMovement || 'Travelling Avant',
+          camera: cameraMovement || 'cinematic side tracking shot, smooth forward motion',
           visualDescription: englishPrompt,
           lighting: 'Éclairage volumétrique 8K & grain cinéma 35mm',
           colorPalette: ['#0f172a', '#4338ca', '#f59e0b'],
@@ -513,10 +539,13 @@ Titre : ${storyboard.title}
 Moteur de rendu : ${engine.toUpperCase()}
 Mouvement de caméra : ${cameraMovement}
 Style visuel : ${style}
-Format : ${chosenRatio} • Durée : ${duration}
+Format : ${chosenRatio} • Durée : ${duration} (5s / 24 FPS / 120 frames)
 
-Prompt de réalisation (Anglais Cinéma) :
+Prompt positif de réalisation (Anglais Cinéma) :
 "${englishPrompt}"
+
+Negative Prompt de protection anti-déformation :
+"${finalNegativePrompt}"
 
 Découpage des plans :
 Plan #1 (5s) : ${cameraMovement} - ${englishPrompt}
@@ -525,11 +554,11 @@ Plan #1 (5s) : ${cameraMovement} - ${englishPrompt}
     const falKey = process.env.FAL_KEY || process.env.VITE_FAL_KEY || '';
     let videoUrl = '';
 
-    // If FAL_KEY is configured, call fal.ai Queue API
+    // 2. Call Fal.ai Queue API (Veo 3, Kling 2.1, Luma)
     if (falKey) {
       try {
         const modelEndpoint = engine === 'kling-2.1'
-          ? 'fal-ai/kling-video/v2.1/standard/text-to-video'
+          ? 'fal-ai/kling-video/v2.1/master/text-to-video'
           : engine === 'luma-dream'
           ? 'fal-ai/luma-dream-machine'
           : 'fal-ai/veo3';
@@ -542,7 +571,15 @@ Plan #1 (5s) : ${cameraMovement} - ${englishPrompt}
           },
           body: JSON.stringify({
             prompt: englishPrompt,
+            negative_prompt: finalNegativePrompt,
             aspect_ratio: chosenRatio,
+            duration: 5,
+            duration_seconds: 5,
+            fps: 24,
+            num_frames: 120,
+            motion_strength: 0.7,
+            camera_motion: "tracking shot, smooth dolly",
+            prompt_enhance: true,
           }),
         });
 
@@ -554,7 +591,7 @@ Plan #1 (5s) : ${cameraMovement} - ${englishPrompt}
             const statusUrl = falData.status_url;
             const responseUrl = falData.response_url;
             const start = Date.now();
-            const timeout = 45000;
+            const timeout = 60000;
 
             while (!videoUrl && Date.now() - start < timeout) {
               await new Promise((r) => setTimeout(r, 2500));
@@ -573,53 +610,56 @@ Plan #1 (5s) : ${cameraMovement} - ${englishPrompt}
                   }
                   break;
                 } else if (pollData.status === 'FAILED') {
-                  break;
+                  console.error('Fal.ai video generation failed:', pollData);
+                  return res.status(500).json({
+                    error: `Échec du moteur vidéo fal.ai (${engine}) : ${pollData.error || 'Erreur interne de rendu vidéo'}.`,
+                    details: pollData
+                  });
                 }
               }
             }
           }
+        } else {
+          const errBody = await falRes.text();
+          console.error('Fal.ai API error:', falRes.status, errBody);
+          return res.status(502).json({
+            error: `Erreur API fal.ai (${falRes.status}) : Vérifiez votre clé FAL_KEY ou les crédits fal.ai.`,
+            details: errBody,
+          });
         }
       } catch (falErr) {
-        console.warn('fal.ai execution error, switching to photorealistic engine:', falErr);
+        console.error('fal.ai execution error:', falErr);
+        return res.status(500).json({
+          error: `Erreur de communication avec le moteur vidéo : ${getErrorMessage(falErr)}`,
+        });
       }
+    } else {
+      // FAL_KEY is not configured: NEVER pretend or send a fake zoomed image
+      return res.status(400).json({
+        error: "Clé API vidéo (FAL_KEY) non configurée dans l'environnement. Un vrai moteur de vidéo IA (Google Veo 3 / Kling) nécessite une clé FAL_KEY active pour calculer 120 images d'animation réelle avec physique 3D et rotation des roues.",
+        needsFalKey: true,
+        storyboard,
+        technicalPlan,
+      });
     }
 
-    // 3. High-Resolution Visual Frame Generator (Flux 1.1 Pro / Imagen)
-    // Ensures the user gets a photorealistic visual matching 100% of their prompt
     if (!videoUrl) {
-      try {
-        const width = chosenRatio === '16:9' ? 1280 : 720;
-        const height = chosenRatio === '16:9' ? 720 : 1280;
-        const seed = Math.floor(Math.random() * 999999);
-        const encodedPrompt = encodeURIComponent(englishPrompt);
-        const fluxUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${seed}&nologo=true&model=flux`;
-
-        const imgFetch = await fetch(fluxUrl, {
-          headers: { 'User-Agent': 'OmniStudio-Cinema/8.0' },
-          signal: AbortSignal.timeout(10000),
-        });
-
-        if (imgFetch.ok) {
-          const arrBuf = await imgFetch.arrayBuffer();
-          const base64 = Buffer.from(arrBuf).toString('base64');
-          videoUrl = `data:image/jpeg;base64,${base64}`;
-        } else {
-          videoUrl = fluxUrl;
-        }
-      } catch (fluxErr) {
-        console.warn('Flux visual frame fallback:', fluxErr);
-        const width = chosenRatio === '16:9' ? 1280 : 720;
-        const height = chosenRatio === '16:9' ? 720 : 1280;
-        videoUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(englishPrompt)}?width=${width}&height=${height}&nologo=true&seed=${Math.floor(Math.random() * 99999)}&model=flux`;
-      }
+      return res.status(500).json({
+        error: "Le moteur vidéo fal.ai n'a pas retourné de fichier vidéo MP4 valide dans le délai imparti.",
+        storyboard,
+        technicalPlan,
+      });
     }
 
     return res.json({
       videoUrl,
       prompt: englishPrompt,
       originalPrompt: prompt,
+      negativePrompt: finalNegativePrompt,
       aspectRatio: chosenRatio,
       engine: engine || 'veo-3',
+      duration: '5s',
+      durationSeconds: 5,
       storyboard,
       technicalPlan,
       isRealTimeRender: !falKey,
@@ -670,7 +710,7 @@ Return a clean JSON object with:
   "cameraMovement": "Camera motion (Travelling Dolly, Panoramique Cinéma, Drone FPV, Zoom Dramatique, or Orbite 360°)"
 }
 Output strictly valid JSON, without any markdown formatting.`,
-        }, 5000);
+        }, 12000);
 
         const raw = autoRes?.text?.trim() || '';
         const cleaned = raw.replace(/```json/g, '').replace(/```/g, '').trim();
@@ -696,7 +736,7 @@ Previous scene context: "${previousPrompt}".
 Continuation prompt: "${userPrompt}".
 Style: ${style}. Camera: ${cameraMovement}.
 Return ONLY the English refined prompt text, no quotes.`,
-        }, 4000);
+        }, 12000);
         continuationPromptEn = transRes?.text?.trim() || cleanPrompt(userPrompt);
       } catch (e) {
         continuationPromptEn = cleanPrompt(userPrompt);
@@ -983,104 +1023,113 @@ Retourne UNIQUEMENT un objet JSON valide suivant exactement cette structure :
       const response = await generateContentWithFallback({
         model: 'gemini-3.8-flash',
         contents: systemPrompt,
-      }, 16000);
+        config: {
+          responseMimeType: 'application/json',
+          temperature: 0.8,
+        },
+      }, 35000);
 
       const rawText = response?.text || '';
       const jsonMatch = rawText.match(/```(?:json)?\s*([\s\S]*?)\s*```/) || rawText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         storyData = JSON.parse(jsonMatch[1] || jsonMatch[0]);
+      } else {
+        storyData = JSON.parse(rawText);
       }
     } catch (err) {
-      console.warn('Story generation fallback triggered:', err);
+      console.warn('Story generation Gemini call fallback triggered:', err);
     }
 
-    if (!storyData || !storyData.chapters) {
+    if (!storyData || !storyData.chapters || !Array.isArray(storyData.chapters)) {
+      const cleanSubject = prompt.trim();
+      const heroName = protagonist?.trim() || 'Alexandre Vance';
+
       storyData = {
-        title: `Chroniques Flare : L'Éveil de l'Ombre`,
-        logline: `Dans un monde où chaque choix résonne à travers les âges, un secret millénaire refait surface face à "${prompt.slice(0, 50)}".`,
-        worldSetting: `Un univers cinématographique mêlant vestiges monumentaux et technologies étranges, où la brume perpétuelle dissimule des vérités oubliées.`,
-        directorVision: `Cinématographie contemplative inspirée du format IMAX 70mm : contrastes profonds, lumière dorée rasante et silences chargés de tension dramatique.`,
+        title: `${cleanSubject.slice(0, 45).toUpperCase()} : L'Épopée`,
+        logline: `Au cœur d'un univers où chaque décision change la destinée, ${heroName} se confronte à "${cleanSubject}".`,
+        worldSetting: `Un décor immersif et palpable (${genre}), imprégné d'une atmosphère ${tone.toLowerCase()} où la précision du détail et la lumière naturelle sculptent chaque instant.`,
+        directorVision: `Mise en scène inspirée du style ${directorStyle} : travail soigné sur les optiques anamorphiques, cadrages cinématographiques larges et contrastes appuyés.`,
         characters: [
           {
-            name: protagonist || 'Kaelen Thorne',
-            role: 'Protagoniste',
-            description: 'Regard acéré, manteau usé par les tempêtes, portant un artefact énigmatique.',
-            motivation: 'Découvrir la vérité sur la disparition des siens.',
-            secret: 'Entend la pulsation de l\'ancienne cité dans ses songes.',
+            name: heroName,
+            role: 'Personnage Principal',
+            description: `Déterminé, marqué par l'expérience et intimement lié à la quête : "${cleanSubject}".`,
+            motivation: `Mener à bien son objectif malgré l'adversité et percer les secrets du terrain.`,
+            secret: `Porte la mémoire d'un défi passé qu'il n'a jamais pu oublier.`,
           },
           {
-            name: 'Vespera Nyx',
-            role: 'Alliée énigmatique',
-            description: 'Archiviste renégate dotée de lentilles cybernétiques.',
-            motivation: 'Sauver le savoir interdit avant la purge.',
-            secret: 'Possède la clé du sanctuaire sous scellé.',
+            name: 'Morgan Cole',
+            role: 'Mentor / Observateur',
+            description: `Pragmatique, regard perçant, fin connaisseur des pièges et des ressources disponibles.`,
+            motivation: `S'assurer que les choix posés résistent aux épreuves de la réalité.`,
+            secret: `Sait ce que cache réellement cet endroit bien avant les autres.`,
           }
         ],
         chapters: [
           {
             chapterNumber: 1,
-            title: 'L\'Étincelle dans le Silence',
-            slugline: 'EXT. RUINES D\'OBSIDIENNE - CRÉPUSCULE SPECTRAL',
-            narrative: `Le vent glacé hurlait contre les parois de pierre noire. Kaelen serra les poings, contemplant les ruines illuminées par une aurore spectrale. C'était ici que tout devait commencer. L'inscription gravée sur le seuil palpitait d'une lueur indigo. "Ne franchis pas ce seuil sans avoir renoncé à ta certitude", murmurait le texte.\n\nSoudain, une ombre se détacha du pilier nord. Vespera s'avança, une lueur d'inquiétude dans ses yeux augmentés. Les échos de pas métalliques résonnaient déjà au fond de la vallée.`,
-            directorNotes: 'Focale anamorphique 35mm. Travelling avant lent, contre-plongée dramatique révélant le gigantisme de l\'architecture.',
+            title: `L'Aube et le Premier Pas`,
+            slugline: `EXT. TERRAIN - PREMIÈRE LUEUR DU JOUR`,
+            narrative: `L'aube déposait une fine nappe de brume argentée sur l'horizon. ${heroName} s'arrêta un instant pour jauger l'immensité de l'épreuve. L'air était vif, chargé du parfum de la terre et du silence avant l'action. "${cleanSubject}", résonnait comme un serment gravé dans l'esprit. Chaque détail comptait : la réactivité des mécanismes, la fermeté du sol sous les appuis, et cette volonté inébranlable qui refuse le compromis.\n\nLe moteur de l'action s'enclencha enfin, rompant la quiétude matinale avec une force tranquille et rythmée.`,
+            directorNotes: `Objectif 35mm anamorphique, lumière dorée rasante (golden hour), travelling latéral continu accompagnant le mouvement du sujet.`,
             dialogues: [
-              { character: 'Vespera', line: 'Ils sont plus proches que prévu. Le compte à rebours a déjà débuté.' },
-              { character: 'Kaelen', line: 'Alors nous franchirons le seuil avant qu\'ils ne nous atteignent.' }
+              { character: heroName, line: `Tout est en place. Rien ne doit nous dévier de notre trajectoire.` },
+              { character: 'Morgan Cole', line: `Le sol garde la mémoire de ceux qui avancent sans trembler.` }
             ],
             shots: [
-              { shotNumber: 1, camera: 'Plan d\'ensemble majestueux', visualPrompt: 'Cinematic wide shot of an ancient obsidian ruin under an indigo aurora sky, solitary wanderer holding a glowing cipher key, 35mm lens, volumetric mist, 8K ultra detail', lighting: 'Lumière rasante d\'aurore boréale indigo', duration: '3s' },
-              { shotNumber: 2, camera: 'Gros plan visage avec reflet néon', visualPrompt: 'Cinematic close up of protagonist face reflecting mystical cyan light, intense determined expression, 85mm portrait lens, shallow depth of field', lighting: 'Chiaroscuro néon cyan', duration: '2s' }
+              { shotNumber: 1, camera: 'Plan d\'ensemble majestueux', visualPrompt: `Cinematic wide landscape shot of ${cleanSubject}, morning golden hour sunlight, hyper-realistic, 8k ultra detailed`, lighting: 'Lumière dorée du lever de soleil', duration: '4s' },
+              { shotNumber: 2, camera: 'Gros plan dynamique en mouvement', visualPrompt: `Detailed action close-up of ${cleanSubject}, authentic textures, cinematic depth of field`, lighting: 'Contre-jour lumineux naturel', duration: '3s' }
             ],
-            sceneVisualPrompt: `Cinematic wide shot of an ancient obsidian ruin under an indigo aurora sky, solitary wanderer holding a glowing cipher key, 35mm anamorphic lens, volumetric mist, hyper-detailed fantasy sci-fi concept art, Google Flare 8K render`,
-            soundtrackMood: 'Cordes graves dissonantes et nappes de synthé analogique mystérieuses',
-            tensionLevel: 6,
+            sceneVisualPrompt: `Cinematic wide shot of ${cleanSubject}, golden hour mist, authentic environmental textures, 35mm lens, 8k master quality`,
+            soundtrackMood: 'Cordes graves et crescendo acoustique ample et chaleureux',
+            tensionLevel: 5,
           },
           {
             chapterNumber: 2,
-            title: 'Le Sanctuaire des Échos',
-            slugline: 'INT. DÔME GRAVITATIONNEL - NUIT',
-            narrative: `L'intérieur du dôme défiait les lois physiques. Des sphères gravitationnelles flottaient au-dessus d'un abîme sans fond. Kaelen avança sur la passerelle d'énergie pure. Chaque pas provoquait une pulsation lumineuse répercutée dans l'obscurité.\n\n"L'archive est intacte", s'exclama Vespera en activant la console centrale. Mais à peine les données s'affichèrent-elles qu'un grondement sourd ébranla les fondations. Le système de défense automatique s'était réveillé, braquant des faisceaux d'un rouge écarlate sur les intrus.`,
-            directorNotes: 'Éclairage 360° avec ombres mouvantes. Accélération du rythme de montage, caméra portée nerveuse.',
+            title: `L'Épreuve du Mouvement`,
+            slugline: `EXT. TERRAIN CENTRAL - PLEIN JOUR`,
+            narrative: `L'intensité montait d'un cran. Les aspérités de la tâche se faisaient sentir avec une vigueur nouvelle. ${heroName} manœuvrait avec une aisance chirurgicale, chaque geste synchronisé avec les éléments. Rien n'était laissé au hasard : l'adhérence, la cadence, la précision du tracé s'imposaient face aux aléas imprévus.\n\nUne résistance inattendue surgit au détour du parcours, obligeant à pousser les capacités au maximum pour maintenir l'équilibre parfait.`,
+            directorNotes: `Caméra épaule fluide stabilisée, focale 50mm, alternance de plans serrés sur la tension mécanique et d'angles larges imposants.`,
             dialogues: [
-              { character: 'Vespera', line: 'Ne touche à rien d\'autre ! Le noyau réagit à notre présence !' },
-              { character: 'Kaelen', line: 'C\'est trop tard. Nous sommes déjà à l\'intérieur de sa mémoire.' }
+              { character: heroName, line: `Nous tenons la cadence, ne lâchons rien.` },
+              { character: 'Morgan Cole', line: `C'est précisément ici que la persévérance fait la différence.` }
             ],
             shots: [
-              { shotNumber: 1, camera: 'Travelling circulaire 360°', visualPrompt: 'Interior of celestial observatory with floating glowing gravitational orbs, characters standing on an energy bridge, dramatic cinematic lighting', lighting: 'Pulsations dorées et faisceaux lasers d\'alerte', duration: '3s' }
+              { shotNumber: 1, camera: 'Travelling d\'action dynamique', visualPrompt: `Action tracking shot of ${cleanSubject}, kicking up earth and textures, realistic physics, 8k cinematic`, lighting: 'Éclairage franc zénithal avec ombres découpées', duration: '4s' }
             ],
-            sceneVisualPrompt: `Interior of an epic celestial observatory with floating glowing gravitational orbs and holographic runes, characters standing on an energy bridge, dramatic cinematic lighting, 8K IMAX format`,
-            soundtrackMood: 'Percussions tribales montantes et cuivres épiques en crescendo',
-            tensionLevel: 8,
+            sceneVisualPrompt: `Action tracking shot of ${cleanSubject}, kicking up earth and particles, realistic physics, 8k cinematic`,
+            soundtrackMood: 'Percussions rythmées et tension dramatique soutenue',
+            tensionLevel: 7,
           },
           {
             chapterNumber: 3,
-            title: 'L\'Ultime Confluence',
-            slugline: 'INT. NOYAU TEMPOREL - CLIMAX',
-            narrative: `Le choix ne pouvait plus être différé. Face au noyau temporel, la réalité se fracturait en filaments dorés. Kaelen sentit le poids de la décision : sceller l'énergie pour préserver la paix actuelle, ou la libérer au risque de bouleverser l'ordre du monde à jamais.\n\n"Quelle que soit ta décision, je te suivrai", murmura Vespera alors que le compte à rebours atteignait ses dernières secondes. Les yeux fixés sur l'horizon naissant, la main de Kaelen s'abaissa sur l'interrupteur.`,
-            directorNotes: 'Ralenti 120fps sur l\'instant décisif. Flare lumineux horizontal et apothéose orchestrale.',
+            title: `L'Accomplissement et le Sillon`,
+            slugline: `EXT. VASTES ÉTENDUES - CRÉPUSCULE`,
+            narrative: `Le soleil déclinait sur l'horizon embrasé de teintes pourpres et ambrées. Le parcours était achevé, laissant derrière lui la marque indélébile d'un travail accompli selon les règles de l'art. ${heroName} coupa l'effort, contemplant le chemin parcouru dans une paix retrouvée.\n\nL'objectif était atteint, prouvant avec force que l'alliance de la rigueur et de la passion transforme chaque terrain hostile en une victoire incontestable.`,
+            directorNotes: `Plan aérien en retrait lent (pull-back drone), lumière crépusculaire somptueuse, contemplation finale sans artifice.`,
             dialogues: [
-              { character: 'Vespera', line: 'Quelle que soit ta décision, le monde d\'hier n\'existera plus.' },
-              { character: 'Kaelen', line: 'Alors nous construirons celui de demain.' }
+              { character: heroName, line: `Le travail est fait. Et il est fait pour durer.` },
+              { character: 'Morgan Cole', line: `Regarde derrière toi : le résultat parle de lui-même.` }
             ],
             shots: [
-              { shotNumber: 1, camera: 'Plongée vertigineuse', visualPrompt: 'Epic climax scene, hero touching a celestial energy core fracturing into golden rays of light, dramatic cinematic angle, 8K ultra detail', lighting: 'Éruption de lumière dorée aveuglante', duration: '4s' }
+              { shotNumber: 1, camera: 'Plan aérien majestueux en recul', visualPrompt: `Aerial wide pull-back shot showing ${cleanSubject} under a dramatic twilight sky, cinematic masterpiece, 8k resolution`, lighting: 'Teintes chaudes crépusculaires orange et indigo', duration: '5s' }
             ],
-            sceneVisualPrompt: `Epic climax scene, hero touching a celestial energy core fracturing into golden rays of light, dramatic cinematic angle, flare lens, 8K ultra detail Google Flare engine`,
-            soundtrackMood: 'Chœur symphonique et apothéose orchestrale avec violons épiques',
-            tensionLevel: 9,
+            sceneVisualPrompt: `Aerial wide pull-back shot showing ${cleanSubject} under a dramatic twilight sky, cinematic masterpiece, 8k resolution`,
+            soundtrackMood: 'Thème symphonique triomphant et apaisement mélodique au piano',
+            tensionLevel: 8,
           }
         ],
         branches: [
           {
-            text: 'Activer le protocole d\'éveil immédiat',
-            consequence: 'Libère une onde tellurique qui restaure les pouvoirs anciens mais attire l\'attention des Sentinelles.'
+            text: `Poursuivre sur un tracé encore plus audacieux`,
+            consequence: `Ouvre la voie à une nouvelle aventure sur des terrains inexplorés.`
           },
           {
-            text: 'Sceller l\'artefact et fuir par les catacombes',
-            consequence: 'Préserve le secret pour le moment, mais laisse l\'antagoniste libre de récupérer la relique.'
+            text: `Consolider les acquis et préparer la saison suivante`,
+            consequence: `Assure la pérennité totale des accomplissements réalisés.`
           }
         ],
-        summary: `Une quête haletante à travers les méandres du destin, où la quête de vérité défie les lois du temps.`
+        summary: `Un récit complet centré sur "${cleanSubject}", alliant intensité humaine, respect des éléments et mise en scène cinématographique de haut vol.`
       };
     }
 

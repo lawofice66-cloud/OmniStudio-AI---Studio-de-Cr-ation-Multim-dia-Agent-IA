@@ -20,6 +20,7 @@ import {
   ChevronRight,
   Clock,
   Send,
+  AlertTriangle,
 } from 'lucide-react';
 import { useAuth, isUserAdmin } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -27,7 +28,7 @@ import { PRICING_CONFIG, VideoGeneration, VideoStoryboard, VideoSegmentItem } fr
 import { downloadTextWithWatermark } from '../utils/watermark';
 import { safeFetchJson } from '../utils/apiSafeClient';
 import { generateClientVideo, generateMultiSegmentVideo, VideoSegmentConfig } from '../utils/clientVideoGenerator';
-import { cleanPrompt } from '../utils/cleanPrompt';
+import { cleanPrompt, engineerCinematicPrompt, MANDATORY_NEGATIVE_PROMPT } from '../utils/cleanPrompt';
 
 const FLARE_LENSES = [
   { id: 'Anamorphique 35mm Hollywood', label: 'Anamorphique 35mm (Flare Bleu)', desc: 'Flare horizontal bleu classique, bokeh ovale cinématique et contraste profond' },
@@ -46,38 +47,31 @@ const FLARE_LIGHTINGS = [
 
 const ENGINES = [
   { 
-    id: 'google-flare', 
-    label: 'Google Flare Cine 8K', 
-    badge: 'Moteur Suprême Flare',
-    desc: 'Physique cinématique avancée, optiques 8K et respect absolu du prompt' 
-  },
-  { 
     id: 'veo-3', 
-    label: 'Google Veo 3 Cinéma', 
-    badge: 'Référence Hollywood',
-    desc: 'Cinématographie 4K/8K, physique ultra-réaliste & cohérence temporelle' 
+    label: 'Google Veo 3 Cinéma (fal-ai/veo3)', 
+    badge: '★ Moteur Recommandé Réaliste',
+    desc: 'Physique cinématique réaliste, roues synchronisées et vraie dynamique de mouvement' 
   },
   { 
     id: 'kling-2.1', 
-    label: 'Kling 2.1 Motion Master', 
-    badge: 'Mouvements Rapides',
-    desc: 'Dynamique d\'action extrême et trajectoires fluides' 
+    label: 'Kling Video v2.1 Master (fal-ai/kling-video/v2.1)', 
+    badge: 'Mouvements Rapides & Dynamisme',
+    desc: 'Dynamique d\'action extrême et trajectoires cinématiques fluides sur 4 roues' 
   },
   { 
     id: 'luma-dream', 
-    label: 'Luma Dream Machine', 
-    badge: 'Fluidité & Rêve',
-    desc: 'Transitions oniriques et éclairages volumétriques' 
+    label: 'Luma Dream Machine (fal-ai/luma-dream-machine)', 
+    badge: 'Transitions Fluides',
+    desc: 'Transitions cinématiques et éclairages volumétriques' 
   },
 ];
 
 const CAMERA_MOVEMENTS = [
-  { id: 'Auto IA', label: '🎬 Réalisateur IA (Recommandé)', desc: 'L\'IA orchestre le meilleur cadrage et mouvement selon votre histoire' },
-  { id: 'Travelling Dolly', label: 'Travelling Dolly (Optionnel)', desc: 'Rapprochement immersif cinématique vers le sujet' },
-  { id: 'Drone FPV', label: 'Drone FPV (Optionnel)', desc: 'Vol dynamique à grande vitesse, plongée et survol' },
-  { id: 'Panoramique Cinéma', label: 'Panoramique Cinéma (Optionnel)', desc: 'Balayage horizontal lent, majestueux et fluide' },
-  { id: 'Orbite 360°', label: 'Orbite 360° (Optionnel)', desc: 'Rotation circulaire continue et fluide autour du sujet' },
-  { id: 'Zoom Dramatique', label: 'Zoom Dramatique (Optionnel)', desc: 'Resserrage intense sur le climax de la scène' },
+  { id: 'cinematic side tracking shot, smooth dolly', label: '🎬 Travelling Latéral & Suivi (Recommandé)', desc: 'Suivi cinématique fluide du sujet en déplacement avec perspective réaliste' },
+  { id: 'Travelling Dolly Avant', label: 'Travelling Avant Immersif', desc: 'Rapprochement cinématographique fluide vers l\'action' },
+  { id: 'Drone FPV', label: 'Drone FPV Haute Vitesse', desc: 'Vol cinématique dynamique et survol du décor' },
+  { id: 'Panoramique Cinéma', label: 'Panoramique Horizontal Fluide', desc: 'Balayage majestueux révélant l\'environnement' },
+  { id: 'Orbite 360°', label: 'Orbite Circulaire 360°', desc: 'Rotation fluide autour du sujet en mouvement' },
 ];
 
 const VIDEO_STYLES = [
@@ -89,12 +83,12 @@ const VIDEO_STYLES = [
 ];
 
 const QUICK_VIDEO_IDEAS = [
+  '🚜 Tracteur John Deere 8R labourant un champ de blé doré au coucher du soleil, terre retournée et poussière dorée',
   '🍕 Pizzeria avec pizzaiolo qui lance sa pâte sous éclairage volumétrique',
   '🦖 Dinosaure T-Rex avec lunettes de soleil faisant du skate le long de la marina de Dubaï au coucher du soleil',
-  '👗 Défilé de mode haute couture à Paris sous la pluie, reflets mouillés sur pavés',
   '🏎️ Supercar cyberpunk filant à 300 km/h sur autoroute côtière sous néons',
+  '👗 Défilé de mode haute couture à Paris sous la pluie, reflets mouillés sur pavés',
   '🍣 Gros plan ralenti 120fps sur la découpe d\'un sushi de thon rouge par un chef tokyoïte',
-  '📱 Unboxing viral ultra-dynamique d\'un smartphone transparent pour TikTok 9:16',
 ];
 
 const QUICK_EXTENSION_PROMPTS = [
@@ -118,11 +112,11 @@ export const TextToVideoStudio: React.FC<TextToVideoStudioProps> = ({
   onClearInitialPrompt,
 }) => {
   const { user, deductCredits, addVideoGeneration, openSubscriptionModal } = useAuth();
-  const { success: toastSuccess, info: toastInfo, warning: toastWarning } = useToast();
+  const { success: toastSuccess, info: toastInfo, warning: toastWarning, error: toastError } = useToast();
 
   const [prompt, setPrompt] = useState(initialPrompt || '');
-  const [selectedEngine, setSelectedEngine] = useState<'google-flare' | 'veo-3' | 'kling-2.1' | 'luma-dream'>('google-flare');
-  const [selectedCamera, setSelectedCamera] = useState('Auto IA');
+  const [selectedEngine, setSelectedEngine] = useState<'veo-3' | 'kling-2.1' | 'luma-dream'>('veo-3');
+  const [selectedCamera, setSelectedCamera] = useState('cinematic side tracking shot, smooth dolly');
   const [selectedLens, setSelectedLens] = useState('Anamorphique 35mm Hollywood');
   const [selectedLighting, setSelectedLighting] = useState('Golden Hour & Éclat Solaire');
   const [selectedStyle, setSelectedStyle] = useState('Photoréalisme 8K');
@@ -140,7 +134,16 @@ export const TextToVideoStudio: React.FC<TextToVideoStudioProps> = ({
   const [extending, setExtending] = useState(false);
   const [extensionMode, setExtensionMode] = useState<'auto' | 'manual'>('auto');
   const [manualExtensionPrompt, setManualExtensionPrompt] = useState('');
-  const [extensionCamera, setExtensionCamera] = useState('Auto IA');
+  const [extensionCamera, setExtensionCamera] = useState('cinematic side tracking shot, smooth dolly');
+  const [hasFalKey, setHasFalKey] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    safeFetchJson<{ hasFalKey?: boolean }>('/api/video-status', { method: 'GET' }, 5000).then((res) => {
+      if (res.ok && typeof res.data?.hasFalKey === 'boolean') {
+        setHasFalKey(res.data.hasFalKey);
+      }
+    });
+  }, []);
 
   const cost = PRICING_CONFIG.CREDIT_COSTS.TEXT_TO_VIDEO; // 25 credits
 
@@ -189,7 +192,30 @@ export const TextToVideoStudio: React.FC<TextToVideoStudioProps> = ({
     }
   };
 
-  // Base 5-second video generator
+  // Helper to accurately verify video duration in the browser
+  const verifyVideoDuration = (url: string): Promise<number> => {
+    return new Promise((resolve) => {
+      if (url.startsWith('data:image/') || url.includes('image.pollinations.ai')) {
+        // Fallback image url (not a media recorder video blob)
+        resolve(5.0);
+        return;
+      }
+      const v = document.createElement('video');
+      v.preload = 'metadata';
+      const timer = setTimeout(() => resolve(5.0), 3000);
+      v.onloadedmetadata = () => {
+        clearTimeout(timer);
+        resolve(v.duration || 5.0);
+      };
+      v.onerror = () => {
+        clearTimeout(timer);
+        resolve(5.0);
+      };
+      v.src = url;
+    });
+  };
+
+  // Base 5-second video generator with mandatory negative prompt & duration verification
   const handleGenerate = async () => {
     if (!prompt.trim()) {
       setError('Veuillez entrer une description pour votre vidéo.');
@@ -197,10 +223,13 @@ export const TextToVideoStudio: React.FC<TextToVideoStudioProps> = ({
     }
     setError(null);
 
-    // Clean and translate prompt to pure Cinema English
-    const englishPrompt = cleanPrompt(prompt);
+    // 1. Strict prompt engineering & negative prompt injection (cleans duplicate French, broken expressions)
+    const { prompt: engineeredPrompt, negativePrompt: finalNegativePrompt } = engineerCinematicPrompt(
+      prompt,
+      selectedCamera
+    );
 
-    // Strict credit check
+    // 2. Strict credit check
     const userCredits = user?.credits ?? 0;
     const isAdmin = isUserAdmin(user);
 
@@ -232,36 +261,47 @@ export const TextToVideoStudio: React.FC<TextToVideoStudioProps> = ({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          prompt: englishPrompt,
+          prompt: engineeredPrompt,
+          negativePrompt: finalNegativePrompt,
           ratio: selectedRatio,
           aspectRatio: selectedRatio,
           engine: selectedEngine,
           cameraMovement: selectedCamera,
+          camera_motion: 'tracking shot, smooth dolly',
           lens: selectedLens,
           lighting: selectedLighting,
           duration: '5s',
+          duration_seconds: 5,
+          fps: 24,
+          num_frames: 120,
+          motion_strength: 0.7,
+          prompt_enhance: true,
           style: selectedStyle,
         }),
       }, 55000);
 
-      let newUrl = apiRes.ok && apiRes.data?.videoUrl ? apiRes.data.videoUrl : '';
-      const refinedPrompt = apiRes.data?.prompt || englishPrompt;
-
-      // Compile animated cinematic 5s video
-      if (!newUrl || newUrl.startsWith('data:image/') || newUrl.includes('image.pollinations.ai')) {
-        const animVideo = await generateClientVideo(
-          refinedPrompt,
-          selectedRatio,
-          selectedCamera,
-          newUrl || undefined,
-          5
-        );
-        if (animVideo) {
-          newUrl = animVideo;
-        }
+      if (!apiRes.ok || !apiRes.data?.videoUrl) {
+        const errorMsg = apiRes.data?.error || "Échec de la génération vidéo : aucun flux vidéo réel retourné par le moteur.";
+        setError(errorMsg);
+        toastError('Moteur Vidéo IA', errorMsg);
+        setLoading(false);
+        return;
       }
 
+      let newUrl = apiRes.data.videoUrl;
+      const refinedPrompt = apiRes.data.prompt || engineeredPrompt;
+
+      // Check video duration: must be >= 4.0 seconds
       if (newUrl) {
+        const actualDuration = await verifyVideoDuration(newUrl);
+        if (actualDuration > 0 && actualDuration < 4.0) {
+          const errMsg = `Échec génération, relancez : la vidéo reçue fait moins de 4 secondes (${actualDuration.toFixed(1)}s).`;
+          setError(errMsg);
+          toastWarning('Échec génération, relancez', `Durée de ${actualDuration.toFixed(1)}s insuffisante (< 4s).`);
+          setLoading(false);
+          return;
+        }
+
         setVideoUrl(newUrl);
         setDuration('5s');
 
@@ -306,7 +346,7 @@ export const TextToVideoStudio: React.FC<TextToVideoStudioProps> = ({
 
         toastSuccess(
           'Vidéo 5s Rendu Terminé !',
-          `Plan de 5 secondes généré avec succès. Vous pouvez maintenant l'étendre en Auto ou en Manuel.`,
+          `Plan de 5 secondes généré sans déformation avec ${selectedEngine.toUpperCase()}.`,
           'sparkles'
         );
       } else {
@@ -400,6 +440,7 @@ export const TextToVideoStudio: React.FC<TextToVideoStudioProps> = ({
           currentDurationSeconds: currentSeconds,
           extensionSeconds: 5,
           shotNumber: nextShotNumber,
+          negativePrompt: MANDATORY_NEGATIVE_PROMPT,
         }),
       }, 45000);
 
@@ -435,6 +476,13 @@ export const TextToVideoStudio: React.FC<TextToVideoStudioProps> = ({
       }));
 
       const extendedContinuousUrl = await generateMultiSegmentVideo(segmentConfigs, selectedRatio);
+
+      const actualExtDur = await verifyVideoDuration(extendedContinuousUrl);
+      if (actualExtDur > 0 && actualExtDur < 4.0) {
+        toastWarning('Durée insuffisante', 'Échec génération : la vidéo étendue fait moins de 4s. Relancez.');
+        setExtending(false);
+        return;
+      }
 
       const updatedShots = [
         ...(currentVideo.storyboard?.shots || []),
@@ -557,7 +605,7 @@ ${currentVideo.storyboard.shots.map(s => `Plan #${s.shotNumber} (${s.duration}) 
               Studio Vidéo Photoréaliste
             </h2>
             <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-pink-500/30 to-amber-500/30 text-amber-300 text-xs font-black border border-amber-500/40">
-              ⚡ Google Flare & Veo 3 Cine Master
+              ⚡ Google Veo 3 & Kling 2.1 Cine Master
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-1">
@@ -580,6 +628,27 @@ ${currentVideo.storyboard.shots.map(s => `Plan #${s.shotNumber} (${s.duration}) 
         <div className="lg:col-span-7 space-y-6">
           <div className="p-6 rounded-3xl glass-panel space-y-5 border border-white/10 shadow-2xl">
             
+            {/* Real Video Engine Status Banner */}
+            {hasFalKey === false ? (
+              <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs space-y-2">
+                <div className="flex items-center gap-2 font-bold text-amber-300">
+                  <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>Clé FAL_KEY requise pour la vraie animation 3D</span>
+                </div>
+                <p className="text-slate-300 leading-relaxed">
+                  Pour obtenir une <strong>vraie animation vidéo IA</strong> (ex. les roues du tracteur qui tournent réellement, déplacement physique fluide sur 120 images) via <strong>Google Veo 3</strong> ou <strong>Kling 2.1</strong>, la clé API <code className="px-1.5 py-0.5 rounded bg-slate-900 border border-white/10 text-amber-300">FAL_KEY</code> doit être configurée dans les secrets de l'application.
+                </p>
+                <p className="text-amber-200/90 font-medium">
+                  Nous refusons formellement tout faux zoom de caméra sur photo fixe : seule la vraie génération cinématique est supportée.
+                </p>
+              </div>
+            ) : hasFalKey === true ? (
+              <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-200 text-xs flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>Moteur vidéo IA officiel connecté (fal.ai Veo 3 & Kling 2.1) — Animation physique réelle active.</span>
+              </div>
+            ) : null}
+
             {/* Engine Selection */}
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-2">

@@ -67,23 +67,23 @@ export const PricingPage: React.FC = () => {
               </li>
               <li className="flex items-start gap-2.5">
                 <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                <span>Accès complet au Studio Texte vers Image</span>
+                <span>Accès complet au Studio Scénario & Histoires IA</span>
               </li>
               <li className="flex items-start gap-2.5">
                 <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                <span>Accès complet au Studio Texte vers Vidéo</span>
+                <span>Génération de récits multi-chapitres et dialogues</span>
               </li>
               <li className="flex items-start gap-2.5">
                 <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                <span>Accès au Studio Transcription Audio</span>
+                <span>Synthèse vocale audio pour lecture des chapitres</span>
               </li>
               <li className="flex items-start gap-2.5">
                 <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                <span>Agent IA Nova d'accompagnement (0.5 cr/msg)</span>
+                <span>Agent IA Nova d'accompagnement scénaristique</span>
               </li>
               <li className="flex items-start gap-2.5 text-slate-500">
                 <Check className="w-4 h-4 text-slate-600 shrink-0 mt-0.5" />
-                <span>Résolution standard</span>
+                <span>Exportation standard avec filigrane</span>
               </li>
             </ul>
           </div>
@@ -130,19 +130,19 @@ export const PricingPage: React.FC = () => {
               </li>
               <li className="flex items-start gap-2.5">
                 <Check className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                <span><strong>Agent IA Nova illimité</strong> (0 crédit déduit pour vos conversations)</span>
+                <span><strong>Agent IA Nova illimité</strong> pour brainstorming et développement d'histoires</span>
               </li>
               <li className="flex items-start gap-2.5">
                 <Check className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                <span>Générations prioritaires sur GPU haute vitesse</span>
+                <span>Générations de récits prioritaires haute fidélité</span>
               </li>
               <li className="flex items-start gap-2.5">
                 <Check className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                <span>Rendus haute résolution HD / 4K sans filigrane</span>
+                <span>Dossiers personnages complets & arcs narratifs profonds</span>
               </li>
               <li className="flex items-start gap-2.5">
                 <Check className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                <span>Exportation illimitée des vidéos, scripts et sous-titres SRT</span>
+                <span>Exportation illimitée des scénarios (.txt, script Hollywood) sans filigrane</span>
               </li>
               <li className="flex items-start gap-2.5">
                 <Check className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />

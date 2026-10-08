@@ -11,7 +11,7 @@ interface ExportProjectBriefModalProps {
 }
 
 export const ExportProjectBriefModal: React.FC<ExportProjectBriefModalProps> = ({ isOpen, onClose }) => {
-  const { user, imageHistory, videoHistory, transcriptionHistory, openSubscriptionModal } = useAuth();
+  const { user, storyHistory, imageHistory, transcriptionHistory, openSubscriptionModal } = useAuth();
   const { success: toastSuccess, info: toastInfo } = useToast();
   const [copied, setCopied] = useState(false);
 
@@ -30,26 +30,36 @@ export const ExportProjectBriefModal: React.FC<ExportProjectBriefModalProps> = (
     });
 
     let brief = `CAHIER DES CHARGES CRÉATIF & EXPORTATION DU PROJET
-Plateforme : OmniStudio AI
+Plateforme : OmniStudio Flare
 Date d'exportation : ${dateStr}
-Auteur : ${user?.name || 'Utilisateur OmniStudio'} (${user?.email || 'Visiteur'})
-Formule active : ${isPro ? 'Plan Pro VIP (Rendus sans filigrane)' : 'Plan Free (Version Gratuite avec filigrane)'}
+Auteur : ${user?.name || 'Azzoula Ali'} (${user?.email || 'lawofice66@gmail.com'})
+Formule active : ${isPro ? 'Plan Pro VIP (Rendus sans filigrane)' : 'Plan Free'}
 Solde de crédits restant : ${user?.credits || 0} crédits
 
 ================================================================================
-1. SYNTHÈSE GLOBALE DU BESOIN CRÉATIF
+1. SYNTHÈSE GLOBALE DU BESOIN CRÉATIF & SCÉNARIOS
 ================================================================================
-Ce document rassemble l'ensemble des besoins multimédia spécifiés par l'utilisateur, incluant les prompts de génération d'images, les storyboards et découpages de vidéos, ainsi que les transcriptions audio de référence.
+Ce document rassemble l'ensemble des créations narratives et scénarios spécifiés par l'utilisateur.
 
-Nombre total d'assets créés :
-- Images IA définies : ${imageHistory.length}
-- Séquences Vidéo conçues : ${videoHistory.length}
-- Fichiers Audio transcrits : ${transcriptionHistory.length}
+Nombre total de récits créés : ${storyHistory.length}
 
 ================================================================================
-2. SPÉCIFICATIONS DES IMAGES (TEXTE VERS IMAGE)
+2. HISTOIRES & SCÉNARIOS CINÉMATOGRAPHIQUES IA
 ================================================================================
 `;
+
+    if (storyHistory.length === 0) {
+      brief += `Aucune histoire générée pour le moment dans ce projet.\n\n`;
+    } else {
+      storyHistory.forEach((story, i) => {
+        brief += `[HISTOIRE #${i + 1}] : ${story.title.toUpperCase()}
+- Genre : ${story.genre} | Tonalité : ${story.tone}
+- Accroche (Logline) : ${story.logline}
+- Univers : ${story.worldSetting}
+- Nombre de chapitres : ${story.chapters?.length || 0}
+- Synthèse : ${story.summary}\n\n`;
+      });
+    }
 
     if (imageHistory.length === 0) {
       brief += `Aucune image générée pour le moment dans ce projet.\n\n`;
@@ -65,34 +75,7 @@ Nombre total d'assets créés :
     }
 
     brief += `================================================================================
-3. SPÉCIFICATIONS DES VIDÉOS & STORYBOARDS (TEXTE VERS VIDÉO)
-================================================================================
-`;
-
-    if (videoHistory.length === 0) {
-      brief += `Aucune vidéo générée pour le moment dans ce projet.\n\n`;
-    } else {
-      videoHistory.forEach((vid, i) => {
-        brief += `[VIDÉO #${i + 1}] : ${vid.storyboard.title}
-- Prompt : "${vid.prompt}"
-- Mouvement de caméra : ${vid.cameraMovement}
-- Style visuel : ${vid.style}
-- Durée estimée : ${vid.duration} | Format : ${vid.aspectRatio}
-- Synopsis : ${vid.storyboard.synopsis}
-- Découpage technique :
-`;
-        vid.storyboard.shots?.forEach((shot) => {
-          brief += `   * Plan ${shot.shotNumber} (${shot.duration}) : ${shot.camera} | ${shot.visualDescription} [Éclairage: ${shot.lighting}]\n`;
-        });
-        if (vid.storyboard.audioDesign) {
-          brief += `   * Design Sonore : ${vid.storyboard.audioDesign.sfx} | Mood: ${vid.storyboard.audioDesign.musicMood}\n`;
-        }
-        brief += `\n`;
-      });
-    }
-
-    brief += `================================================================================
-4. EXTRAITS & TRANSCRIPTIONS AUDIO (AUDIO TRANSCRIBE)
+3. EXTRAITS & TRANSCRIPTIONS AUDIO (AUDIO TRANSCRIBE)
 ================================================================================
 `;
 

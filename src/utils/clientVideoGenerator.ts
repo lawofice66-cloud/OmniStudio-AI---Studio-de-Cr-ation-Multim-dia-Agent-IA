@@ -2,7 +2,11 @@
  * Client-Side Cinematic Video Generator & Multi-Segment Video Extender.
  * Generates high-fidelity 5s base video clips and stitches continuous extended videos
  * (10s, 15s, etc.) via HTML5 Canvas and MediaRecorder.
+ * Enforces real-time wall-clock pacing (minimum 5.0 seconds), bans "zoom only",
+ * and injects dynamic cinematic tracking motion with atmospheric particles.
  */
+
+import { MANDATORY_NEGATIVE_PROMPT, engineerCinematicPrompt } from './cleanPrompt';
 
 export interface VideoSegmentConfig {
   prompt: string;
@@ -12,7 +16,7 @@ export interface VideoSegmentConfig {
 }
 
 // Helper to safely load an image as HTMLImageElement
-function loadImageElement(url: string, timeoutMs = 12000): Promise<HTMLImageElement | null> {
+function loadImageElement(url: string, timeoutMs = 15000): Promise<HTMLImageElement | null> {
   return new Promise((resolve) => {
     const img = new Image();
     if (!url.startsWith('data:')) {
@@ -39,19 +43,21 @@ function loadImageElement(url: string, timeoutMs = 12000): Promise<HTMLImageElem
 
 function resolveImageUrl(prompt: string, width: number, height: number, baseImageUrl?: string): string {
   if (baseImageUrl) return baseImageUrl;
-  const cleanKeyword = encodeURIComponent(prompt.slice(0, 350));
+  const { prompt: engineeredPrompt } = engineerCinematicPrompt(prompt);
+  const cleanKeyword = encodeURIComponent(engineeredPrompt.slice(0, 350));
   const seed = Math.floor(Math.random() * 90000) + 10000;
-  return `https://image.pollinations.ai/prompt/${cleanKeyword}?width=${width}&height=${height}&nologo=true&seed=${seed}&model=flux`;
+  const negativeParam = encodeURIComponent(MANDATORY_NEGATIVE_PROMPT);
+  return `https://image.pollinations.ai/prompt/${cleanKeyword}?width=${width}&height=${height}&nologo=true&seed=${seed}&model=flux&negative=${negativeParam}`;
 }
 
 /**
  * Generates an animated cinematic 5s video clip matching the prompt using
- * canvas MediaRecorder with smooth camera movement.
+ * canvas MediaRecorder with smooth camera tracking motion.
  */
 export async function generateClientVideo(
   prompt: string,
   ratio: '16:9' | '9:16' = '16:9',
-  cameraMovement = 'Travelling Dolly',
+  cameraMovement = 'cinematic side tracking shot, smooth dolly',
   baseImageUrl?: string,
   durationSeconds = 5
 ): Promise<string> {
@@ -61,7 +67,7 @@ export async function generateClientVideo(
         prompt,
         cameraMovement,
         baseImageUrl,
-        durationSeconds,
+        durationSeconds: Math.max(5, durationSeconds),
       },
     ],
     ratio
@@ -69,8 +75,8 @@ export async function generateClientVideo(
 }
 
 /**
- * Generates or extends a continuous multi-segment video (e.g. 5s + 5s = 10s total, or 15s total)
- * with seamless transitions, continuous motion, and high-definition canvas rendering.
+ * Generates or extends a continuous multi-segment video (5s base, 10s extended, etc.)
+ * Strictly timed in real wall-clock milliseconds so MediaRecorder generates a true 5.0s video.
  */
 export async function generateMultiSegmentVideo(
   segments: VideoSegmentConfig[],
@@ -83,15 +89,15 @@ export async function generateMultiSegmentVideo(
   const width = ratio === '16:9' ? 1280 : 720;
   const height = ratio === '16:9' ? 720 : 1280;
 
-  // Resolve image URLs for each segment
+  // Resolve image URLs for each segment with engineered prompt & negative prompt
   const segmentItems = segments.map((seg) => {
-    const dur = seg.durationSeconds && seg.durationSeconds > 0 ? seg.durationSeconds : 5;
+    const dur = seg.durationSeconds && seg.durationSeconds >= 5 ? seg.durationSeconds : 5;
     const url = resolveImageUrl(seg.prompt, width, height, seg.baseImageUrl);
     return {
       prompt: seg.prompt,
-      cameraMovement: seg.cameraMovement || 'Travelling Dolly',
+      cameraMovement: seg.cameraMovement || 'cinematic side tracking shot, smooth dolly',
       durationSeconds: dur,
-      frames: Math.round(dur * 30),
+      durationMs: dur * 1000,
       url,
     };
   });
@@ -101,7 +107,6 @@ export async function generateMultiSegmentVideo(
     segmentItems.map((item) => loadImageElement(item.url))
   );
 
-  // If even the first image fails to load, return the URL as fallback
   const fallbackUrl = segmentItems[0].url;
   const firstImg = loadedImages[0];
   if (!firstImg) {
@@ -119,7 +124,8 @@ export async function generateMultiSegmentVideo(
         return;
       }
 
-      const stream = canvas.captureStream(30);
+      // 24 or 30 FPS stream
+      const stream = canvas.captureStream(24);
       let mimeType = 'video/webm;codecs=vp9';
       if (!MediaRecorder.isTypeSupported(mimeType)) {
         mimeType = 'video/webm';
@@ -128,7 +134,7 @@ export async function generateMultiSegmentVideo(
         mimeType = '';
       }
 
-      const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+      const recorder = mimeType ? new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 8000000 }) : new MediaRecorder(stream);
       const chunks: Blob[] = [];
 
       recorder.ondataavailable = (e) => {
@@ -144,10 +150,22 @@ export async function generateMultiSegmentVideo(
         resolve(videoObjectUrl);
       };
 
-      recorder.start();
+      // Generate seed particles for realistic airborne dust, soil & cinematic atmosphere
+      const particles = Array.from({ length: 45 }, () => ({
+        x: Math.random() * width,
+        y: (Math.random() * 0.7 + 0.2) * height,
+        radius: Math.random() * 2.5 + 0.8,
+        speedX: Math.random() * 1.8 + 0.8,
+        speedY: (Math.random() - 0.5) * 0.4,
+        alpha: Math.random() * 0.6 + 0.25,
+        color: Math.random() > 0.4 ? 'rgba(217, 119, 6, ' : 'rgba(245, 158, 11, ', // Golden dust & soil particles
+      }));
 
-      const totalFrames = segmentItems.reduce((acc, cur) => acc + cur.frames, 0);
-      let globalFrame = 0;
+      // Total duration in wall-clock ms (e.g. 5000ms for 5s, 10000ms for 10s)
+      const totalDurationMs = segmentItems.reduce((acc, cur) => acc + cur.durationMs, 0);
+
+      recorder.start(250); // Emit chunk every 250ms
+      const startWallClockTime = performance.now();
 
       const drawSegmentFrame = (
         img: HTMLImageElement,
@@ -158,92 +176,144 @@ export async function generateMultiSegmentVideo(
         ctx.save();
         ctx.globalAlpha = alpha;
 
-        let scale = 1.0;
+        // BAN "ZOOM ONLY" - Enforce realistic side tracking shot, smooth dolly, ground vibration
+        let scale = 1.08;
         let dx = 0;
         let dy = 0;
 
-        if (cameraMovement.includes('Dolly') || cameraMovement.includes('Zoom')) {
-          scale = 1.0 + progress * 0.16;
-          dx = (width * (1 - scale)) / 2;
-          dy = (height * (1 - scale)) / 2;
-        } else if (cameraMovement.includes('Pan')) {
-          scale = 1.08;
-          dx = -progress * (width * 0.08);
-          dy = (height * (1 - scale)) / 2;
-        } else if (cameraMovement.includes('Orbite') || cameraMovement.includes('Drone')) {
-          scale = 1.05 + Math.sin(progress * Math.PI) * 0.08;
-          dx = (Math.cos(progress * Math.PI * 0.5) - 0.5) * (width * 0.05);
+        const isSideTracking = cameraMovement.includes('tracking') || cameraMovement.includes('Dolly') || cameraMovement.includes('glisse');
+        const isDrone = cameraMovement.includes('Drone') || cameraMovement.includes('FPV');
+        const isPan = cameraMovement.includes('Pan') || cameraMovement.includes('Panoramique');
+
+        if (isSideTracking) {
+          // Dynamic horizontal tracking shot (travels horizontally alongside the moving subject)
+          scale = 1.09 + Math.sin(progress * Math.PI) * 0.02; // Subtle depth breathing, NOT a static zoom!
+          dx = (0.5 - progress) * (width * 0.12); // Smooth horizontal camera travel
+          dy = (height * (1 - scale)) / 2 + Math.sin(progress * 24) * 1.5; // Vehicle & chassis ground vibration
+        } else if (isDrone) {
+          scale = 1.12 - progress * 0.04;
+          dx = (Math.cos(progress * Math.PI) - 0.5) * (width * 0.08);
+          dy = (height * (1 - scale)) / 2 + (progress - 0.5) * (height * 0.06);
+        } else if (isPan) {
+          scale = 1.09;
+          dx = (progress - 0.5) * (width * 0.14);
           dy = (height * (1 - scale)) / 2;
         } else {
-          scale = 1.0 + progress * 0.08;
-          dx = (width * (1 - scale)) / 2;
-          dy = (height * (1 - scale)) / 2;
+          // Default cinematic tracking shot & forward dolly
+          scale = 1.07 + Math.sin(progress * Math.PI) * 0.02;
+          dx = (0.5 - progress) * (width * 0.10);
+          dy = (height * (1 - scale)) / 2 + Math.sin(progress * 20) * 1.2;
         }
 
         ctx.drawImage(img, dx, dy, width * scale, height * scale);
 
-        // Volumetric cinematic vignette & lighting
-        const gradient = ctx.createRadialGradient(
-          width / 2, height / 2, width * 0.2,
-          width / 2, height / 2, width * 0.72
+        // 1. Dynamic soil turning & ground speed blur effect in the lower 22% of frame
+        const groundHeight = height * 0.22;
+        const groundY = height - groundHeight;
+        const groundGrad = ctx.createLinearGradient(0, groundY, 0, height);
+        groundGrad.addColorStop(0, 'rgba(0,0,0,0)');
+        groundGrad.addColorStop(1, 'rgba(15, 23, 42, 0.45)');
+        ctx.fillStyle = groundGrad;
+        ctx.fillRect(0, groundY, width, groundHeight);
+
+        // Horizontal motion streaks simulating plowed soil / rolling tires speed
+        ctx.strokeStyle = 'rgba(180, 83, 9, 0.18)';
+        ctx.lineWidth = 1.5;
+        for (let i = 0; i < 6; i++) {
+          const streakY = groundY + 15 + i * 14;
+          const streakOffset = (progress * width * 1.4 + i * 220) % (width + 200) - 100;
+          ctx.beginPath();
+          ctx.moveTo(streakOffset, streakY);
+          ctx.lineTo(streakOffset + 80, streakY);
+          ctx.stroke();
+        }
+
+        // 2. Realistic dynamic airborne particles (dust, soil clods turning in golden hour)
+        particles.forEach((p, idx) => {
+          const currentX = (p.x + progress * p.speedX * width * 0.5) % width;
+          const currentY = p.y + Math.sin(progress * 12 + idx) * 8;
+          ctx.beginPath();
+          ctx.arc(currentX, currentY, p.radius, 0, Math.PI * 2);
+          ctx.fillStyle = `${p.color}${p.alpha * alpha})`;
+          ctx.fill();
+
+          // Motion streak behind particle
+          ctx.strokeStyle = `${p.color}${p.alpha * 0.4 * alpha})`;
+          ctx.lineWidth = p.radius * 0.8;
+          ctx.beginPath();
+          ctx.moveTo(currentX, currentY);
+          ctx.lineTo(currentX - p.speedX * 8, currentY - p.speedY * 4);
+          ctx.stroke();
+        });
+
+        // 3. Volumetric cinematic vignette & golden hour illumination
+        const vignette = ctx.createRadialGradient(
+          width / 2, height * 0.45, width * 0.25,
+          width / 2, height * 0.5, width * 0.72
         );
-        gradient.addColorStop(0, 'rgba(0,0,0,0)');
-        gradient.addColorStop(1, 'rgba(0,0,0,0.28)');
-        ctx.fillStyle = gradient;
+        vignette.addColorStop(0, 'rgba(0,0,0,0)');
+        vignette.addColorStop(1, 'rgba(0,0,0,0.32)');
+        ctx.fillStyle = vignette;
         ctx.fillRect(0, 0, width, height);
 
         ctx.restore();
       };
 
+      // REAL-TIME WALL-CLOCK PACED RENDER LOOP
+      // Guarantees MediaRecorder runs for full totalDurationMs (5000ms minimum)
       const renderLoop = () => {
-        // Find active segment
-        let accumulated = 0;
+        const elapsedWallClockMs = performance.now() - startWallClockTime;
+
+        // Check if finished
+        if (elapsedWallClockMs >= totalDurationMs) {
+          // Draw final stabilized frame
+          const lastSeg = segmentItems[segmentItems.length - 1];
+          const lastImg = loadedImages[segmentItems.length - 1] || firstImg;
+          drawSegmentFrame(lastImg, lastSeg.cameraMovement, 1.0, 1.0);
+          recorder.stop();
+          return;
+        }
+
+        // Identify active segment based on elapsed time
+        let accumulatedMs = 0;
         let activeIdx = 0;
-        let segFrame = 0;
+        let segElapsedMs = 0;
 
         for (let i = 0; i < segmentItems.length; i++) {
-          if (globalFrame < accumulated + segmentItems[i].frames) {
+          if (elapsedWallClockMs < accumulatedMs + segmentItems[i].durationMs) {
             activeIdx = i;
-            segFrame = globalFrame - accumulated;
+            segElapsedMs = elapsedWallClockMs - accumulatedMs;
             break;
           }
-          accumulated += segmentItems[i].frames;
+          accumulatedMs += segmentItems[i].durationMs;
         }
 
         const currentSeg = segmentItems[activeIdx];
         const currentImg = loadedImages[activeIdx] || firstImg;
-        const segProgress = segFrame / currentSeg.frames;
+        const segProgress = Math.min(1.0, segElapsedMs / currentSeg.durationMs);
 
         ctx.clearRect(0, 0, width, height);
 
-        // Check if we are in crossfade transition with next segment (last 15 frames = 0.5s)
-        const transitionWindow = 15;
-        const framesRemaining = currentSeg.frames - segFrame;
+        // Crossfade in last 600ms of current segment if next segment exists
+        const transitionMs = 600;
+        const msRemaining = currentSeg.durationMs - segElapsedMs;
         const nextIdx = activeIdx + 1;
 
-        if (framesRemaining < transitionWindow && nextIdx < segmentItems.length) {
+        if (msRemaining < transitionMs && nextIdx < segmentItems.length) {
           const nextImg = loadedImages[nextIdx] || currentImg;
           const nextSeg = segmentItems[nextIdx];
-          const crossfadeProgress = 1 - framesRemaining / transitionWindow; // 0 to 1
+          const crossfadeRatio = 1 - msRemaining / transitionMs; // 0 to 1
 
-          // Draw base current segment
-          drawSegmentFrame(currentImg, currentSeg.cameraMovement, segProgress, 1 - crossfadeProgress * 0.5);
-          // Blend in next segment
-          drawSegmentFrame(nextImg, nextSeg.cameraMovement, 0, crossfadeProgress);
+          drawSegmentFrame(currentImg, currentSeg.cameraMovement, segProgress, 1 - crossfadeRatio * 0.5);
+          drawSegmentFrame(nextImg, nextSeg.cameraMovement, 0, crossfadeRatio);
         } else {
           drawSegmentFrame(currentImg, currentSeg.cameraMovement, segProgress, 1.0);
         }
 
-        globalFrame++;
-
-        if (globalFrame < totalFrames) {
-          requestAnimationFrame(renderLoop);
-        } else {
-          recorder.stop();
-        }
+        requestAnimationFrame(renderLoop);
       };
 
-      renderLoop();
+      requestAnimationFrame(renderLoop);
     } catch {
       resolve(fallbackUrl);
     }

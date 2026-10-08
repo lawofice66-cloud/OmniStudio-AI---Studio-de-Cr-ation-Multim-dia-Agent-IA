@@ -62,16 +62,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <button
             onClick={onNavigateToStudio}
-            className="p-4 rounded-2xl bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white text-left transition-all shadow-lg shadow-pink-600/20 flex flex-col justify-between space-y-2 cursor-pointer group"
+            className="p-4 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-left transition-all shadow-lg shadow-purple-600/20 flex flex-col justify-between space-y-2 cursor-pointer group"
           >
             <div className="flex items-center justify-between">
               <span className="font-bold text-sm flex items-center gap-1.5">
-                <Video className="w-4 h-4" />
-                Studio Vidéo Flare
+                <BookOpen className="w-4 h-4" />
+                Studio Histoires Flare
               </span>
             </div>
-            <p className="text-xs text-pink-100">
-              Générez vos vidéos photoréalistes 8K avec Veo 3 et optiques cinématiques.
+            <p className="text-xs text-purple-100">
+              Générez vos récits épiques, scénarios multi-actes et dialogues cinématographiques.
             </p>
           </button>
 

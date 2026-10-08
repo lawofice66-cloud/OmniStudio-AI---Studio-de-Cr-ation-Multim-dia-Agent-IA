@@ -58,7 +58,7 @@ export interface VideoGeneration {
   duration: string;
   style: string;
   aspectRatio: string;
-  engine?: 'google-flare' | 'veo-3' | 'kling-2.1' | 'luma-dream';
+  engine?: 'veo-3' | 'kling-2.1' | 'luma-dream' | 'google-flare';
   resolution?: string;
   videoUrl?: string;
   imageUrl?: string;

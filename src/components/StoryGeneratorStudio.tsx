@@ -58,13 +58,7 @@ const STORY_INSPIRATIONS = [
   'Une détective télépathe enquête sur un meurtre dont l\'unique témoin est un automate qui refuse de parler',
 ];
 
-interface StoryGeneratorStudioProps {
-  onNavigateToVideoStudio?: (prompt: string) => void;
-}
-
-export const StoryGeneratorStudio: React.FC<StoryGeneratorStudioProps> = ({
-  onNavigateToVideoStudio,
-}) => {
+export const StoryGeneratorStudio: React.FC = () => {
   const { user, deductCredits, addStoryGeneration, openSubscriptionModal } = useAuth();
   const { success: toastSuccess, error: toastError, info: toastInfo } = useToast();
 
@@ -293,7 +287,7 @@ EMBRANCHEMENTS & DILEMMES INTERACTIFS
         <div className="max-w-3xl space-y-3">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 text-purple-300 text-xs font-bold">
             <BookOpen className="w-3.5 h-3.5 text-purple-400" />
-            <span>⚡ Google Flare Narrative Engine • Multi-Actes & Scénario 8K</span>
+            <span>⚡ Google Flare Narrative Engine • Multi-Actes & Scénario Professionnel</span>
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
@@ -301,7 +295,7 @@ EMBRANCHEMENTS & DILEMMES INTERACTIFS
           </h1>
 
           <p className="text-sm text-slate-300 leading-relaxed">
-            Moteur d'écriture cinématographique ultra-puissant : univers vivant, psychologie des personnages, arcs narratifs captivants et prompts vidéo Veo 3 & Flare prêts pour la réalisation.
+            Moteur d'écriture littéraire et cinématographique d'élite : univers immersifs, développement profond des personnages, scènes dynamiques, dialogues percutants et découpage multi-chapitres.
           </p>
 
           <div className="flex flex-wrap items-center gap-4 pt-2 text-xs text-slate-400">
@@ -690,22 +684,39 @@ EMBRANCHEMENTS & DILEMMES INTERACTIFS
                       </div>
                     )}
 
-                    {/* Scene Video Generation Shortcut */}
+                    {/* Chapter Actions (Audio Reading & Copy) */}
                     <div className="pt-3 border-t border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                       <span className="text-slate-400 italic text-[11px] line-clamp-1 max-w-sm">
-                        🎬 Prompt Scène Flare : "{currentStory.chapters[activeChapterIndex].sceneVisualPrompt}"
+                        🎬 Ambiance scénique : "{currentStory.chapters[activeChapterIndex].sceneVisualPrompt}"
                       </span>
 
-                      {onNavigateToVideoStudio && (
+                      <div className="flex items-center gap-2">
                         <button
                           type="button"
-                          onClick={() => onNavigateToVideoStudio(currentStory.chapters[activeChapterIndex].sceneVisualPrompt)}
-                          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-pink-600 via-rose-600 to-amber-500 hover:from-pink-500 hover:to-amber-400 text-white font-bold flex items-center gap-2 shadow-lg shadow-pink-600/30 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer shrink-0"
+                          onClick={toggleSpeechRead}
+                          className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                            isReadingSpeech
+                              ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/30'
+                              : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-white/10'
+                          }`}
                         >
-                          <Clapperboard className="w-4 h-4 text-white" />
-                          <span>Tourner cette Scène dans le Studio Vidéo Flare</span>
+                          {isReadingSpeech ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-pink-400" />}
+                          <span>{isReadingSpeech ? 'Arrêter la Voix' : 'Écouter ce Chapitre'}</span>
                         </button>
-                      )}
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const ch = currentStory.chapters[activeChapterIndex];
+                            navigator.clipboard.writeText(`CHAPITRE ${ch.chapterNumber} : ${ch.title}\n\n${ch.narrative}`);
+                            toastInfo('Chapitre copié !', `Le texte du Chapitre ${ch.chapterNumber} est dans le presse-papiers.`);
+                          }}
+                          className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold flex items-center gap-1.5 shadow-md shadow-purple-600/20 transition-all cursor-pointer"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                          <span>Copier ce Chapitre</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
