@@ -35,7 +35,7 @@ export const PricingPage: React.FC = () => {
           Un abonnement unique à <span className="bg-gradient-to-r from-amber-300 via-orange-400 to-amber-500 bg-clip-text text-transparent">5 USD / mois</span>
         </h1>
         <p className="text-base text-slate-400">
-          Compte <strong>Azzoula Ali</strong> avec 500 crédits renouvelés. Accès exclusif aux moteurs Google Flare Vidéo 8K et Scénarios Cinématographiques.
+          Compte <strong>Azzoula Ali</strong> avec 500 crédits permanents. Accès complet au Studio d'Écriture de Récits & Scénarios Cinématographiques Flare.
         </p>
       </div>
 

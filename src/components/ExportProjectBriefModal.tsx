@@ -11,7 +11,7 @@ interface ExportProjectBriefModalProps {
 }
 
 export const ExportProjectBriefModal: React.FC<ExportProjectBriefModalProps> = ({ isOpen, onClose }) => {
-  const { user, storyHistory, imageHistory, transcriptionHistory, openSubscriptionModal } = useAuth();
+  const { user, storyHistory, openSubscriptionModal } = useAuth();
   const { success: toastSuccess, info: toastInfo } = useToast();
   const [copied, setCopied] = useState(false);
 
@@ -30,14 +30,14 @@ export const ExportProjectBriefModal: React.FC<ExportProjectBriefModalProps> = (
     });
 
     let brief = `CAHIER DES CHARGES CRÉATIF & EXPORTATION DU PROJET
-Plateforme : OmniStudio Flare
+Plateforme : OmniStudio Flare — Studio d'Écriture & Scénarios IA
 Date d'exportation : ${dateStr}
 Auteur : ${user?.name || 'Azzoula Ali'} (${user?.email || 'lawofice66@gmail.com'})
 Formule active : ${isPro ? 'Plan Pro VIP (Rendus sans filigrane)' : 'Plan Free'}
 Solde de crédits restant : ${user?.credits || 0} crédits
 
 ================================================================================
-1. SYNTHÈSE GLOBALE DU BESOIN CRÉATIF & SCÉNARIOS
+1. SYNTHÈSE GLOBALE DU BESOIN CRÉATIF & RÉCITS
 ================================================================================
 Ce document rassemble l'ensemble des créations narratives et scénarios spécifiés par l'utilisateur.
 
@@ -56,44 +56,23 @@ Nombre total de récits créés : ${storyHistory.length}
 - Genre : ${story.genre} | Tonalité : ${story.tone}
 - Accroche (Logline) : ${story.logline}
 - Univers : ${story.worldSetting}
+- Réalisation : ${story.directorVision || 'Standard Cinéma'}
 - Nombre de chapitres : ${story.chapters?.length || 0}
+- Personnages : ${story.characters?.map(c => `${c.name} (${c.role})`).join(', ') || 'N/A'}
 - Synthèse : ${story.summary}\n\n`;
-      });
-    }
 
-    if (imageHistory.length === 0) {
-      brief += `Aucune image générée pour le moment dans ce projet.\n\n`;
-    } else {
-      imageHistory.forEach((img, i) => {
-        brief += `[IMAGE #${i + 1}]
-- Date : ${new Date(img.createdAt).toLocaleDateString()}
-- Prompt principal : "${img.prompt}"
-- Style artistique : ${img.style}
-- Format & Ratio : ${img.aspectRatio}
-- Crédits consommés : ${img.creditsUsed} cr\n\n`;
+        story.chapters?.forEach((ch) => {
+          brief += `  [Chapitre ${ch.chapterNumber}: ${ch.title}] (Tension: ${ch.tensionLevel}/10)\n`;
+          brief += `  ${ch.narrative}\n\n`;
+        });
+        brief += `--------------------------------------------------------------------------------\n\n`;
       });
     }
 
     brief += `================================================================================
-3. EXTRAITS & TRANSCRIPTIONS AUDIO (AUDIO TRANSCRIBE)
+3. RECOMMANDATIONS TECHNIQUES & PROCHAINES ÉTAPES
 ================================================================================
-`;
-
-    if (transcriptionHistory.length === 0) {
-      brief += `Aucun enregistrement audio transcrit pour le moment.\n\n`;
-    } else {
-      transcriptionHistory.forEach((tr, i) => {
-        brief += `[AUDIO #${i + 1}] : ${tr.fileName}
-- Date : ${new Date(tr.createdAt).toLocaleDateString()}
-- Transcription & Analyse :
-${tr.transcription.slice(0, 400)}... (Extrait)\n\n`;
-      });
-    }
-
-    brief += `================================================================================
-5. RECOMMANDATIONS TECHNIQUES & PROCHAINES ÉTAPES
-================================================================================
-- Les éléments validés peuvent être exportés directement en production.
+- Les éléments validés peuvent être exportés directement en production audiovisuelle ou littéraire.
 - Pour une utilisation commerciale haute résolution sans filigrane, veillez à activer le Plan Pro (5 USD/mois).
 - Lien direct d'abonnement : ${PRICING_CONFIG.NOWPAYMENTS_URL}
 `;

@@ -21,6 +21,7 @@ interface AuthContextType {
   addVideoGeneration: (item: VideoGeneration) => void;
   addTranscription: (item: TranscriptionItem) => void;
   addStoryGeneration: (item: StoryGeneration) => void;
+  deleteStoryGeneration: (id: string) => void;
   addMusicGeneration: (item: MusicGeneration) => void;
   clearHistory: () => void;
   openAuthModal: () => void;
@@ -109,82 +110,179 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   });
 
-  // Zero demo content — starts clean and empty
-  const [imageHistory, setImageHistory] = useState<ImageGeneration[]>(() => {
+  // Clean any obsolete video, image, music, or transcription data from local storage
+  useEffect(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEYS.IMAGES);
-      return saved ? JSON.parse(saved) : [];
+      const purgeKeys = [
+        'omnistudio_videos',
+        'omnistudio_images',
+        'omnistudio_music',
+        'omnistudio_transcriptions',
+        'flare_videos',
+        'flare_text_to_video',
+        'flare_video_generations'
+      ];
+      purgeKeys.forEach((k) => localStorage.removeItem(k));
     } catch {
-      return [];
+      // ignore
     }
-  });
+  }, []);
 
-  const [videoHistory, setVideoHistory] = useState<VideoGeneration[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.VIDEOS);
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [imageHistory, setImageHistory] = useState<ImageGeneration[]>([]);
+  const [videoHistory, setVideoHistory] = useState<VideoGeneration[]>([]);
+  const [transcriptionHistory, setTranscriptionHistory] = useState<TranscriptionItem[]>([]);
+  const [musicHistory, setMusicHistory] = useState<MusicGeneration[]>([]);
 
-  const [transcriptionHistory, setTranscriptionHistory] = useState<TranscriptionItem[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.TRANSCRIPTIONS);
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
-
+  // Story History — exclusively stories & narrative scenarios
   const [storyHistory, setStoryHistory] = useState<StoryGeneration[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.STORIES);
-      return saved ? JSON.parse(saved) : [];
+      if (saved) {
+        const parsed: StoryGeneration[] = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
     } catch {
-      return [];
+      // fallback
     }
-  });
 
-  const [musicHistory, setMusicHistory] = useState<MusicGeneration[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.MUSIC);
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
+    // Default premium initial stories
+    return [
+      {
+        id: 'sty_signal_obsidienne',
+        title: "Le Dernier Signal d'Obsidienne",
+        prompt: "Dans un monastère technologique sur une lune morte, l'archiviste décode une stèle d'obsidienne dont les glyphes modifient la réalité à chaque lecture",
+        genre: "Science-Fiction & Hard Sci-Fi",
+        tone: "Épique & Métaphysique",
+        directorVision: "Denis Villeneuve & Christopher Nolan (IMAX 70mm)",
+        worldSetting: "Lune morte d'Oméga-7, monastère technologique de l'Ordre des Chrono-Moines",
+        logline: "Une archiviste recluse active sans le savoir une stèle quantique qui réécrit le passé de l'humanité à chaque glyphe déchiffré.",
+        createdAt: "2026-10-04T12:13:00.000Z",
+        creditsUsed: 2,
+        characters: [
+          { name: "Lyra Valen", role: "Archiviste en chef", description: "Esprit brillant et cartésien", motivation: "Comprendre l'origine du cataclysme lunaire" },
+          { name: "Erebus", role: "Gardien synthétique", description: "IA séculaire du sanctuaire", motivation: "Protéger le secret de l'Obsidienne" }
+        ],
+        chapters: [
+          {
+            chapterNumber: 1,
+            title: "L'Aube de Silicium",
+            narrative: "Le vent stellaire soufflait sur la poussière fine d'Oméga-7. Lyra ajusta les capteurs de son gant holographique. Face à elle, le monolithe noir résonnait d'une fréquence inaudible à l'oreille humaine. Chaque glyphe semblait respirer sous les reflets ambrés de l'étoile mourante.",
+            sceneVisualPrompt: "Ancient obsidian monolith in high-tech brutalist lunar monastery, blue holographic dust",
+            soundtrackMood: "Nappes de synthé analogique & violoncelles sombres",
+            tensionLevel: 5
+          },
+          {
+            chapterNumber: 2,
+            title: "La Réécriture Quantique",
+            narrative: "À l'instant où le troisième glyphe s'illumina, le paysage extérieur se transforma instantanément. Les cratères disparurent au profit d'océans de mercure. Le temps lui-même venait de bifurquer, réorganisant la structure même de la réalité spatiale.",
+            sceneVisualPrompt: "Reality bending, shifting landscapes seen through panoramic monastery glass",
+            soundtrackMood: "Percussions lourdes & crescendo de cordes",
+            tensionLevel: 8
+          },
+          {
+            chapterNumber: 3,
+            title: "La Convergence Finale",
+            narrative: "Pour stabiliser la station en perdition, Lyra dut inscrire sa propre mémoire dans la stèle, devenant à la fois le témoin et l'architecte de la nouvelle ère humaine parmi les étoiles.",
+            sceneVisualPrompt: "Cosmic convergence, gold and obsidian glowing fracture",
+            soundtrackMood: "Orgue grandiose et chœur stellaire",
+            tensionLevel: 10
+          }
+        ],
+        summary: "Un récit philosophique et spatial intense sur le pouvoir de la mémoire et les paradoxes temporels."
+      },
+      {
+        id: 'sty_horizon_sillons',
+        title: "L'Horizon des Sillons",
+        prompt: "Un titan agricole autonome traverse les vastes plaines dorées d'une colonie agricole pour préparer la première moisson avant l'hiver cosmique",
+        genre: "Science-Fiction",
+        tone: "Épique & Poétique",
+        directorVision: "Interstellar & Christopher Nolan",
+        worldSetting: "Nouvelle-Arcadie, plaine agricole de blé doré s'étendant à perte de vue",
+        logline: "Sur les terres fertiles d'un monde lointain, un cultivateur et sa machine colossale luttent contre le temps pour sauver les récoltes de toute une colonie.",
+        createdAt: "2026-10-08T11:45:00.000Z",
+        creditsUsed: 2,
+        characters: [
+          { name: "Marcus Keller", role: "Vétéran de la Terre & Cultivateur", description: "Mains calleuses, regard déterminé", motivation: "Assurer la survie de la colonie" }
+        ],
+        chapters: [
+          {
+            chapterNumber: 1,
+            title: "La Terre Promise",
+            narrative: "Les roues colossales du tracteur lourd broyaient le sol sombre et fertile de Nouvelle-Arcadie. La poussière dorée s'élevait en gerbes étincelantes sous les rayons ambrés du couchant, traçant des sillons parfaits jusqu'à l'horizon infini.",
+            sceneVisualPrompt: "Massive futuristic heavy agricultural tractor plowing endless golden fields at golden hour, realistic dust",
+            soundtrackMood: "Accords de guitare acoustique et cordes chaleureuses",
+            tensionLevel: 4
+          },
+          {
+            chapterNumber: 2,
+            title: "Le Défi du Crépuscule",
+            narrative: "Le ciel vira au pourpre à l'approche du front froid cosmique. Marcus enclencha les projecteurs holographiques pour guider la machine dans la brume naissante.",
+            sceneVisualPrompt: "Approaching cosmic storm over golden wheat fields, tractor headlights cutting darkness",
+            soundtrackMood: "Tension rythmée et basses profondes",
+            tensionLevel: 7
+          },
+          {
+            chapterNumber: 3,
+            title: "L'Aurore Nouvelle",
+            narrative: "À l'aube naissante, les silos de la colonie étaient pleins. Le titan s'immobilisa au sommet du promontoire, baigné par la première lumière du printemps.",
+            sceneVisualPrompt: "Sunrise over harvested fields, glowing silo towers in distance",
+            soundtrackMood: "Thème d'espoir et trompettes éclatantes",
+            tensionLevel: 9
+          }
+        ],
+        summary: "Une ode poétique et grandiose au travail de la terre et à la résilience humaine dans les étoiles."
+      }
+    ];
   });
 
   const [transactions, setTransactions] = useState<CreditTransaction[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.TRANSACTIONS);
       if (saved) {
-        return JSON.parse(saved);
+        const parsed: CreditTransaction[] = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          // Filter out any legacy video transactions
+          const cleaned = parsed.filter((tx) => {
+            const cat = (tx.category || '').toLowerCase();
+            const name = (tx.actionName || '').toLowerCase();
+            return (
+              cat !== 'video' &&
+              !name.includes('vidéo') &&
+              !name.includes('video') &&
+              !name.includes('flare') &&
+              !name.includes('tractor') &&
+              !name.includes('tracteur') &&
+              !name.includes('cinematic slow')
+            );
+          });
+          if (cleaned.length > 0) return cleaned;
+        }
       }
-      return [
-        {
-          id: 'tx_azzoula_ali_pro',
-          type: 'addition',
-          category: 'subscription',
-          actionName: 'Azzoula Ali — 500 crédits permanents',
-          amount: 500,
-          date: new Date().toISOString(),
-          balanceAfter: 500,
-        },
-      ];
     } catch {
-      return [
-        {
-          id: 'tx_azzoula_ali_pro',
-          type: 'addition',
-          category: 'subscription',
-          actionName: 'Azzoula Ali — 500 crédits permanents',
-          amount: 500,
-          date: new Date().toISOString(),
-          balanceAfter: 500,
-        },
-      ];
+      // fallback
     }
+    return [
+      {
+        id: 'tx_azzoula_ali_pro',
+        type: 'addition',
+        category: 'subscription',
+        actionName: 'Azzoula Ali — 500 crédits permanents',
+        amount: 500,
+        date: new Date().toISOString(),
+        balanceAfter: 500,
+      },
+      {
+        id: 'tx_story_signal',
+        type: 'deduction',
+        category: 'story',
+        actionName: "Génération Récit : Le Dernier Signal d'Obsidienne",
+        amount: 2,
+        date: '2026-10-04T12:13:00.000Z',
+        balanceAfter: 498,
+      },
+    ];
   });
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -361,6 +459,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setStoryHistory((prev) => [item, ...prev]);
   };
 
+  const deleteStoryGeneration = (id: string) => {
+    setStoryHistory((prev) => prev.filter((s) => s.id !== id));
+    toastInfo('Histoire retirée', 'Le projet a été retiré de votre historique.');
+  };
+
   const addMusicGeneration = (item: MusicGeneration) => {
     setMusicHistory((prev) => [item, ...prev]);
   };
@@ -407,6 +510,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         addVideoGeneration,
         addTranscription,
         addStoryGeneration,
+        deleteStoryGeneration,
         addMusicGeneration,
         clearHistory,
         openAuthModal,
