@@ -935,93 +935,98 @@ function createSynthesizedWav(durationSeconds = 15, style = 'Cinematic'): { wavU
 // 6. Endpoint: Générateur d'Histoires IA (propulsé directement par Gemini)
 app.post('/api/generate-story', async (req, res) => {
   try {
-    const {
-      prompt,
-      theme,
-      genre,
-    } = req.body;
+    const idea = (req.body.idea || req.body.prompt || '').trim();
+    const theme = (req.body.theme || req.body.genre || 'Général').trim();
 
-    if (!prompt || !prompt.trim()) {
-      return res.status(400).json({ error: 'Le prompt ou sujet de l\'histoire est requis' });
+    if (!idea) {
+      return res.status(400).json({ error: 'L\'idée de départ est requise' });
     }
 
-    const cleanPrompt = prompt.trim();
-    const selectedTheme = theme || genre || 'Vengeance & Justice';
+    const geminiPrompt = `Ecris une histoire de 500-700 mots. Thème: ${theme}. Idée: ${idea}. Respecte exactement l'idée, n'invente pas d'autres personnages.
 
-    const systemPrompt = `Tu es un romancier et auteur de fiction talentueux. Écris une histoire complète, prenante et remarquablement rédigée en français basée à 100% sur cette idée :
-
-Idée de l'histoire : "${cleanPrompt}"
-Thème : "${selectedTheme}"
-
-CONSIGNES STRICTES :
-1. RESPECT ABSOLU DU SUJET : L'histoire doit traiter EXCLUSIVEMENT et directement de l'idée fournie ("${cleanPrompt}"). Ne dévie JAMAIS du sujet (aucun tracteur, aucun champ agricole, aucun élément hors-sujet).
-2. PERSONNAGES : Crée des protagonistes et antagonistes en lien direct avec le prompt (n'invente pas de nom arbitraire comme "Alexandre Vance").
-3. LONGUEUR : Entre 500 et 700 mots environ.
-4. STRUCTURE : Rédige une histoire captivante en 3 ou 4 paragraphes fluides et bien découpés (mise en situation et tension initiale, montée dramatique et confrontation, résolution poignante ou inattendue).
-5. TITRE : Donne un titre fort et percutant en parfait accord avec l'intrigue.
-
-Réponds UNIQUEMENT sous la forme d'un objet JSON valide sans texte avant ni après :
+Donne un titre percutant et l'histoire complète sous forme JSON strict :
 {
-  "title": "Titre fort de l'histoire",
-  "content": "Texte complet de l'histoire en 3 à 4 paragraphes séparés par des sauts de ligne...",
-  "theme": "${selectedTheme}"
+  "title": "Titre percutant en rapport avec l'idée",
+  "content": "Histoire complète en 3 à 4 paragraphes bien écrits séparés par des sauts de ligne..."
 }`;
 
-    let storyData: { title: string; content: string; theme?: string } | null = null;
-    try {
-      const response = await generateContentWithFallback({
-        model: 'gemini-3.8-flash',
-        contents: systemPrompt,
-        config: {
-          responseMimeType: 'application/json',
-          temperature: 0.8,
-        },
-      }, 25000);
+    let title = '';
+    let content = '';
 
-      const rawText = response?.text || '';
+    const response = await generateContentWithFallback({
+      model: 'gemini-3.8-flash',
+      contents: geminiPrompt,
+      config: {
+        responseMimeType: 'application/json',
+        temperature: 0.8,
+      },
+    }, 25000);
+
+    const rawText = (response?.text || '').trim();
+    try {
       const jsonMatch = rawText.match(/```(?:json)?\s*([\s\S]*?)\s*```/) || rawText.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        storyData = JSON.parse(jsonMatch[1] || jsonMatch[0]);
-      } else {
-        storyData = JSON.parse(rawText);
-      }
-    } catch (err) {
-      console.warn('Story generation Gemini call error, using tailored fallback:', err);
+      const parsed = JSON.parse(jsonMatch ? (jsonMatch[1] || jsonMatch[0]) : rawText);
+      if (parsed.title) title = String(parsed.title).trim();
+      if (parsed.content) content = String(parsed.content).trim();
+    } catch {
+      // Si ce n'est pas du JSON strict, utiliser le texte brut
+      content = rawText;
+      title = idea.length > 50 ? idea.slice(0, 47) + '...' : idea;
     }
 
-    if (!storyData || !storyData.content || !storyData.title) {
-      // Fallback dynamique et intelligent respectant 100% le prompt sans Alexandre ni tracteur
-      const shortTitle = cleanPrompt.length > 50 ? cleanPrompt.slice(0, 47) + '...' : cleanPrompt;
-      storyData = {
-        title: `L'Heure des Comptes : ${shortTitle}`,
-        theme: selectedTheme,
-        content: `Pendant des mois passés derrière les barreaux pour une faute qu'il n'avait jamais commise, une seule pensée avait nourri son esprit : le moment où la balance pencherait de nouveau. Accusé à tort suite à un dossier bâclé et condamné par un juge intransigeant soucieux de boucler l'affaire sans poser de questions, le jeune homme avait tout perdu ce jour-là : sa réputation, sa liberté et la confiance des siens. Mais l'enfermement avait aiguisé sa patience et sa clairvoyance. Il ne cherchait pas la violence aveugle, mais une revanche implacable, une mise à nu méthodique de la vérité qui forcerait son accusateur à regarder en face l'injustice qu'il avait infligée.\n\nÀ sa sortie, l'enquête commença dans l'ombre. Grâce à des contacts glanés dans les bas-fonds et à une minutie chirurgicale, il reconstitua pièce par pièce les failles du procès initial. Les preuves écartées, les témoignages tronqués et les arrangements en coulisses vinrent peu à peu dessiner la réalité d'un système où l'erreur judiciaire avait été délibérément étouffée pour préserver la carrière du magistrat. Chaque document accumulé devenait une pièce maîtresse sur l'échiquier. Le piège se referma le soir où le juge, acculé par des preuves irréfutables déposées sous ses yeux en plein tribunal désert, comprit que son passé venait de le rattraper.\n\nFace à face dans la pénombre de la salle d'audience vide, les rôles étaient désormais inversés. Le jeune homme n'avait plus le statut de coupable résigné ; il incarnait la justice authentique face à une autorité déchue de sa légitimité. Sans éclat de voix ni éclat de colère, il posa le dossier complet sur le pupitre du magistrat, le laissant seul devant le choix inévitable d'avouer publiquement ou de voir son honneur s'effondrer au grand jour. La vengeance n'était pas de sang, mais de vérité, et pour la première fois depuis des années, l'innocent pouvait enfin respirer libre.`
-      };
+    if (!content) {
+      throw new Error('La génération a échoué. Veuillez réessayer.');
+    }
+
+    if (!title) {
+      title = idea.length > 50 ? idea.slice(0, 47) + '...' : idea;
     }
 
     return res.json({
       id: 'story_' + Date.now(),
-      prompt: cleanPrompt,
-      theme: selectedTheme,
-      genre: selectedTheme,
-      title: storyData.title,
-      content: storyData.content,
-      logline: storyData.title,
-      chapters: [
-        {
-          chapterNumber: 1,
-          title: storyData.title,
-          narrative: storyData.content,
-          sceneVisualPrompt: '',
-          tensionLevel: 8,
-        }
-      ],
-      summary: storyData.content.slice(0, 180) + '...',
+      prompt: idea,
+      theme,
+      genre: theme,
+      title,
+      content,
       createdAt: new Date().toISOString(),
       creditsUsed: 1,
     });
   } catch (error: unknown) {
     console.error('Story generation error:', error);
+    return res.status(500).json({ error: getErrorMessage(error) });
+  }
+});
+
+// Endpoint: Prolongation d'Histoire IA (Ajoute 300 mots)
+app.post('/api/extend-story', async (req, res) => {
+  try {
+    const fullStory = (req.body.fullStory || req.body.story || '').trim();
+    if (!fullStory) {
+      return res.status(400).json({ error: 'L\'histoire actuelle est requise pour la prolonger.' });
+    }
+
+    const extendPrompt = `Prolonge cette histoire de 300 mots sans répéter, en continuant avec les mêmes personnages : ${fullStory}`;
+
+    const response = await generateContentWithFallback({
+      model: 'gemini-3.8-flash',
+      contents: extendPrompt,
+      config: {
+        temperature: 0.8,
+      },
+    }, 25000);
+
+    const extension = (response?.text || '').trim();
+    if (!extension) {
+      throw new Error('Impossible de prolonger l\'histoire.');
+    }
+
+    return res.json({
+      extension,
+      creditsUsed: 1,
+    });
+  } catch (error: unknown) {
+    console.error('Extend story error:', error);
     return res.status(500).json({ error: getErrorMessage(error) });
   }
 });

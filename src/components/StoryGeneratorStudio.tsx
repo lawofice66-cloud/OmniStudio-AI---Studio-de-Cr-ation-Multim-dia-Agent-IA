@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  BookOpen, 
   Sparkles, 
   Download, 
   Copy, 
   Check, 
   Volume2, 
   VolumeX, 
-  Loader2 
+  Loader2,
+  PlusCircle
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -24,12 +24,13 @@ const THEMES = [
 ];
 
 export const StoryGeneratorStudio: React.FC = () => {
-  const { user, deductCredits, addStoryGeneration } = useAuth();
+  const { deductCredits, addStoryGeneration } = useAuth();
   const { success: toastSuccess, error: toastError, info: toastInfo } = useToast();
 
   const [prompt, setPrompt] = useState('');
-  const [theme, setTheme] = useState('Vengeance & Justice');
+  const [theme, setTheme] = useState('Drame');
   const [loading, setLoading] = useState(false);
+  const [extending, setExtending] = useState(false);
   const [currentStory, setCurrentStory] = useState<StoryGeneration | null>(null);
   const [copied, setCopied] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
@@ -45,78 +46,127 @@ export const StoryGeneratorStudio: React.FC = () => {
     };
   }, []);
 
-  const handleGenerate = async () => {
-    if (!prompt.trim()) {
+  const generateStory = async () => {
+    // 1. Récupère l'idée directement depuis le DOM au moment du clic
+    const ideaEl = document.getElementById('idea') as HTMLTextAreaElement | null;
+    const themeEl = document.getElementById('theme') as HTMLSelectElement | null;
+    const idea = (ideaEl ? ideaEl.value : prompt).trim();
+    const selectedTheme = (themeEl ? themeEl.value : theme).trim();
+
+    if (!idea) {
       toastError('Idée requise', 'Veuillez saisir votre idée de départ pour générer l\'histoire.');
       return;
     }
 
-    const hasCredits = deductCredits(
-      cost,
-      `Histoire : ${prompt.trim().slice(0, 30)}...`,
-      'story'
-    );
-    if (!hasCredits) return;
-
-    setLoading(true);
+    // 2. Vide le output avant de générer
+    setCurrentStory(null);
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
       setIsPlayingAudio(false);
     }
 
+    // 3. Déduire 1 crédit
+    const hasCredits = deductCredits(
+      cost,
+      `Histoire : ${idea.slice(0, 30)}...`,
+      'story'
+    );
+    if (!hasCredits) return;
+
+    setLoading(true);
+
     try {
-      const apiRes = await safeFetchJson<StoryGeneration>('/api/generate-story', {
+      const apiRes = await safeFetchJson<{
+        id?: string;
+        title?: string;
+        content?: string;
+        prompt?: string;
+        theme?: string;
+        error?: string;
+      }>('/api/generate-story', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          prompt: prompt.trim(),
-          theme,
+          idea,
+          theme: selectedTheme,
         }),
-      }, 30000);
+      }, 35000);
 
-      let storyData: StoryGeneration;
+      if (apiRes.ok && apiRes.data?.content) {
+        const fullContent = apiRes.data.content.trim();
+        const storyTitle = (apiRes.data.title || idea.slice(0, 45)).trim();
 
-      if (apiRes.ok && apiRes.data?.title && (apiRes.data.content || apiRes.data.chapters?.[0]?.narrative)) {
-        const fullContent = apiRes.data.content || apiRes.data.chapters?.[0]?.narrative || '';
-        storyData = {
-          ...apiRes.data,
+        const storyData: StoryGeneration = {
+          id: apiRes.data.id || 'story_' + Date.now(),
+          prompt: idea,
+          theme: selectedTheme,
+          genre: selectedTheme,
+          title: storyTitle,
           content: fullContent,
-          theme: apiRes.data.theme || theme,
-        };
-      } else {
-        // Fallback immédiat et direct respectant 100% le prompt sans Alexandre ni tracteur
-        const cleanIdea = prompt.trim();
-        const generatedTitle = `L'Heure du Verdict : ${cleanIdea.slice(0, 40)}`;
-        const fallbackContent = `Condamné injustement par un juge pressé d'en finir avec une affaire sans importance à ses yeux, le jeune homme avait passé de longs mois enfermé dans l'obscurité d'une cellule, rongé par un sentiment d'impuissance. Mais derrière les murs froids du centre de détention, sa colère s'était transformée en une patience froide et calculatrice. Il avait juré que le jour de sa libération, il ne chercherait pas la violence aveugle, mais une justice impitoyable qui forcerait le magistrat à reconnaître publiquement son erreur et sa lâcheté.\n\nUne fois dehors, il entreprit une traque méthodique et silencieuse. Épluchant les archives judiciaires et surveillant les habitudes du juge, il découvrit que ce dernier avait délibérément ignoré des preuves d'innocence évidentes pour préserver des intérêts politiques locaux. Pièce après pièce, témoignage après témoignage, il bâtit un dossier irréfutable, bien plus solide que l'enquête bâclée qui l'avait envoyé en prison. Le piège se referma un soir de pluie dans le bureau même du tribunal, où le juge travaillait tard dans la solitude.\n\nLorsque la porte claqua doucement et que le jeune homme posa sur le bureau verni les documents démontrant l'injustice commise, la stupeur se peignit sur le visage du magistrat. Les rôles étaient désormais inversés : celui qui avait autrefois brandi le marteau de la loi se retrouvait face à sa propre culpabilité, sans échappatoire possible. Sans un cri, avec le calme de celui qui sait la vérité de son côté, l'ancien condamné lui laissa une nuit pour signer ses aveux et démissionner. La vengeance était accomplie, non par le sang, mais par le triomphe éclatant de la vérité.`;
-
-        storyData = {
-          id: 'story_' + Date.now(),
-          prompt: cleanIdea,
-          theme,
-          title: generatedTitle,
-          content: fallbackContent,
           createdAt: new Date().toISOString(),
           creditsUsed: cost,
-          chapters: [
-            {
-              chapterNumber: 1,
-              title: generatedTitle,
-              narrative: fallbackContent,
-              sceneVisualPrompt: '',
-              tensionLevel: 8,
-            }
-          ]
         };
-      }
 
-      setCurrentStory(storyData);
-      addStoryGeneration(storyData);
-      toastSuccess('Histoire générée !', 'Votre histoire complète a été créée avec succès.');
+        setCurrentStory(storyData);
+        addStoryGeneration(storyData);
+        toastSuccess('Histoire générée !', 'Votre histoire a été créée avec succès.');
+      } else {
+        const errMessage = apiRes.data?.error || 'Erreur lors de la génération. Veuillez réessayer.';
+        toastError('Échec de génération', errMessage);
+      }
     } catch (err: unknown) {
       console.error('Erreur génération histoire:', err);
-      toastError('Erreur de génération', 'Impossible de générer l\'histoire. Veuillez réessayer.');
+      toastError('Erreur de génération', 'Impossible de contacter le moteur IA. Veuillez réessayer.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Prolonger l'histoire (+1 crédit, ajoute 300 mots)
+  const handleExtendStory = async () => {
+    if (!currentStory?.content) return;
+
+    const hasCredits = deductCredits(
+      1,
+      `Prolongation : ${currentStory.title.slice(0, 25)}...`,
+      'story'
+    );
+    if (!hasCredits) return;
+
+    setExtending(true);
+    const fullStory = currentStory.content;
+
+    try {
+      const apiRes = await safeFetchJson<{ extension?: string; error?: string }>('/api/extend-story', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullStory,
+        }),
+      }, 35000);
+
+      if (apiRes.ok && apiRes.data?.extension) {
+        const extension = apiRes.data.extension.trim();
+        const updatedContent = `${fullStory}\n\n${extension}`;
+
+        const updatedStory: StoryGeneration = {
+          ...currentStory,
+          content: updatedContent,
+          creditsUsed: (currentStory.creditsUsed || 1) + 1,
+        };
+
+        setCurrentStory(updatedStory);
+        addStoryGeneration(updatedStory);
+        toastSuccess('Histoire prolongée !', '300 mots supplémentaires ont été ajoutés à votre histoire.');
+      } else {
+        const errMessage = apiRes.data?.error || 'Impossible de prolonger l\'histoire.';
+        toastError('Erreur prolongation', errMessage);
+      }
+    } catch (err: unknown) {
+      console.error('Erreur prolongation histoire:', err);
+      toastError('Erreur prolongation', 'Impossible de prolonger l\'histoire. Veuillez réessayer.');
+    } finally {
+      setExtending(false);
     }
   };
 
@@ -183,30 +233,30 @@ ${currentStory.content}
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in">
       
-      {/* Header simple et direct */}
+      {/* Header simple */}
       <div className="text-center space-y-2">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-semibold">
           <Sparkles className="w-3.5 h-3.5 text-purple-400" />
           <span>Générateur d'Histoires IA</span>
         </div>
         <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-          Donnez vie à vos histoires en 1 clic
+          Générateur d'Histoires Direct
         </h1>
         <p className="text-xs sm:text-sm text-slate-400 max-w-lg mx-auto">
-          Tapez votre idée, choisissez le thème et obtenez directement une histoire complète de 500 à 700 mots.
+          Tapez votre idée, choisissez le thème et obtenez directement votre histoire de 500 à 700 mots.
         </p>
       </div>
 
-      {/* Formulaire simplifié : 1 textarea + 1 select + 1 bouton */}
+      {/* Formulaire simplifié : 1 textarea (id="idea") + 1 select (id="theme") + 1 bouton */}
       <div className="p-6 sm:p-8 rounded-3xl glass-panel border border-white/10 space-y-6 shadow-2xl bg-slate-900/70">
         
         {/* Champ 1 : Textarea Idée de départ */}
         <div className="space-y-2">
-          <label htmlFor="story-prompt" className="block text-xs font-bold uppercase tracking-wider text-slate-300">
+          <label htmlFor="idea" className="block text-xs font-bold uppercase tracking-wider text-slate-300">
             Idée de départ
           </label>
           <textarea
-            id="story-prompt"
+            id="idea"
             rows={4}
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
@@ -215,13 +265,13 @@ ${currentStory.content}
           />
         </div>
 
-        {/* Champ 2 : Select Thème (6 options simples) */}
+        {/* Champ 2 : Select Thème (id="theme") */}
         <div className="space-y-2">
-          <label htmlFor="story-theme" className="block text-xs font-bold uppercase tracking-wider text-slate-300">
+          <label htmlFor="theme" className="block text-xs font-bold uppercase tracking-wider text-slate-300">
             Thème
           </label>
           <select
-            id="story-theme"
+            id="theme"
             value={theme}
             onChange={(e) => setTheme(e.target.value)}
             className="w-full p-3.5 rounded-2xl bg-slate-950 border border-white/10 text-white text-sm focus:outline-none focus:border-purple-500/80 focus:ring-1 focus:ring-purple-500/50 transition-all cursor-pointer"
@@ -237,14 +287,14 @@ ${currentStory.content}
         {/* Bouton Unique : Générer l'histoire (1 crédit) */}
         <button
           type="button"
-          onClick={handleGenerate}
-          disabled={loading || !prompt.trim()}
+          onClick={generateStory}
+          disabled={loading}
           className="w-full py-4 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-base font-extrabold shadow-xl shadow-purple-600/30 transition-all cursor-pointer flex items-center justify-center gap-2 group"
         >
           {loading ? (
             <>
               <Loader2 className="w-5 h-5 animate-spin" />
-              <span>Génération de votre histoire en cours...</span>
+              <span>Génération directe en cours...</span>
             </>
           ) : (
             <>
@@ -255,7 +305,7 @@ ${currentStory.content}
         </button>
       </div>
 
-      {/* Affichage Simple de l'Histoire Générée */}
+      {/* Zone Histoire avec actions */}
       {currentStory && (
         <div className="p-6 sm:p-8 rounded-3xl glass-panel border border-purple-500/30 bg-slate-900/90 space-y-6 shadow-2xl animate-in fade-in slide-in-from-bottom-4">
           
@@ -270,7 +320,7 @@ ${currentStory.content}
               </h2>
             </div>
 
-            {/* 3 boutons d'action : Écouter (TTS), Copier, Télécharger .txt */}
+            {/* Boutons d'action : Écouter | Copier | Télécharger */}
             <div className="flex items-center gap-2 shrink-0">
               <button
                 type="button"
@@ -326,13 +376,35 @@ ${currentStory.content}
             </div>
           </div>
 
-          {/* Histoire complète en paragraphes fluides et bien espacés */}
+          {/* Corps de l'Histoire complète */}
           <div className="space-y-4 text-slate-200 text-sm sm:text-base leading-relaxed whitespace-pre-line font-serif">
             {currentStory.content.split('\n\n').map((paragraph, index) => (
               <p key={index} className="text-justify first-letter:text-2xl first-letter:font-bold first-letter:text-purple-400">
                 {paragraph.trim()}
               </p>
             ))}
+          </div>
+
+          {/* Bouton Prolonger l'histoire (+1 crédit) */}
+          <div className="pt-4 border-t border-white/10 flex justify-end">
+            <button
+              type="button"
+              onClick={handleExtendStory}
+              disabled={extending}
+              className="px-5 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-indigo-600/20 transition-all cursor-pointer flex items-center gap-2"
+            >
+              {extending ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Prolongation en cours (+300 mots)...</span>
+                </>
+              ) : (
+                <>
+                  <PlusCircle className="w-4 h-4 text-amber-300" />
+                  <span>Prolonger l'histoire (+1 crédit)</span>
+                </>
+              )}
+            </button>
           </div>
 
         </div>

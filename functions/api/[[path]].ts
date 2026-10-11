@@ -597,33 +597,21 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
     // 7. Story Generation (Direct Gemini Engine)
     if (path === '/api/generate-story') {
-      const { prompt, theme, genre } = body;
-      if (!prompt || !String(prompt).trim()) return jsonResponse({ error: 'Prompt requis' }, 400);
+      const idea = String(body.idea || body.prompt || '').trim();
+      const selectedTheme = String(body.theme || body.genre || 'Général').trim();
+      if (!idea) return jsonResponse({ error: 'L\'idée de départ est requise' }, 400);
 
-      const cleanSubject = String(prompt).trim();
-      const selectedTheme = theme || genre || 'Vengeance & Justice';
-
-      let storyData: { title: string; content: string; theme?: string } | null = null;
+      let title = '';
+      let content = '';
 
       if (apiKey) {
         try {
-          const systemPrompt = `Tu es un romancier et auteur de fiction talentueux. Écris une histoire complète, prenante et magnifiquement rédigée en français basée à 100% sur cette idée :
+          const systemPrompt = `Ecris une histoire de 500-700 mots. Thème: ${selectedTheme}. Idée: ${idea}. Respecte exactement l'idée, n'invente pas d'autres personnages.
 
-Idée de l'histoire : "${cleanSubject}"
-Thème : "${selectedTheme}"
-
-CONSIGNES STRICTES :
-1. RESPECT ABSOLU DU SUJET : L'histoire doit traiter EXCLUSIVEMENT et directement de l'idée fournie ("${cleanSubject}"). Ne dévie JAMAIS du sujet (aucun tracteur, aucun champ agricole, aucun sujet non mentionné dans la demande).
-2. PERSONNAGES : Crée des protagonistes et antagonistes en lien direct avec le prompt (ne jamais inventer "Alexandre Vance" si ce n'est pas demandé).
-3. LONGUEUR : Entre 500 et 700 mots environ.
-4. STRUCTURE : Rédige une histoire captivante en 3 ou 4 paragraphes fluides et bien découpés (mise en situation et tension initiale, montée dramatique et confrontation, résolution poignante ou inattendue).
-5. TITRE : Donne un titre fort et percutant en parfait accord avec l'intrigue.
-
-Réponds UNIQUEMENT sous la forme d'un objet JSON valide :
+Donne un titre percutant et l'histoire complète sous forme JSON strict :
 {
-  "title": "Titre fort de l'histoire",
-  "content": "Texte complet de l'histoire en 3 à 4 paragraphes séparés par des sauts de ligne...",
-  "theme": "${selectedTheme}"
+  "title": "Titre percutant en rapport avec l'idée",
+  "content": "Histoire complète en 3 à 4 paragraphes bien écrits séparés par des sauts de ligne..."
 }`;
 
           const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`, {
@@ -642,43 +630,71 @@ Réponds UNIQUEMENT sous la forme d'un objet JSON valide :
             const data: any = await res.json();
             const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
             const parsed = JSON.parse(rawText.replace(/```json/g, '').replace(/```/g, '').trim());
-            if (parsed && parsed.title && parsed.content) {
-              storyData = parsed;
-            }
+            if (parsed && parsed.title) title = parsed.title;
+            if (parsed && parsed.content) content = parsed.content;
           }
         } catch (geminiErr) {
           console.warn('Edge Gemini story error:', geminiErr);
         }
       }
 
-      if (!storyData || !storyData.content) {
-        const shortTitle = cleanSubject.length > 50 ? cleanSubject.slice(0, 47) + '...' : cleanSubject;
-        storyData = {
-          title: `L'Heure des Comptes : ${shortTitle}`,
-          theme: selectedTheme,
-          content: `Pendant des mois passés derrière les barreaux pour une faute qu'il n'avait jamais commise, une seule pensée avait nourri son esprit : le moment où la balance pencherait de nouveau. Accusé à tort suite à un dossier bâclé et condamné par un juge intransigeant soucieux de boucler l'affaire sans poser de questions, le jeune homme avait tout perdu ce jour-là : sa réputation, sa liberté et la confiance des siens. Mais l'enfermement avait aiguisé sa patience et sa clairvoyance. Il ne cherchait pas la violence aveugle, mais une revanche implacable, une mise à nu méthodique de la vérité qui forcerait son accusateur à regarder en face l'injustice qu'il avait infligée.\n\nÀ sa sortie, l'enquête commença dans l'ombre. Grâce à des contacts glanés dans les bas-fonds et à une minutie chirurgicale, il reconstitua pièce par pièce les failles du procès initial. Les preuves écartées, les témoignages tronqués et les arrangements en coulisses vinrent peu à peu dessiner la réalité d'un système où l'erreur judiciaire avait été délibérément étouffée pour préserver la carrière du magistrat. Chaque document accumulé devenait une pièce maîtresse sur l'échiquier. Le piège se referma le soir où le juge, acculé par des preuves irréfutables déposées sous ses yeux en plein tribunal désert, comprit que son passé venait de le rattraper.\n\nFace à face dans la pénombre de la salle d'audience vide, les rôles étaient désormais inversés. Le jeune homme n'avait plus le statut de coupable résigné ; il incarnait la justice authentique face à une autorité déchue de sa légitimité. Sans éclat de voix ni éclat de colère, il posa le dossier complet sur le pupitre du magistrat, le laissant seul devant le choix inévitable d'avouer publiquement ou de voir son honneur s'effondrer au grand jour. La vengeance n'était pas de sang, mais de vérité, et pour la première fois depuis des années, l'innocent pouvait enfin respirer libre.`
-        };
+      if (!content) {
+        return jsonResponse({ error: 'Impossible de générer l\'histoire. Veuillez réessayer.' }, 500);
+      }
+
+      if (!title) {
+        title = idea.length > 50 ? idea.slice(0, 47) + '...' : idea;
       }
 
       return jsonResponse({
         id: 'story_' + Date.now(),
-        prompt: cleanSubject,
+        prompt: idea,
         theme: selectedTheme,
         genre: selectedTheme,
-        title: storyData.title,
-        content: storyData.content,
-        logline: storyData.title,
-        chapters: [
-          {
-            chapterNumber: 1,
-            title: storyData.title,
-            narrative: storyData.content,
-            sceneVisualPrompt: '',
-            tensionLevel: 8,
-          }
-        ],
-        summary: storyData.content.slice(0, 180) + '...',
+        title,
+        content,
         createdAt: new Date().toISOString(),
+        creditsUsed: 1,
+      });
+    }
+
+    // 8. Story Extension (Ajoute 300 mots)
+    if (path === '/api/extend-story') {
+      const fullStory = String(body.fullStory || body.story || '').trim();
+      if (!fullStory) return jsonResponse({ error: 'L\'histoire actuelle est requise' }, 400);
+
+      let extension = '';
+
+      if (apiKey) {
+        try {
+          const extendPrompt = `Prolonge cette histoire de 300 mots sans répéter, en continuant avec les mêmes personnages : ${fullStory}`;
+
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ role: 'user', parts: [{ text: extendPrompt }] }],
+              generationConfig: {
+                temperature: 0.8,
+              },
+            }),
+          });
+
+          if (res.ok) {
+            const data: any = await res.json();
+            extension = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          }
+        } catch (geminiErr) {
+          console.warn('Edge Gemini extend error:', geminiErr);
+        }
+      }
+
+      if (!extension) {
+        return jsonResponse({ error: 'Impossible de prolonger l\'histoire.' }, 500);
+      }
+
+      return jsonResponse({
+        extension: extension.trim(),
         creditsUsed: 1,
       });
     }
