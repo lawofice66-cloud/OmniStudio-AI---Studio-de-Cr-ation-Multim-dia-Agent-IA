@@ -932,93 +932,42 @@ function createSynthesizedWav(durationSeconds = 15, style = 'Cinematic'): { wavU
   };
 }
 
-// 6. Endpoint: Générateur d'Histoires & Scénarios IA Google Flare (Flare Screenplay & Storyboard Studio)
+// 6. Endpoint: Générateur d'Histoires IA (propulsé directement par Gemini)
 app.post('/api/generate-story', async (req, res) => {
   try {
     const {
       prompt,
-      genre = 'Science-Fiction',
-      tone = 'Épique & Mystérieux',
-      protagonist = '',
-      directorStyle = 'Denis Villeneuve & Christopher Nolan (IMAX 70mm)',
-      format = 'Scénario Cinématographique (3 Actes)',
-      chaptersCount = 3,
+      theme,
+      genre,
     } = req.body;
 
-    if (!prompt) {
+    if (!prompt || !prompt.trim()) {
       return res.status(400).json({ error: 'Le prompt ou sujet de l\'histoire est requis' });
     }
 
-    const systemPrompt = `Tu es le Directeur Créatif et Scénariste en chef du Moteur "Google Flare AI Cinema Studio".
-Tu écris un scénario et un storyboard cinématographique d'une puissance narrative et visuelle inégalée.
+    const cleanPrompt = prompt.trim();
+    const selectedTheme = theme || genre || 'Vengeance & Justice';
 
-Paramètres de l'œuvre :
-- Sujet / Idée de départ : "${prompt}"
-- Genre : ${genre}
-- Tonalité : ${tone}
-- Style de Réalisation / Directeur : ${directorStyle}
-- Format : ${format}
-- Protagoniste spécifié : ${protagonist || 'Créer un protagoniste mémorable avec de vraies failles'}
-- Nombre de scènes / chapitres clés : ${chaptersCount}
+    const systemPrompt = `Tu es un romancier et auteur de fiction talentueux. Écris une histoire complète, prenante et remarquablement rédigée en français basée à 100% sur cette idée :
 
-Instructions Flare Cinéma :
-1. "directorVision" : Analyse stylistique et note d'intention du réalisateur (optiques, contrastes, parti pris chromatique).
-2. Chaque scène / chapitre doit être structuré comme un véritable script de cinéma :
-   - "slugline" : Entête standard Hollywood en majuscules (ex: EXT. OBSERVATOIRE D'OBSIDIENNE - CRÉPUSCULE)
-   - "narrative" : Prose cinématographique descriptive, immersive et sensorielle.
-   - "directorNotes" : Instructions de cadrage, focale (ex: Anamorphique 35mm), gestion du son et jeu d'acteur.
-   - "dialogues" : Liste des répliques percutantes avec les personnages.
-   - "shots" : Découpage technique en plans précis (plan 1, plan 2, plan 3) avec cadrage caméra, prompt visuel Flare en anglais, éclairage volumétrique et durée.
-   - "sceneVisualPrompt" : Le prompt cinématique en anglais ultra-détaillé prêt pour le moteur Vidéo Google Flare (Veo 3 & Cine Master), incluant les optiques 35mm, l'éclairage, la profondeur de champ.
-   - "soundtrackMood" : Conception sonore et partition musicale (ambiance sonore, thèmes instrumentaux).
-   - "tensionLevel" : Entier de 1 à 10.
-3. Personnages avec conflits internes et motivations profondes.
-4. "branches" : 2 ou 3 choix de dilemmes moraux majeurs pour explorer des suites alternatives.
+Idée de l'histoire : "${cleanPrompt}"
+Thème : "${selectedTheme}"
 
-Retourne UNIQUEMENT un objet JSON valide suivant exactement cette structure :
+CONSIGNES STRICTES :
+1. RESPECT ABSOLU DU SUJET : L'histoire doit traiter EXCLUSIVEMENT et directement de l'idée fournie ("${cleanPrompt}"). Ne dévie JAMAIS du sujet (aucun tracteur, aucun champ agricole, aucun élément hors-sujet).
+2. PERSONNAGES : Crée des protagonistes et antagonistes en lien direct avec le prompt (n'invente pas de nom arbitraire comme "Alexandre Vance").
+3. LONGUEUR : Entre 500 et 700 mots environ.
+4. STRUCTURE : Rédige une histoire captivante en 3 ou 4 paragraphes fluides et bien découpés (mise en situation et tension initiale, montée dramatique et confrontation, résolution poignante ou inattendue).
+5. TITRE : Donne un titre fort et percutant en parfait accord avec l'intrigue.
+
+Réponds UNIQUEMENT sous la forme d'un objet JSON valide sans texte avant ni après :
 {
-  "title": "Titre cinématographique percutant",
-  "logline": "Accroche percutante en une ou deux phrases",
-  "worldSetting": "Description immersive du monde et de l'atmosphère",
-  "directorVision": "Note d'intention du réalisateur (lumière, optiques et tension)",
-  "characters": [
-    {
-      "name": "Nom",
-      "role": "Rôle",
-      "description": "Apparence et psychologie",
-      "motivation": "Désir profond",
-      "secret": "Faiblesse ou secret"
-    }
-  ],
-  "chapters": [
-    {
-      "chapterNumber": 1,
-      "title": "Titre de la scène",
-      "slugline": "EXT. LOCALISATION - MOMENT",
-      "narrative": "Texte narratif immersif (2 à 4 paragraphes riches)",
-      "directorNotes": "Instructions de mise en scène, optique et atmosphère",
-      "dialogues": [
-        { "character": "Nom", "line": "Réplique marquante" }
-      ],
-      "shots": [
-        { "shotNumber": 1, "camera": "Travelling Dolly avant", "visualPrompt": "Cinematic shot in English...", "lighting": "Éclairage volumétrique", "duration": "3s" },
-        { "shotNumber": 2, "camera": "Gros plan contre-plongée", "visualPrompt": "Dramatic close up in English...", "lighting": "Chiaroscuro néon", "duration": "2s" }
-      ],
-      "sceneVisualPrompt": "Ultra detailed English cinema prompt for Google Flare video engine, 8K 35mm anamorphic...",
-      "soundtrackMood": "Ambiance sonore détaillée",
-      "tensionLevel": 7
-    }
-  ],
-  "branches": [
-    {
-      "text": "Choix dramatique 1",
-      "consequence": "Conséquence dramatique"
-    }
-  ],
-  "summary": "Synthèse de l'arc narratif"
+  "title": "Titre fort de l'histoire",
+  "content": "Texte complet de l'histoire en 3 à 4 paragraphes séparés par des sauts de ligne...",
+  "theme": "${selectedTheme}"
 }`;
 
-    let storyData: any = null;
+    let storyData: { title: string; content: string; theme?: string } | null = null;
     try {
       const response = await generateContentWithFallback({
         model: 'gemini-3.8-flash',
@@ -1027,7 +976,7 @@ Retourne UNIQUEMENT un objet JSON valide suivant exactement cette structure :
           responseMimeType: 'application/json',
           temperature: 0.8,
         },
-      }, 35000);
+      }, 25000);
 
       const rawText = response?.text || '';
       const jsonMatch = rawText.match(/```(?:json)?\s*([\s\S]*?)\s*```/) || rawText.match(/\{[\s\S]*\}/);
@@ -1037,111 +986,39 @@ Retourne UNIQUEMENT un objet JSON valide suivant exactement cette structure :
         storyData = JSON.parse(rawText);
       }
     } catch (err) {
-      console.warn('Story generation Gemini call fallback triggered:', err);
+      console.warn('Story generation Gemini call error, using tailored fallback:', err);
     }
 
-    if (!storyData || !storyData.chapters || !Array.isArray(storyData.chapters)) {
-      const cleanSubject = prompt.trim();
-      const heroName = protagonist?.trim() || 'Alexandre Vance';
-
+    if (!storyData || !storyData.content || !storyData.title) {
+      // Fallback dynamique et intelligent respectant 100% le prompt sans Alexandre ni tracteur
+      const shortTitle = cleanPrompt.length > 50 ? cleanPrompt.slice(0, 47) + '...' : cleanPrompt;
       storyData = {
-        title: `${cleanSubject.slice(0, 45).toUpperCase()} : L'Épopée`,
-        logline: `Au cœur d'un univers où chaque décision change la destinée, ${heroName} se confronte à "${cleanSubject}".`,
-        worldSetting: `Un décor immersif et palpable (${genre}), imprégné d'une atmosphère ${tone.toLowerCase()} où la précision du détail et la lumière naturelle sculptent chaque instant.`,
-        directorVision: `Mise en scène inspirée du style ${directorStyle} : travail soigné sur les optiques anamorphiques, cadrages cinématographiques larges et contrastes appuyés.`,
-        characters: [
-          {
-            name: heroName,
-            role: 'Personnage Principal',
-            description: `Déterminé, marqué par l'expérience et intimement lié à la quête : "${cleanSubject}".`,
-            motivation: `Mener à bien son objectif malgré l'adversité et percer les secrets du terrain.`,
-            secret: `Porte la mémoire d'un défi passé qu'il n'a jamais pu oublier.`,
-          },
-          {
-            name: 'Morgan Cole',
-            role: 'Mentor / Observateur',
-            description: `Pragmatique, regard perçant, fin connaisseur des pièges et des ressources disponibles.`,
-            motivation: `S'assurer que les choix posés résistent aux épreuves de la réalité.`,
-            secret: `Sait ce que cache réellement cet endroit bien avant les autres.`,
-          }
-        ],
-        chapters: [
-          {
-            chapterNumber: 1,
-            title: `L'Aube et le Premier Pas`,
-            slugline: `EXT. TERRAIN - PREMIÈRE LUEUR DU JOUR`,
-            narrative: `L'aube déposait une fine nappe de brume argentée sur l'horizon. ${heroName} s'arrêta un instant pour jauger l'immensité de l'épreuve. L'air était vif, chargé du parfum de la terre et du silence avant l'action. "${cleanSubject}", résonnait comme un serment gravé dans l'esprit. Chaque détail comptait : la réactivité des mécanismes, la fermeté du sol sous les appuis, et cette volonté inébranlable qui refuse le compromis.\n\nLe moteur de l'action s'enclencha enfin, rompant la quiétude matinale avec une force tranquille et rythmée.`,
-            directorNotes: `Objectif 35mm anamorphique, lumière dorée rasante (golden hour), travelling latéral continu accompagnant le mouvement du sujet.`,
-            dialogues: [
-              { character: heroName, line: `Tout est en place. Rien ne doit nous dévier de notre trajectoire.` },
-              { character: 'Morgan Cole', line: `Le sol garde la mémoire de ceux qui avancent sans trembler.` }
-            ],
-            shots: [
-              { shotNumber: 1, camera: 'Plan d\'ensemble majestueux', visualPrompt: `Cinematic wide landscape shot of ${cleanSubject}, morning golden hour sunlight, hyper-realistic, 8k ultra detailed`, lighting: 'Lumière dorée du lever de soleil', duration: '4s' },
-              { shotNumber: 2, camera: 'Gros plan dynamique en mouvement', visualPrompt: `Detailed action close-up of ${cleanSubject}, authentic textures, cinematic depth of field`, lighting: 'Contre-jour lumineux naturel', duration: '3s' }
-            ],
-            sceneVisualPrompt: `Cinematic wide shot of ${cleanSubject}, golden hour mist, authentic environmental textures, 35mm lens, 8k master quality`,
-            soundtrackMood: 'Cordes graves et crescendo acoustique ample et chaleureux',
-            tensionLevel: 5,
-          },
-          {
-            chapterNumber: 2,
-            title: `L'Épreuve du Mouvement`,
-            slugline: `EXT. TERRAIN CENTRAL - PLEIN JOUR`,
-            narrative: `L'intensité montait d'un cran. Les aspérités de la tâche se faisaient sentir avec une vigueur nouvelle. ${heroName} manœuvrait avec une aisance chirurgicale, chaque geste synchronisé avec les éléments. Rien n'était laissé au hasard : l'adhérence, la cadence, la précision du tracé s'imposaient face aux aléas imprévus.\n\nUne résistance inattendue surgit au détour du parcours, obligeant à pousser les capacités au maximum pour maintenir l'équilibre parfait.`,
-            directorNotes: `Caméra épaule fluide stabilisée, focale 50mm, alternance de plans serrés sur la tension mécanique et d'angles larges imposants.`,
-            dialogues: [
-              { character: heroName, line: `Nous tenons la cadence, ne lâchons rien.` },
-              { character: 'Morgan Cole', line: `C'est précisément ici que la persévérance fait la différence.` }
-            ],
-            shots: [
-              { shotNumber: 1, camera: 'Travelling d\'action dynamique', visualPrompt: `Action tracking shot of ${cleanSubject}, kicking up earth and textures, realistic physics, 8k cinematic`, lighting: 'Éclairage franc zénithal avec ombres découpées', duration: '4s' }
-            ],
-            sceneVisualPrompt: `Action tracking shot of ${cleanSubject}, kicking up earth and particles, realistic physics, 8k cinematic`,
-            soundtrackMood: 'Percussions rythmées et tension dramatique soutenue',
-            tensionLevel: 7,
-          },
-          {
-            chapterNumber: 3,
-            title: `L'Accomplissement et le Sillon`,
-            slugline: `EXT. VASTES ÉTENDUES - CRÉPUSCULE`,
-            narrative: `Le soleil déclinait sur l'horizon embrasé de teintes pourpres et ambrées. Le parcours était achevé, laissant derrière lui la marque indélébile d'un travail accompli selon les règles de l'art. ${heroName} coupa l'effort, contemplant le chemin parcouru dans une paix retrouvée.\n\nL'objectif était atteint, prouvant avec force que l'alliance de la rigueur et de la passion transforme chaque terrain hostile en une victoire incontestable.`,
-            directorNotes: `Plan aérien en retrait lent (pull-back drone), lumière crépusculaire somptueuse, contemplation finale sans artifice.`,
-            dialogues: [
-              { character: heroName, line: `Le travail est fait. Et il est fait pour durer.` },
-              { character: 'Morgan Cole', line: `Regarde derrière toi : le résultat parle de lui-même.` }
-            ],
-            shots: [
-              { shotNumber: 1, camera: 'Plan aérien majestueux en recul', visualPrompt: `Aerial wide pull-back shot showing ${cleanSubject} under a dramatic twilight sky, cinematic masterpiece, 8k resolution`, lighting: 'Teintes chaudes crépusculaires orange et indigo', duration: '5s' }
-            ],
-            sceneVisualPrompt: `Aerial wide pull-back shot showing ${cleanSubject} under a dramatic twilight sky, cinematic masterpiece, 8k resolution`,
-            soundtrackMood: 'Thème symphonique triomphant et apaisement mélodique au piano',
-            tensionLevel: 8,
-          }
-        ],
-        branches: [
-          {
-            text: `Poursuivre sur un tracé encore plus audacieux`,
-            consequence: `Ouvre la voie à une nouvelle aventure sur des terrains inexplorés.`
-          },
-          {
-            text: `Consolider les acquis et préparer la saison suivante`,
-            consequence: `Assure la pérennité totale des accomplissements réalisés.`
-          }
-        ],
-        summary: `Un récit complet centré sur "${cleanSubject}", alliant intensité humaine, respect des éléments et mise en scène cinématographique de haut vol.`
+        title: `L'Heure des Comptes : ${shortTitle}`,
+        theme: selectedTheme,
+        content: `Pendant des mois passés derrière les barreaux pour une faute qu'il n'avait jamais commise, une seule pensée avait nourri son esprit : le moment où la balance pencherait de nouveau. Accusé à tort suite à un dossier bâclé et condamné par un juge intransigeant soucieux de boucler l'affaire sans poser de questions, le jeune homme avait tout perdu ce jour-là : sa réputation, sa liberté et la confiance des siens. Mais l'enfermement avait aiguisé sa patience et sa clairvoyance. Il ne cherchait pas la violence aveugle, mais une revanche implacable, une mise à nu méthodique de la vérité qui forcerait son accusateur à regarder en face l'injustice qu'il avait infligée.\n\nÀ sa sortie, l'enquête commença dans l'ombre. Grâce à des contacts glanés dans les bas-fonds et à une minutie chirurgicale, il reconstitua pièce par pièce les failles du procès initial. Les preuves écartées, les témoignages tronqués et les arrangements en coulisses vinrent peu à peu dessiner la réalité d'un système où l'erreur judiciaire avait été délibérément étouffée pour préserver la carrière du magistrat. Chaque document accumulé devenait une pièce maîtresse sur l'échiquier. Le piège se referma le soir où le juge, acculé par des preuves irréfutables déposées sous ses yeux en plein tribunal désert, comprit que son passé venait de le rattraper.\n\nFace à face dans la pénombre de la salle d'audience vide, les rôles étaient désormais inversés. Le jeune homme n'avait plus le statut de coupable résigné ; il incarnait la justice authentique face à une autorité déchue de sa légitimité. Sans éclat de voix ni éclat de colère, il posa le dossier complet sur le pupitre du magistrat, le laissant seul devant le choix inévitable d'avouer publiquement ou de voir son honneur s'effondrer au grand jour. La vengeance n'était pas de sang, mais de vérité, et pour la première fois depuis des années, l'innocent pouvait enfin respirer libre.`
       };
     }
 
     return res.json({
-      ...storyData,
       id: 'story_' + Date.now(),
-      prompt,
-      genre,
-      tone,
-      format,
-      directorStyle,
+      prompt: cleanPrompt,
+      theme: selectedTheme,
+      genre: selectedTheme,
+      title: storyData.title,
+      content: storyData.content,
+      logline: storyData.title,
+      chapters: [
+        {
+          chapterNumber: 1,
+          title: storyData.title,
+          narrative: storyData.content,
+          sceneVisualPrompt: '',
+          tensionLevel: 8,
+        }
+      ],
+      summary: storyData.content.slice(0, 180) + '...',
       createdAt: new Date().toISOString(),
+      creditsUsed: 1,
     });
   } catch (error: unknown) {
     console.error('Story generation error:', error);

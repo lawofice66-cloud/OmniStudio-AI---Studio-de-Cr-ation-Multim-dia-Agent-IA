@@ -168,16 +168,11 @@ export const SubscriptionModal: React.FC = () => {
             </p>
             <span className="text-[10px] text-amber-400 font-bold">500 crédits rechargeables</span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+          <div className="grid grid-cols-1 gap-2 text-xs">
             <div className="p-3 rounded-xl bg-slate-950/70 border border-purple-500/20">
-              <span className="text-purple-300 block text-[11px] font-bold">Récit & Histoire Complète</span>
-              <span className="font-extrabold text-white text-base">2 crédits</span>
-              <span className="text-[10px] text-slate-400 block mt-0.5">Multi-chapitres, univers immersif, dialogues</span>
-            </div>
-            <div className="p-3 rounded-xl bg-slate-950/70 border border-indigo-500/20">
-              <span className="text-indigo-300 block text-[11px] font-bold">Scénario Cinématographique</span>
-              <span className="font-extrabold text-white text-base">3 crédits</span>
-              <span className="text-[10px] text-slate-400 block mt-0.5">Découpage de scènes, sluglines, vision réalisateur</span>
+              <span className="text-purple-300 block text-[11px] font-bold">Générateur d'Histoire Complète IA</span>
+              <span className="font-extrabold text-white text-base">1 crédit</span>
+              <span className="text-[10px] text-slate-400 block mt-0.5">Histoire fluide de 500 à 700 mots, 100% fidèle au sujet, avec TTS et export .txt</span>
             </div>
           </div>
         </div>

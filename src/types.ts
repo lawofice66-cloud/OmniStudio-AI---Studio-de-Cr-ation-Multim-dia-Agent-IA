@@ -119,19 +119,22 @@ export interface StoryBranchChoice {
 export interface StoryGeneration {
   id: string;
   prompt: string;
-  genre: string;
-  tone: string;
+  theme?: string;
   title: string;
-  logline: string;
-  worldSetting: string;
-  directorVision?: string;
-  format?: string;
-  characters: StoryCharacter[];
-  chapters: StoryChapter[];
-  branches?: StoryBranchChoice[];
-  summary: string;
+  content: string; // Histoire complète en 3-4 paragraphes
   createdAt: string;
   creditsUsed: number;
+  // Propriétés optionnelles pour compatibilité
+  genre?: string;
+  tone?: string;
+  logline?: string;
+  worldSetting?: string;
+  directorVision?: string;
+  format?: string;
+  characters?: StoryCharacter[];
+  chapters?: StoryChapter[];
+  branches?: StoryBranchChoice[];
+  summary?: string;
 }
 
 export interface MusicGeneration {
@@ -171,9 +174,9 @@ export const PRICING_CONFIG = {
   CREDIT_COSTS: {
     AGENT_CHAT: 0.5, // Free for Pro users
     TRANSCRIBE: 1,
-    STORY_GENERATOR: 3,
+    STORY_GENERATOR: 1, // 1 histoire complète = 1 crédit
     TEXT_TO_IMAGE: 2,
-    MUSIC_GENERATOR: 5,  // 1 musique symphonique = 5 crédits
-    TEXT_TO_VIDEO: 25,   // 1 vidéo 5s = 25 crédits (Plan Free avec 25 crédits = 1 vidéo gratuite)
+    MUSIC_GENERATOR: 5,
+    TEXT_TO_VIDEO: 25,
   },
 };

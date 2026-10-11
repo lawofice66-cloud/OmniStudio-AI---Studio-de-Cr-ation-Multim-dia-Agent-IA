@@ -208,30 +208,17 @@ export const PricingPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <div className="p-5 rounded-2xl bg-slate-900/80 border border-purple-500/30 space-y-2">
             <span className="text-xs font-bold text-purple-400 flex items-center gap-1.5">
-              <span>📖 Récits & Histoires Complètes</span>
+              <span>📖 Générateur d'Histoires IA Complètes</span>
             </span>
-            <div className="text-3xl font-black text-white">2 crédits</div>
+            <div className="text-3xl font-black text-white">1 crédit</div>
             <p className="text-xs text-slate-300">
-              Par récit complet multi-chapitres avec univers détaillé, dialogues riches, descriptions immersives et fiches personnages.
+              Par histoire complète de 500 à 700 mots, parfaitement rédigée et respectant scrupuleusement votre prompt, avec synthèse vocale (TTS), copie et téléchargement .txt.
             </p>
             <span className="inline-block text-[11px] font-bold text-purple-300 bg-purple-500/10 px-2.5 py-1 rounded-lg">
-              ✨ 250 histoires complètes par mois avec vos 500 crédits Pro
-            </span>
-          </div>
-
-          <div className="p-5 rounded-2xl bg-slate-900/80 border border-indigo-500/30 space-y-2">
-            <span className="text-xs font-bold text-indigo-400 flex items-center gap-1.5">
-              <span>🎭 Scénarios Cinématographiques & Découpage</span>
-            </span>
-            <div className="text-3xl font-black text-white">3 crédits</div>
-            <p className="text-xs text-slate-300">
-              Par scénario cinéma avec sluglines Hollywood, vision réalisateur, intentions dramatiques et cadrages détaillés.
-            </p>
-            <span className="inline-block text-[11px] font-bold text-indigo-300 bg-indigo-500/10 px-2.5 py-1 rounded-lg">
-              ✨ Plus de 160 scénarios cinématographiques complets par mois
+              ✨ 500 histoires complètes par mois avec vos 500 crédits Pro
             </span>
           </div>
         </div>

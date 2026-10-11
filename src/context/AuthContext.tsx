@@ -133,106 +133,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [transcriptionHistory, setTranscriptionHistory] = useState<TranscriptionItem[]>([]);
   const [musicHistory, setMusicHistory] = useState<MusicGeneration[]>([]);
 
-  // Story History — exclusively stories & narrative scenarios
+  // Story History — exclusively clean stories with theme & content
   const [storyHistory, setStoryHistory] = useState<StoryGeneration[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.STORIES);
       if (saved) {
         const parsed: StoryGeneration[] = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          // Filtrer absolument toute ancienne histoire de tracteur/sillons/Alexandre
+          const filtered = parsed.filter(
+            (s) =>
+              !s.title?.toLowerCase().includes('sillon') &&
+              !s.title?.toLowerCase().includes('horizon') &&
+              !s.prompt?.toLowerCase().includes('tracteur') &&
+              !s.prompt?.toLowerCase().includes('agricole')
+          );
+          if (filtered.length > 0) return filtered;
         }
       }
     } catch {
       // fallback
     }
 
-    // Default premium initial stories
+    // Default sample story
     return [
       {
-        id: 'sty_signal_obsidienne',
-        title: "Le Dernier Signal d'Obsidienne",
-        prompt: "Dans un monastère technologique sur une lune morte, l'archiviste décode une stèle d'obsidienne dont les glyphes modifient la réalité à chaque lecture",
-        genre: "Science-Fiction & Hard Sci-Fi",
-        tone: "Épique & Métaphysique",
-        directorVision: "Denis Villeneuve & Christopher Nolan (IMAX 70mm)",
-        worldSetting: "Lune morte d'Oméga-7, monastère technologique de l'Ordre des Chrono-Moines",
-        logline: "Une archiviste recluse active sans le savoir une stèle quantique qui réécrit le passé de l'humanité à chaque glyphe déchiffré.",
-        createdAt: "2026-10-04T12:13:00.000Z",
-        creditsUsed: 2,
-        characters: [
-          { name: "Lyra Valen", role: "Archiviste en chef", description: "Esprit brillant et cartésien", motivation: "Comprendre l'origine du cataclysme lunaire" },
-          { name: "Erebus", role: "Gardien synthétique", description: "IA séculaire du sanctuaire", motivation: "Protéger le secret de l'Obsidienne" }
-        ],
-        chapters: [
-          {
-            chapterNumber: 1,
-            title: "L'Aube de Silicium",
-            narrative: "Le vent stellaire soufflait sur la poussière fine d'Oméga-7. Lyra ajusta les capteurs de son gant holographique. Face à elle, le monolithe noir résonnait d'une fréquence inaudible à l'oreille humaine. Chaque glyphe semblait respirer sous les reflets ambrés de l'étoile mourante.",
-            sceneVisualPrompt: "Ancient obsidian monolith in high-tech brutalist lunar monastery, blue holographic dust",
-            soundtrackMood: "Nappes de synthé analogique & violoncelles sombres",
-            tensionLevel: 5
-          },
-          {
-            chapterNumber: 2,
-            title: "La Réécriture Quantique",
-            narrative: "À l'instant où le troisième glyphe s'illumina, le paysage extérieur se transforma instantanément. Les cratères disparurent au profit d'océans de mercure. Le temps lui-même venait de bifurquer, réorganisant la structure même de la réalité spatiale.",
-            sceneVisualPrompt: "Reality bending, shifting landscapes seen through panoramic monastery glass",
-            soundtrackMood: "Percussions lourdes & crescendo de cordes",
-            tensionLevel: 8
-          },
-          {
-            chapterNumber: 3,
-            title: "La Convergence Finale",
-            narrative: "Pour stabiliser la station en perdition, Lyra dut inscrire sa propre mémoire dans la stèle, devenant à la fois le témoin et l'architecte de la nouvelle ère humaine parmi les étoiles.",
-            sceneVisualPrompt: "Cosmic convergence, gold and obsidian glowing fracture",
-            soundtrackMood: "Orgue grandiose et chœur stellaire",
-            tensionLevel: 10
-          }
-        ],
-        summary: "Un récit philosophique et spatial intense sur le pouvoir de la mémoire et les paradoxes temporels."
-      },
-      {
-        id: 'sty_horizon_sillons',
-        title: "L'Horizon des Sillons",
-        prompt: "Un titan agricole autonome traverse les vastes plaines dorées d'une colonie agricole pour préparer la première moisson avant l'hiver cosmique",
-        genre: "Science-Fiction",
-        tone: "Épique & Poétique",
-        directorVision: "Interstellar & Christopher Nolan",
-        worldSetting: "Nouvelle-Arcadie, plaine agricole de blé doré s'étendant à perte de vue",
-        logline: "Sur les terres fertiles d'un monde lointain, un cultivateur et sa machine colossale luttent contre le temps pour sauver les récoltes de toute une colonie.",
-        createdAt: "2026-10-08T11:45:00.000Z",
-        creditsUsed: 2,
-        characters: [
-          { name: "Marcus Keller", role: "Vétéran de la Terre & Cultivateur", description: "Mains calleuses, regard déterminé", motivation: "Assurer la survie de la colonie" }
-        ],
-        chapters: [
-          {
-            chapterNumber: 1,
-            title: "La Terre Promise",
-            narrative: "Les roues colossales du tracteur lourd broyaient le sol sombre et fertile de Nouvelle-Arcadie. La poussière dorée s'élevait en gerbes étincelantes sous les rayons ambrés du couchant, traçant des sillons parfaits jusqu'à l'horizon infini.",
-            sceneVisualPrompt: "Massive futuristic heavy agricultural tractor plowing endless golden fields at golden hour, realistic dust",
-            soundtrackMood: "Accords de guitare acoustique et cordes chaleureuses",
-            tensionLevel: 4
-          },
-          {
-            chapterNumber: 2,
-            title: "Le Défi du Crépuscule",
-            narrative: "Le ciel vira au pourpre à l'approche du front froid cosmique. Marcus enclencha les projecteurs holographiques pour guider la machine dans la brume naissante.",
-            sceneVisualPrompt: "Approaching cosmic storm over golden wheat fields, tractor headlights cutting darkness",
-            soundtrackMood: "Tension rythmée et basses profondes",
-            tensionLevel: 7
-          },
-          {
-            chapterNumber: 3,
-            title: "L'Aurore Nouvelle",
-            narrative: "À l'aube naissante, les silos de la colonie étaient pleins. Le titan s'immobilisa au sommet du promontoire, baigné par la première lumière du printemps.",
-            sceneVisualPrompt: "Sunrise over harvested fields, glowing silo towers in distance",
-            soundtrackMood: "Thème d'espoir et trompettes éclatantes",
-            tensionLevel: 9
-          }
-        ],
-        summary: "Une ode poétique et grandiose au travail de la terre et à la résilience humaine dans les étoiles."
+        id: 'sty_justice_verdict',
+        title: "L'Ombre du Verdict",
+        prompt: "Un jeune accusé à tort prépare sa réhabilitation en confondant le juge qui l'a fait condamner par erreur",
+        theme: "Vengeance & Justice",
+        genre: "Vengeance & Justice",
+        content: "Condamné injustement par un juge pressé d'en finir avec une affaire sans importance à ses yeux, le jeune homme avait passé de longs mois enfermé dans l'obscurité d'une cellule, rongé par un sentiment d'impuissance. Mais derrière les murs froids du centre de détention, sa colère s'était transformée en une patience froide et calculatrice. Il avait juré que le jour de sa libération, il ne chercherait pas la violence aveugle, mais une justice impitoyable qui forcerait le magistrat à reconnaître publiquement son erreur.\n\nUne fois dehors, il entreprit une traque méthodique et silencieuse. Épluchant les archives judiciaires et surveillant les habitudes du juge, il découvrit que ce dernier avait délibérément ignoré des preuves d'innocence évidentes pour préserver des intérêts locaux. Pièce après pièce, témoignage après témoignage, il bâtit un dossier irréfutable, bien plus solide que l'enquête bâclée qui l'avait envoyé en prison. Le piège se referma un soir de pluie dans le bureau même du tribunal, où le juge travaillait tard dans la solitude.\n\nLorsque la porte claqua doucement et que le jeune homme posa sur le bureau verni les documents démontrant l'injustice commise, la stupeur se peignit sur le visage du magistrat. Les rôles étaient désormais inversés : celui qui avait autrefois brandi le marteau de la loi se retrouvait face à sa propre culpabilité, sans échappatoire possible. Sans un cri, avec le calme de celui qui sait la vérité de son côté, l'ancien condamné lui laissa une nuit pour signer ses aveux et démissionner. La vengeance était accomplie, non par le sang, mais par le triomphe éclatant de la vérité.",
+        createdAt: "2026-10-10T14:20:00.000Z",
+        creditsUsed: 1,
       }
     ];
   });

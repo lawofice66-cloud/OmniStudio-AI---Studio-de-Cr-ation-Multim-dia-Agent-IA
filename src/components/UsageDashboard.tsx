@@ -57,17 +57,17 @@ export const UsageDashboard: React.FC = () => {
   const genreFilters = useMemo(() => {
     const counts: Record<string, number> = {};
     storyHistory.forEach((s) => {
-      const g = s.genre || 'Général';
+      const g = s.theme || s.genre || 'Général';
       counts[g] = (counts[g] || 0) + 1;
     });
 
     const standardGenres = [
-      'Science-Fiction',
-      'Dark Fantasy',
-      'Cyberpunk',
-      'Thriller & Mystère',
-      'Space Opera',
-      'Post-Apocalyptique'
+      'Vengeance & Justice',
+      'Amour',
+      'Aventure',
+      'Thriller',
+      'Drame',
+      'Comédie',
     ];
 
     const list = [
@@ -99,25 +99,18 @@ export const UsageDashboard: React.FC = () => {
   // Filtered stories
   const filteredStories = useMemo(() => {
     return storyHistory.filter((story) => {
+      const storyCategory = story.theme || story.genre || '';
       const matchGenre = selectedGenre === 'all' || 
-        story.genre.toLowerCase().includes(selectedGenre.toLowerCase()) ||
-        selectedGenre.toLowerCase().includes(story.genre.toLowerCase());
+        storyCategory.toLowerCase().includes(selectedGenre.toLowerCase()) ||
+        selectedGenre.toLowerCase().includes(storyCategory.toLowerCase());
 
       const q = historySearch.toLowerCase().trim();
       if (!q) return matchGenre;
 
       const matchPrompt = story.prompt?.toLowerCase().includes(q);
       const matchTitle = story.title?.toLowerCase().includes(q);
-      const matchLogline = story.logline?.toLowerCase().includes(q);
-      const matchWorld = story.worldSetting?.toLowerCase().includes(q);
-      const matchCharacters = story.characters?.some(
-        (c) => c.name?.toLowerCase().includes(q) || c.role?.toLowerCase().includes(q)
-      );
-      const matchChapters = story.chapters?.some(
-        (ch) => ch.title?.toLowerCase().includes(q) || ch.narrative?.toLowerCase().includes(q)
-      );
-
-      return matchGenre && (matchPrompt || matchTitle || matchLogline || matchWorld || matchCharacters || matchChapters);
+      const matchContent = story.content?.toLowerCase().includes(q);
+      return matchGenre && (matchPrompt || matchTitle || matchContent);
     });
   }, [storyHistory, selectedGenre, historySearch]);
 
@@ -137,22 +130,18 @@ export const UsageDashboard: React.FC = () => {
 
   const handleCopyFullText = (id: string, story: StoryGeneration) => {
     let full = `TITRE : ${story.title.toUpperCase()}\n`;
-    full += `GENRE : ${story.genre} | TONALITÉ : ${story.tone}\n`;
-    full += `ACCROCHE : ${story.logline}\n`;
-    full += `UNIVERS : ${story.worldSetting}\n\n`;
+    full += `THÈME : ${story.theme || story.genre || 'Général'}\n\n`;
 
-    if (story.chapters && story.chapters.length > 0) {
+    if (story.content) {
+      full += `${story.content}\n\n`;
+    } else if (story.chapters && story.chapters.length > 0) {
       story.chapters.forEach((ch) => {
-        full += `--- CHAPITRE ${ch.chapterNumber} : ${ch.title} ---\n`;
+        full += `--- ${ch.title} ---\n`;
         full += `${ch.narrative}\n\n`;
       });
     }
 
-    if (story.summary) {
-      full += `RÉSUMÉ : ${story.summary}\n`;
-    }
-
-    navigator.clipboard.writeText(full);
+    navigator.clipboard.writeText(full.trim());
     setCopiedTextId(id);
     toastSuccess('Récit complet copié !', 'Le texte complet a été copié dans votre presse-papiers.');
     setTimeout(() => setCopiedTextId(null), 2000);
@@ -160,45 +149,32 @@ export const UsageDashboard: React.FC = () => {
 
   const handleExportStoryTxt = (story: StoryGeneration) => {
     let text = `================================================================================\n`;
-    text += `OMNISTUDIO FLARE — RÉCIT & SCÉNARIO COMPLET\n`;
+    text += `HISTOIRE IA — RÉCIT COMPLET\n`;
     text += `================================================================================\n\n`;
     text += `TITRE : ${story.title.toUpperCase()}\n`;
-    text += `GENRE : ${story.genre} | TONALITÉ : ${story.tone}\n`;
+    text += `THÈME : ${story.theme || story.genre || 'Général'}\n`;
     text += `DATE : ${new Date(story.createdAt).toLocaleDateString('fr-FR')}\n`;
-    text += `ACCROCHE (LOGLINE) : ${story.logline}\n`;
-    text += `UNIVERS : ${story.worldSetting}\n`;
-    if (story.directorVision) {
-      text += `VISION DE RÉALISATION : ${story.directorVision}\n`;
-    }
-    text += `\nPERSONNAGES :\n`;
-    story.characters?.forEach((c) => {
-      text += `- ${c.name} (${c.role}) : ${c.description} [Motivation: ${c.motivation}]\n`;
-    });
-    text += `\n================================================================================\n`;
-    text += `DÉROULÉ DES CHAPITRES\n`;
+    text += `IDÉE DE DÉPART : ${story.prompt}\n\n`;
     text += `================================================================================\n\n`;
 
-    story.chapters?.forEach((ch) => {
-      text += `[CHAPITRE ${ch.chapterNumber}] : ${ch.title.toUpperCase()}\n`;
-      if (ch.soundtrackMood) text += `Ambiance sonore : ${ch.soundtrackMood}\n`;
-      if (ch.sceneVisualPrompt) text += `Prompt visuel : ${ch.sceneVisualPrompt}\n`;
-      text += `\n${ch.narrative}\n\n--------------------------------------------------------------------------------\n\n`;
-    });
-
-    if (story.summary) {
-      text += `ÉPILOGUE & SYNTHÈSE :\n${story.summary}\n`;
+    if (story.content) {
+      text += `${story.content}\n\n`;
+    } else if (story.chapters && story.chapters.length > 0) {
+      story.chapters.forEach((ch) => {
+        text += `[${ch.title.toUpperCase()}]\n\n${ch.narrative}\n\n--------------------------------------------------------------------------------\n\n`;
+      });
     }
 
     const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `recit-${story.title.toLowerCase().replace(/[^a-z0-9]/gi, '_')}.txt`;
+    link.download = `histoire-${story.title.toLowerCase().replace(/[^a-z0-9]/gi, '_').slice(0, 35)}.txt`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    toastSuccess('Fichier téléchargé', `Le récit "${story.title}" a été exporté en .TXT`);
+    toastSuccess('Fichier téléchargé', `L'histoire "${story.title}" a été exportée en .TXT`);
   };
 
   const handleExportHistoryJson = () => {
@@ -495,15 +471,11 @@ export const UsageDashboard: React.FC = () => {
                       <div className="flex items-center gap-2.5">
                         <span className="px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 bg-purple-500/20 text-purple-300 border-purple-500/30">
                           <BookOpen className="w-3.5 h-3.5 text-purple-400" />
-                          <span>Histoire & Scénario IA</span>
+                          <span>Histoire IA</span>
                         </span>
 
-                        <span className="px-2.5 py-0.5 rounded-lg bg-slate-900 border border-white/10 text-[11px] font-semibold text-slate-300">
-                          {story.genre}
-                        </span>
-
-                        <span className="px-2.5 py-0.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-[11px] font-semibold text-indigo-300">
-                          {story.tone}
+                        <span className="px-2.5 py-0.5 rounded-lg bg-slate-900 border border-white/10 text-[11px] font-semibold text-purple-300">
+                          {story.theme || story.genre || 'Histoire'}
                         </span>
                       </div>
 
@@ -513,33 +485,30 @@ export const UsageDashboard: React.FC = () => {
                           {formattedDate}
                         </span>
 
-                        <span className="px-2 py-0.5 rounded-full bg-slate-900 border border-white/10 text-rose-400 font-bold text-[11px]">
-                          -{story.creditsUsed || 2} cr
+                        <span className="px-2 py-0.5 rounded-full bg-slate-900 border border-white/10 text-emerald-400 font-bold text-[11px]">
+                          -{story.creditsUsed || 1} cr
                         </span>
                       </div>
                     </div>
 
-                    {/* Story Title & Logline */}
-                    <div className="space-y-2">
+                    {/* Story Title */}
+                    <div className="space-y-1">
                       <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
                         <span>{story.title}</span>
                       </h3>
-                      <p className="text-xs sm:text-sm text-slate-300 italic leading-relaxed bg-slate-900/60 p-3 rounded-xl border border-white/5">
-                        "{story.logline}"
-                      </p>
                     </div>
 
                     {/* Generation Prompt Box with 1-Click Copy */}
                     <div className="p-4 rounded-2xl bg-slate-900/90 border border-white/10 space-y-2">
                       <div className="flex items-center justify-between text-[11px] font-bold text-slate-400">
-                        <span className="uppercase tracking-wider">Prompt de Génération :</span>
+                        <span className="uppercase tracking-wider">Idée de départ :</span>
                         <button
                           type="button"
                           onClick={() => handleCopyPrompt(story.id, story.prompt)}
                           className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-white/10 text-[11px] font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
                         >
                           {isCopiedPrompt ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                          <span>{isCopiedPrompt ? 'Copié !' : 'Copier le prompt'}</span>
+                          <span>{isCopiedPrompt ? 'Copié !' : 'Copier l\'idée'}</span>
                         </button>
                       </div>
 
@@ -548,112 +517,34 @@ export const UsageDashboard: React.FC = () => {
                       </p>
                     </div>
 
-                    {/* Meta Info: World Setting, Director Style & Characters */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                      {story.worldSetting && (
-                        <div className="p-3 rounded-xl bg-slate-900/50 border border-white/5 space-y-1">
-                          <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1">
-                            <Compass className="w-3 h-3 text-indigo-400" /> Univers & Décor :
-                          </span>
-                          <p className="text-slate-200 text-xs">{story.worldSetting}</p>
-                        </div>
-                      )}
-
-                      {story.directorVision && (
-                        <div className="p-3 rounded-xl bg-slate-900/50 border border-white/5 space-y-1">
-                          <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1">
-                            <Sparkles className="w-3 h-3 text-amber-400" /> Vision Réalisation :
-                          </span>
-                          <p className="text-slate-200 text-xs">{story.directorVision}</p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Characters List */}
-                    {story.characters && story.characters.length > 0 && (
-                      <div className="space-y-1.5">
-                        <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1">
-                          <UserIcon className="w-3 h-3 text-purple-400" /> Personnages :
-                        </span>
-                        <div className="flex flex-wrap gap-2">
-                          {story.characters.map((char, idx) => (
-                            <div
-                              key={idx}
-                              className="px-3 py-1 rounded-xl bg-purple-950/40 border border-purple-500/20 text-xs"
-                            >
-                              <strong className="text-purple-300">{char.name}</strong>
-                              <span className="text-slate-400 ml-1">({char.role})</span>
-                              {char.motivation && (
-                                <span className="text-slate-500 text-[10px] ml-1.5">• {char.motivation}</span>
+                    {/* Histoire complète */}
+                    <div className="p-5 rounded-2xl bg-slate-950/80 border border-white/10 space-y-3">
+                      <span className="text-[11px] uppercase font-bold text-purple-400 tracking-wider block">
+                        Récit complet :
+                      </span>
+                      <div className="text-xs sm:text-sm text-slate-200 leading-relaxed font-serif whitespace-pre-line space-y-3">
+                        {story.content ? (
+                          story.content.split('\n\n').map((para, pIdx) => (
+                            <p key={pIdx} className="leading-relaxed">
+                              {para.trim()}
+                            </p>
+                          ))
+                        ) : story.chapters?.[0]?.narrative ? (
+                          story.chapters.map((ch, chIdx) => (
+                            <div key={chIdx} className="space-y-2">
+                              {story.chapters!.length > 1 && (
+                                <h4 className="text-xs font-bold text-purple-300 uppercase tracking-wide">
+                                  {ch.title}
+                                </h4>
                               )}
+                              <p className="leading-relaxed">{ch.narrative}</p>
                             </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Expandable Chapters Breakdown */}
-                    {story.chapters && story.chapters.length > 0 && (
-                      <div className="space-y-3 pt-2">
-                        <button
-                          type="button"
-                          onClick={() => toggleExpandStory(story.id)}
-                          className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-900/80 hover:bg-slate-900 border border-white/10 text-xs font-bold text-slate-300 hover:text-white transition-colors cursor-pointer"
-                        >
-                          <span className="flex items-center gap-2">
-                            <BookOpen className="w-4 h-4 text-purple-400" />
-                            <span>
-                              {isExpanded ? 'Masquer les chapitres' : `Lire les ${story.chapters.length} chapitres du récit`}
-                            </span>
-                          </span>
-                          {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
-                        </button>
-
-                        {isExpanded && (
-                          <div className="space-y-4 pt-2 animate-in fade-in">
-                            {story.chapters.map((ch) => (
-                              <div
-                                key={ch.chapterNumber}
-                                className="p-4 rounded-2xl bg-slate-950/90 border border-white/10 space-y-3"
-                              >
-                                <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-white/5">
-                                  <div className="flex items-center gap-2">
-                                    <span className="w-6 h-6 rounded-lg bg-purple-600/20 border border-purple-500/30 text-purple-300 font-bold text-xs flex items-center justify-center">
-                                      {ch.chapterNumber}
-                                    </span>
-                                    <h4 className="font-bold text-sm text-white">{ch.title}</h4>
-                                  </div>
-
-                                  <div className="flex items-center gap-2 text-[10px]">
-                                    {ch.soundtrackMood && (
-                                      <span className="px-2 py-0.5 rounded-lg bg-slate-900 border border-white/5 text-slate-400">
-                                        🎵 {ch.soundtrackMood}
-                                      </span>
-                                    )}
-                                    {ch.tensionLevel && (
-                                      <span className="px-2 py-0.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 flex items-center gap-1 font-semibold">
-                                        <Flame className="w-3 h-3 text-rose-400" />
-                                        Tension {ch.tensionLevel}/10
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-
-                                <p className="text-xs sm:text-sm text-slate-200 leading-relaxed whitespace-pre-line font-serif">
-                                  {ch.narrative}
-                                </p>
-
-                                {ch.sceneVisualPrompt && (
-                                  <div className="text-[10px] text-slate-500 font-mono bg-slate-900/60 p-2 rounded-lg border border-white/5">
-                                    <strong className="text-slate-400">Prompt visuel :</strong> {ch.sceneVisualPrompt}
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
+                          ))
+                        ) : (
+                          <p className="italic text-slate-400">Texte de l'histoire...</p>
                         )}
                       </div>
-                    )}
+                    </div>
 
                     {/* Action Buttons Toolbar */}
                     <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-white/5">

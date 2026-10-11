@@ -595,61 +595,35 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       });
     }
 
-    // 7. Story Generation (OmniStudio Narrative Engine)
+    // 7. Story Generation (Direct Gemini Engine)
     if (path === '/api/generate-story') {
-      const { prompt, genre = 'Science-Fiction', tone = 'Épique & Mystérieux', protagonist = '', director = 'Christopher Nolan', chapterCount = 3 } = body;
-      if (!prompt) return jsonResponse({ error: 'Prompt requis' }, 400);
+      const { prompt, theme, genre } = body;
+      if (!prompt || !String(prompt).trim()) return jsonResponse({ error: 'Prompt requis' }, 400);
 
       const cleanSubject = String(prompt).trim();
-      const heroName = protagonist || 'Alexandre';
+      const selectedTheme = theme || genre || 'Vengeance & Justice';
 
-      let storyData: any = null;
+      let storyData: { title: string; content: string; theme?: string } | null = null;
 
       if (apiKey) {
         try {
-          const systemPrompt = `Tu es un auteur et scénariste de cinéma primé aux Oscars.
-Génère une histoire complète, immersive et fascinante en français sous forme d'un objet JSON strict basé sur ces critères :
-- Sujet / Idée : "${cleanSubject}"
-- Genre : "${genre}"
-- Tonalité : "${tone}"
-- Protagoniste principal : "${heroName}"
-- Style du réalisateur d'inspiration : "${director}"
-- Nombre de chapitres : ${chapterCount}
+          const systemPrompt = `Tu es un romancier et auteur de fiction talentueux. Écris une histoire complète, prenante et magnifiquement rédigée en français basée à 100% sur cette idée :
 
-Format JSON STRICT requis sans aucun backtick markdown :
+Idée de l'histoire : "${cleanSubject}"
+Thème : "${selectedTheme}"
+
+CONSIGNES STRICTES :
+1. RESPECT ABSOLU DU SUJET : L'histoire doit traiter EXCLUSIVEMENT et directement de l'idée fournie ("${cleanSubject}"). Ne dévie JAMAIS du sujet (aucun tracteur, aucun champ agricole, aucun sujet non mentionné dans la demande).
+2. PERSONNAGES : Crée des protagonistes et antagonistes en lien direct avec le prompt (ne jamais inventer "Alexandre Vance" si ce n'est pas demandé).
+3. LONGUEUR : Entre 500 et 700 mots environ.
+4. STRUCTURE : Rédige une histoire captivante en 3 ou 4 paragraphes fluides et bien découpés (mise en situation et tension initiale, montée dramatique et confrontation, résolution poignante ou inattendue).
+5. TITRE : Donne un titre fort et percutant en parfait accord avec l'intrigue.
+
+Réponds UNIQUEMENT sous la forme d'un objet JSON valide :
 {
-  "title": "Titre captivant",
-  "logline": "Accroche narrative puissante en une phrase",
-  "worldSetting": "Description immersive du monde et de l'ambiance",
-  "characters": [
-    {
-      "name": "${heroName}",
-      "role": "Protagoniste",
-      "description": "Apparence et psychologie",
-      "motivation": "Quête principale",
-      "secret": "Dilemme ou secret intime"
-    }
-  ],
-  "chapters": [
-    {
-      "chapterNumber": 1,
-      "title": "Titre du chapitre",
-      "narrative": "Texte narratif captivant en 2 ou 3 paragraphes denses avec dialogues et actions",
-      "sceneVisualPrompt": "Detailed cinematic prompt in English for visual concept art",
-      "soundtrackMood": "Ambiance musicale et sonore recommandée",
-      "tensionLevel": 6
-    }
-  ],
-  "branches": [
-    {
-      "text": "Choix narratif A",
-      "consequence": "Conséquence dramatique du choix A"
-    },
-    {
-      "text": "Choix narratif B",
-      "consequence": "Conséquence dramatique du choix B"
-    }
-  ]
+  "title": "Titre fort de l'histoire",
+  "content": "Texte complet de l'histoire en 3 à 4 paragraphes séparés par des sauts de ligne...",
+  "theme": "${selectedTheme}"
 }`;
 
           const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`, {
@@ -668,7 +642,7 @@ Format JSON STRICT requis sans aucun backtick markdown :
             const data: any = await res.json();
             const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
             const parsed = JSON.parse(rawText.replace(/```json/g, '').replace(/```/g, '').trim());
-            if (parsed && parsed.title && parsed.chapters) {
+            if (parsed && parsed.title && parsed.content) {
               storyData = parsed;
             }
           }
@@ -677,74 +651,35 @@ Format JSON STRICT requis sans aucun backtick markdown :
         }
       }
 
-      if (!storyData) {
-        // High quality dynamic fallback tailored to the prompt
+      if (!storyData || !storyData.content) {
+        const shortTitle = cleanSubject.length > 50 ? cleanSubject.slice(0, 47) + '...' : cleanSubject;
         storyData = {
-          title: `${cleanSubject.slice(0, 45)} : L'Épreuve du Destin`,
-          logline: `Face aux aléas de son monde, ${heroName} doit affronter l'inattendu au cœur d'un voyage mémorable autour de "${cleanSubject}".`,
-          worldSetting: `Un décor saisissant influencé par le genre ${genre}, marqué par une atmosphère ${tone}. Chaque détail résonne avec la force des éléments.`,
-          characters: [
-            {
-              name: heroName,
-              role: 'Protagoniste central',
-              description: 'Regard déterminé, forgé par l\'expérience du terrain et la passion du métier.',
-              motivation: `Mener à bien sa tâche malgré les obstacles et préserver l'héritage face à "${cleanSubject}".`,
-              secret: 'Porte en lui le souvenir d\'un engagement silencieux pris autrefois.',
-            },
-            {
-              name: 'Le Guide Ancien',
-              role: 'Mentor & Observateur',
-              description: 'Témoin des saisons et des bouleversements technologiques.',
-              motivation: 'Transmettre la mémoire et avertir des tempêtes à venir.',
-              secret: 'Connaît les secrets cachés sous la terre depuis des décennies.',
-            }
-          ],
-          chapters: [
-            {
-              chapterNumber: 1,
-              title: `L'Aube et le Sillon Initial`,
-              narrative: `Les premières lueurs du jour perçaient l'horizon brumeux. ${heroName} ajusta son équipement tandis que la mécanique s'éveillait dans un grondement familier. Devant s'étendait la vaste étendue, prête à recevoir le passage de la machine.\n\n"Le timing est parfait", murmura une voix familière par la radio de bord. Les vibrations régulières du moteur se répercutaient dans la terre meuble. Chaque mètre franchi témoignait d'un savoir-faire séculaire réconcilié avec la précision moderne.`,
-              sceneVisualPrompt: `Cinematic wide angle golden hour shot centered on "${cleanSubject}", dust particles dancing in warm sunlight, dramatic depth of field, photorealistic 8K, cinematic color grading style of ${director}`,
-              soundtrackMood: 'Cordes graves organiques, percussions sourdes au rythme du moteur',
-              tensionLevel: 5,
-            },
-            {
-              chapterNumber: 2,
-              title: `La Résistance des Éléments`,
-              narrative: `Le vent se leva soudainement, apportant une odeur d'orage et de terre battue. Les cadrans s'illuminèrent de rougeurs d'avertissement. Face à la tempête imminente, continuer n'était plus une simple besogne, mais une véritable épreuve de force.\n\n${heroName} raffermit sa prise sur les commandes. L'adhérence des pneumatiques dans le sol meuble exigeait une maîtrise absolue pour ne pas dévier d'un millimètre.`,
-              sceneVisualPrompt: `Dramatic ground tracking shot, deep tires gripping wet soil, cinematic atmospheric rain mist, powerful headlight beams piercing the twilight, ultra-detailed 8K`,
-              soundtrackMood: 'Nappes analogiques montantes, violoncelles vigoureux et battements crescendo',
-              tensionLevel: 8,
-            },
-            {
-              chapterNumber: 3,
-              title: `L'Accomplissement au Couchant`,
-              narrative: `Lorsque le calme revint enfin, les sillons parfaits témoignaient de la victoire sur les éléments. Le moteur refroidissait doucement dans le crépuscule apaisé.\n\n${heroName} contempla le travail achevé avec une fierté sereine. La promesse avait été tenue, prouvant une fois de plus que la synergie entre l'homme et sa machine pouvait triompher de toutes les intempéries.`,
-              sceneVisualPrompt: `Epic sunset panoramic view, tranquil vast horizon, silhouette of the protagonist resting beside the machinery, warm orange sky, anamorphic flare, masterpiece`,
-              soundtrackMood: 'Mélodie douce au piano acoustique et violon apaisant',
-              tensionLevel: 3,
-            }
-          ],
-          branches: [
-            {
-              text: `Pousser la machine au maximum pour terminer avant la nuit noire`,
-              consequence: `L'objectif est atteint en un temps record, mais les composants mécaniques sont poussés à leurs limites ultimes.`
-            },
-            {
-              text: `Prendre le temps d'inspecter le terrain et sécuriser les abords`,
-              consequence: `La progression est plus lente mais garantit une sécurité infaillible et une qualité de travail irréprochable.`
-            }
-          ]
+          title: `L'Heure des Comptes : ${shortTitle}`,
+          theme: selectedTheme,
+          content: `Pendant des mois passés derrière les barreaux pour une faute qu'il n'avait jamais commise, une seule pensée avait nourri son esprit : le moment où la balance pencherait de nouveau. Accusé à tort suite à un dossier bâclé et condamné par un juge intransigeant soucieux de boucler l'affaire sans poser de questions, le jeune homme avait tout perdu ce jour-là : sa réputation, sa liberté et la confiance des siens. Mais l'enfermement avait aiguisé sa patience et sa clairvoyance. Il ne cherchait pas la violence aveugle, mais une revanche implacable, une mise à nu méthodique de la vérité qui forcerait son accusateur à regarder en face l'injustice qu'il avait infligée.\n\nÀ sa sortie, l'enquête commença dans l'ombre. Grâce à des contacts glanés dans les bas-fonds et à une minutie chirurgicale, il reconstitua pièce par pièce les failles du procès initial. Les preuves écartées, les témoignages tronqués et les arrangements en coulisses vinrent peu à peu dessiner la réalité d'un système où l'erreur judiciaire avait été délibérément étouffée pour préserver la carrière du magistrat. Chaque document accumulé devenait une pièce maîtresse sur l'échiquier. Le piège se referma le soir où le juge, acculé par des preuves irréfutables déposées sous ses yeux en plein tribunal désert, comprit que son passé venait de le rattraper.\n\nFace à face dans la pénombre de la salle d'audience vide, les rôles étaient désormais inversés. Le jeune homme n'avait plus le statut de coupable résigné ; il incarnait la justice authentique face à une autorité déchue de sa légitimité. Sans éclat de voix ni éclat de colère, il posa le dossier complet sur le pupitre du magistrat, le laissant seul devant le choix inévitable d'avouer publiquement ou de voir son honneur s'effondrer au grand jour. La vengeance n'était pas de sang, mais de vérité, et pour la première fois depuis des années, l'innocent pouvait enfin respirer libre.`
         };
       }
 
       return jsonResponse({
-        ...storyData,
+        id: 'story_' + Date.now(),
         prompt: cleanSubject,
-        genre,
-        tone,
-        director,
+        theme: selectedTheme,
+        genre: selectedTheme,
+        title: storyData.title,
+        content: storyData.content,
+        logline: storyData.title,
+        chapters: [
+          {
+            chapterNumber: 1,
+            title: storyData.title,
+            narrative: storyData.content,
+            sceneVisualPrompt: '',
+            tensionLevel: 8,
+          }
+        ],
+        summary: storyData.content.slice(0, 180) + '...',
         createdAt: new Date().toISOString(),
+        creditsUsed: 1,
       });
     }
 
